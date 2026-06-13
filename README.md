@@ -12,6 +12,7 @@ This repository currently contains the analysis and planning phase:
 - Visual effect analysis.
 - Product requirements and business logic.
 - Technical architecture.
+- Runtime contracts and architecture quality gate.
 - GitHub Pages deployment evaluation.
 
 Implementation is intentionally deferred until the visual prototype direction is confirmed.
@@ -30,5 +31,8 @@ Implementation is intentionally deferred until the visual prototype direction is
 - `docs/product/prototype-directions.md`
 - `docs/architecture/technical-architecture.md`
 - `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.md`
+- `docs/architecture/runtime-contracts.md`
+- `docs/architecture/architecture-quality-gate.md`
+- `docs/architecture/brooks-debt-architecture-review.md`
 - `docs/deployment/github-pages-evaluation.md`
 - `CODEX_DOC/progress.md`

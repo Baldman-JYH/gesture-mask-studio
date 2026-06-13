@@ -44,7 +44,8 @@ gesture-mask-studio/
       features/hand-tracking/
       features/scene-sampling/
       features/light-sheet-renderer/
-      features/effects/
+      features/gesture-engine/
+      features/light-sheet-styles/
       components/
       styles/
       assets/textures/
@@ -123,7 +124,7 @@ interface TrackedHand {
 }
 ```
 
-### `features/effects`
+### `features/gesture-engine`
 
 职责：
 
@@ -134,10 +135,10 @@ interface TrackedHand {
 核心输出：
 
 ```ts
-interface MaskGestureState {
+interface LightSheetGestureState {
   mode: 'hidden' | 'one-hand-preview' | 'two-hand-sheet' | 'fade-out';
   confidence: number;
-  texturePreset: 'blueprint' | 'cards' | 'organic';
+  stylePresetId: 'blueprint' | 'cards' | 'organic';
   anchors: {
     left: { x: number; y: number };
     right?: { x: number; y: number };
@@ -203,36 +204,21 @@ bottomLeft - bottomRight
 
 ### 样式扩展契约
 
-光片样式应作为 preset 扩展，而不是写死在渲染逻辑里：
-
-```ts
-interface LightSheetStylePreset {
-  id: string;
-  label: string;
-  thumbnailUrl: string;
-  textureUrl?: string;
-  shader: 'blueprint' | 'cards' | 'organic' | 'custom';
-  opacity: number;
-  edgeColor: string;
-  edgeWidth: number;
-  sceneSample: {
-    enabled: boolean;
-    mode: 'raw' | 'edge-lines' | 'luma-map' | 'posterized';
-    intensity: number;
-    tint: string;
-  };
-  highlight: {
-    enabled: boolean;
-    intensity: number;
-    speed: number;
-  };
-  blendMode: 'normal' | 'screen' | 'additive';
-}
-```
+光片样式应作为 preset 扩展，而不是写死在渲染逻辑里。规范接口以 [运行时架构契约](runtime-contracts.md) 中的 `LightSheetStylePreset` 为唯一来源。
 
 后期新增光片样式时，优先只新增纹理、缩略图和 preset 配置；只有样式确实需要特殊合成时才新增 shader variant。
 
-## 6. 性能策略
+## 6. 架构护栏
+
+实现阶段必须遵守：
+
+- [运行时架构契约](runtime-contracts.md)
+- [架构质量准入门槛](architecture-quality-gate.md)
+- [ADR-0001: 实时场景采样光片运行时](adr-0001-realtime-scene-sampling-light-sheet.md)
+
+任何新增运行时大依赖、跨模块依赖方向变化、后端能力、录制/上传能力，都必须先新增 ADR。
+
+## 7. 性能策略
 
 - 摄像头输入建议 640x480 起步。
 - 手部识别建议 20-30fps，低性能下降到 12-15fps。
@@ -240,7 +226,7 @@ interface LightSheetStylePreset {
 - 使用上一帧识别结果插值，避免识别帧率下降时画面卡顿。
 - 模型和纹理延迟加载；首屏先显示启动状态。
 
-## 7. 测试策略
+## 8. 测试策略
 
 ### 单元测试
 
@@ -265,7 +251,7 @@ interface LightSheetStylePreset {
 
 工具：手工测试 + Playwright 截图检查。真实摄像头交互需要人工验证或 mock video stream。
 
-## 8. 技术风险
+## 9. 技术风险
 
 - GitHub Pages 是静态托管，不能处理服务端模型推理；本方案不依赖后端，因此可行。
 - GitHub Pages 的 HTTPS 支持满足摄像头权限要求。
@@ -273,7 +259,7 @@ interface LightSheetStylePreset {
 - iOS Safari 对摄像头、WebGL、WASM 性能更敏感，首版优先保证桌面 Chrome/Edge。
 - 精确前后遮挡需要额外分割模型，会增加性能成本。首版重点不是简单遮挡，而是先保证光片内部能实时采样并风格化显示后方场景。
 
-## 9. 推荐实施阶段
+## 10. 推荐实施阶段
 
 1. 原型确认：完成一张主体验界面原型图和关键交互说明。
 2. 工程初始化：创建 React + Vite + TypeScript 项目。

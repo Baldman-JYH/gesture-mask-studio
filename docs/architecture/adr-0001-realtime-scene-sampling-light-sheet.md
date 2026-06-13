@@ -87,32 +87,7 @@ flowchart LR
 
 光片样式必须设计成可替换 preset，而不是写死在渲染流程里。后期新增样式时，不应改动摄像头、手部追踪和核心几何逻辑。
 
-建议样式契约：
-
-```ts
-export interface LightSheetStylePreset {
-  id: string;
-  label: string;
-  thumbnailUrl: string;
-  textureUrl?: string;
-  shader: 'blueprint' | 'cards' | 'organic' | 'custom';
-  opacity: number;
-  edgeColor: string;
-  edgeWidth: number;
-  sceneSample: {
-    enabled: boolean;
-    mode: 'raw' | 'edge-lines' | 'luma-map' | 'posterized';
-    intensity: number;
-    tint: string;
-  };
-  highlight: {
-    enabled: boolean;
-    intensity: number;
-    speed: number;
-  };
-  blendMode: 'normal' | 'screen' | 'additive';
-}
-```
+规范样式契约以 `runtime-contracts.md` 中的 `LightSheetStylePreset` 为唯一来源。ADR 只记录决策，不复制接口定义。
 
 简单新增样式时只需要增加：
 

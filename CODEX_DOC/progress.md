@@ -186,3 +186,42 @@
 - Adopted term: gesture-driven live-sampling light sheet / 手势驱动实时采样光片.
 - Project name can remain `Gesture Mask Studio`.
 - Runtime must sample the live camera scene behind the sheet, not only render a face and not only apply a static texture.
+
+## 2026-06-13 14:12
+
+### Completed
+- Used `$brooks-debt` to assess architecture debt risk before implementation.
+- Confirmed current repository still has no app code; assessment scope is planning documents and proposed architecture.
+- Closed pre-development risks by adding:
+  - `docs/architecture/runtime-contracts.md`
+  - `docs/architecture/architecture-quality-gate.md`
+  - `docs/architecture/brooks-debt-architecture-review.md`
+- Updated `docs/architecture/technical-architecture.md` to use `gesture-engine`, `light-sheet-renderer`, `scene-sampling`, and `light-sheet-styles` consistently.
+- Updated `docs/product/requirements-and-business-logic.md` to use 光片 terminology consistently in core logic.
+- Updated `README.md` with the new architecture quality documents.
+
+### Key Decision
+- Development must not start until the architecture quality gate is accepted.
+- Future features must enter through declared extension points:
+  - new style: `light-sheet-styles`
+  - new gesture: `gesture-engine`
+  - new sampling/filter mode: `scene-sampling` or renderer shader
+  - new model: `vision-extensions` plus ADR
+  - screenshot/recording/share: composition layer plus ADR when crossing runtime boundaries
+
+### Next
+- Commit and push the zero-known-architecture-debt gate.
+
+## 2026-06-13 14:18
+
+### Completed
+- Removed duplicated `LightSheetStylePreset` definitions from ADR and technical architecture docs.
+- Confirmed `docs/architecture/runtime-contracts.md` is the single source of truth for runtime interfaces.
+- Re-ran consistency checks for legacy names:
+  - no `features/effects`
+  - no `MaskGestureState`
+  - no `mask-renderer`
+  - no `face-sampling`
+
+### Next
+- Commit and push architecture quality gate documents.
