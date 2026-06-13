@@ -416,3 +416,29 @@
 ### Next
 - Commit this progress update locally.
 - Retry `git push origin main` when GitHub network access is available.
+
+## 2026-06-13 15:04
+
+### Completed
+- Investigated GitHub Pages workflow failure from screenshot.
+- Confirmed first failure cause:
+  - repository Pages site did not exist yet, so `actions/configure-pages@v5` failed with GitHub Pages API 404.
+- Enabled GitHub Pages through GitHub API:
+  - `build_type`: `workflow`
+  - `html_url`: `https://baldman-jyh.github.io/gesture-mask-studio/`
+- Re-ran workflow manually:
+  - Pages configuration step passed.
+  - new failure moved to `npm ci`.
+- Investigated `npm ci` failure:
+  - GitHub runner uses Node `22.22.3` and npm `10.9.8`.
+  - lockfile was not accepted by npm 10 because `@emnapi/*` dependency entries were out of sync.
+- Regenerated `app/package-lock.json` with `npm@10.9.8`.
+- Verified locally:
+  - `npx npm@10.9.8 ci`: passed.
+  - `npm test`: 23 tests passed.
+  - `npm run build`: production build passed.
+- Updated Pages workflow with `FORCE_JAVASCRIPT_ACTIONS_TO_NODE24=true` to address the Node 20 action deprecation warning before GitHub's 2026-06-16 default change.
+
+### Next
+- Commit and push workflow/lockfile/progress fixes.
+- Confirm the next GitHub Actions deployment run completes successfully.
