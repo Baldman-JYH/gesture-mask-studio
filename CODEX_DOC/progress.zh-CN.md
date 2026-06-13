@@ -421,3 +421,13 @@ English version: [progress.md](progress.md)
   - `Mirror` 按钮数量：1；
   - `Mirror` 默认 `aria-pressed`：`true`；
   - 控制台 error 日志：0。
+- 提交与部署：
+  - Commit：`3774e09 fix: align mirrored gesture coordinates`；
+  - GitHub Actions run：`27462088325`；
+  - build job：success；
+  - deploy job：success。
+
+### 部署说明
+- GitHub Actions 仍会显示第三方 action 的 Node.js 20 deprecation annotation。
+- workflow 已强制这些 actions 在 Node.js 24 下运行，并且部署已成功完成。
+- 剩余必须验证项是真实设备移动方向：Mirror 开/关、手部左右移动，并录制短视频继续对比。
