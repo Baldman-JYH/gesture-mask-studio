@@ -915,3 +915,4 @@
 - Push result: success.
 - Remote branch: `origin/feat/spatial-template-mvp`.
 - PR creation URL: `https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/feat/spatial-template-mvp`.
+- Pull request: `https://github.com/Baldman-JYH/gesture-mask-studio/pull/1`.
