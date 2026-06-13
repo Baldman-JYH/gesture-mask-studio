@@ -803,3 +803,10 @@
 - Use a recognizable background marker and check that sampled content inside the sheet overlaps the visible background more closely than commit `c9076f2`.
 - Repeat with Mirror enabled and disabled.
 - Confirm the console has no `THREE.WebGLProgram: Shader Error`.
+
+### Commit And Deployment
+- Commit: `2719a35 fix: align cover-cropped video sampling`.
+- GitHub Actions run: `27464484453`.
+- build job: success.
+- deploy job: success.
+- GitHub still reports the known Node.js 20 deprecation annotation for third-party actions, but the workflow forced Node.js 24 and completed successfully.

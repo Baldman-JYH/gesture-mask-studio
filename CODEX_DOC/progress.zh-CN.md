@@ -562,3 +562,10 @@ English version: [progress.md](progress.md)
 - 使用易识别背景标记，检查光片内部采样内容比提交 `c9076f2` 更接近可见背景位置。
 - Mirror 开启和关闭都重复验证。
 - 确认控制台没有 `THREE.WebGLProgram: Shader Error`。
+
+### 提交与部署
+- Commit：`2719a35 fix: align cover-cropped video sampling`。
+- GitHub Actions run：`27464484453`。
+- build job：success。
+- deploy job：success。
+- GitHub 仍然报告第三方 action 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功完成。
