@@ -47,6 +47,7 @@ The app is intentionally split by runtime boundary:
 - `camera`: permission and stream lifecycle.
 - `hand-tracking`: MediaPipe adapter; emits canonical `TrackedHand` objects only.
 - `gesture-engine`: pure hand-to-geometry state derivation.
+- `coordinate-space`: camera/display/video UV coordinate conversion.
 - `scene-sampling`: normalized screen/video UV mapping.
 - `light-sheet-renderer`: Three.js/WebGL video-texture renderer.
 - `light-sheet-styles`: extensible style presets.
@@ -71,6 +72,8 @@ MediaPipe wasm files are copied from `node_modules/@mediapipe/tasks-vision/wasm`
 
 - `docs/analysis/video-effect-analysis.md`
 - `docs/analysis/video-effect-analysis.zh-CN.md`
+- `docs/analysis/cad0446-real-device-video-comparison.md`
+- `docs/analysis/cad0446-real-device-video-comparison.zh-CN.md`
 - `docs/product/requirements-and-business-logic.md`
 - `docs/product/requirements-and-business-logic.zh-CN.md`
 - `docs/product/prototype-directions.md`
@@ -79,6 +82,8 @@ MediaPipe wasm files are copied from `node_modules/@mediapipe/tasks-vision/wasm`
 - `docs/architecture/technical-architecture.zh-CN.md`
 - `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.md`
 - `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.zh-CN.md`
+- `docs/architecture/adr-0002-hand-anchored-3d-template-model.md`
+- `docs/architecture/adr-0002-hand-anchored-3d-template-model.zh-CN.md`
 - `docs/architecture/runtime-contracts.md`
 - `docs/architecture/runtime-contracts.zh-CN.md`
 - `docs/architecture/architecture-quality-gate.md`

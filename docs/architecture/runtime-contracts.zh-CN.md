@@ -37,6 +37,21 @@ export type TrackedHand = {
 - 不允许在手势引擎中直接使用 MediaPipe 类型。
 - `landmarks` 通常为 21 个关键点。
 
+## 坐标空间
+
+当前运行时必须区分以下坐标：
+
+- `camera-space`：MediaPipe 和源视频输出的原始坐标。
+- `display-space`：用户在页面上实际看到的坐标；开启镜像时，landmark 的 `x` 必须先转换为 `1 - x`。
+- `video-uv-space`：源视频纹理采样坐标；它可以与显示坐标镜像方向不同。
+
+约束：
+
+- 可见几何必须使用 `display-space`。
+- 视频纹理采样必须使用 `video-uv-space`。
+- `features/coordinate-space` 不得依赖 DOM、React、Three.js 或 MediaPipe 类型。
+- 坐标转换不得修改输入的 tracking 结果。
+
 ## 光片模式
 
 ```ts
