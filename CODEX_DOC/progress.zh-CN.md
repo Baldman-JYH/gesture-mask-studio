@@ -330,3 +330,18 @@ English version: [progress.md](progress.md)
   - fake camera smoke 进入 `Stop camera`，挂载 1 个 WebGL canvas，且无 shader error。
 - 剩余真实设备检查：
   - 部署后需要在有摄像头的电脑上分别展示一只手和两只手，验证光片出现和样式自动切换。
+
+## 2026-06-13 15:57
+
+### 已完成
+- 提交并推送渲染修复：
+  - Commit：`cad0446`
+  - Message：`fix: restore light sheet rendering`
+- 确认 GitHub Pages workflow 成功：
+  - Run：`27460970039`
+  - build job：success
+  - deploy job：success
+
+### 说明
+- GitHub Actions 仍会显示第三方 actions 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功。
+- 下一轮真实设备验证应在部署地址强制刷新后，重新测试手势驱动渲染。

@@ -571,3 +571,18 @@
   - fake-camera smoke reached `Stop camera`, mounted 1 WebGL canvas, and reported no shader errors.
 - Remaining real-device check:
   - after deployment, verify on the camera-equipped computer with one hand and two hands visible in frame.
+
+## 2026-06-13 15:57
+
+### Completed
+- Committed and pushed the rendering fix:
+  - Commit: `cad0446`
+  - Message: `fix: restore light sheet rendering`
+- Confirmed GitHub Pages workflow succeeded:
+  - Run: `27460970039`
+  - build job: success
+  - deploy job: success
+
+### Notes
+- GitHub Actions still reports Node.js 20 deprecation annotations for third-party actions, but the workflow is forced to Node.js 24 and completed successfully.
+- Next real-device validation should hard refresh the deployed URL and retest hand-driven rendering.
