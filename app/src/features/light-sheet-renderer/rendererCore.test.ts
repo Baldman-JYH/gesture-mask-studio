@@ -30,10 +30,10 @@ describe('rendererCore', () => {
 
   it('converts normalized vertices to mirrored video UVs in order', () => {
     expect(Array.from(geometryToVideoUvs(geometry, true))).toEqual([
-      1, 0,
-      0, 0,
-      0, 1,
       1, 1,
+      0, 1,
+      0, 0,
+      1, 0,
     ]);
   });
 

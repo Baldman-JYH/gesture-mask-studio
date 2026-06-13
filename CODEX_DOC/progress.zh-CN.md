@@ -431,3 +431,64 @@ English version: [progress.md](progress.md)
 - GitHub Actions 仍会显示第三方 action 的 Node.js 20 deprecation annotation。
 - workflow 已强制这些 actions 在 Node.js 24 下运行，并且部署已成功完成。
 - 剩余必须验证项是真实设备移动方向：Mirror 开/关、手部左右移动，并录制短视频继续对比。
+
+## 2026-06-13 17:35
+
+### 已完成
+- 分析了基于提交 `e79f74f257c80db9ae39c2b0d3e0b47425a31609` 的真实设备录屏。
+- 使用 FFmpeg 抽取证据：
+  - 真实设备录屏 179 张 1fps 连续帧；
+  - 1 张 1fps 总览拼图；
+  - 20s-40s、60s-85s、120s-145s 三个 4fps 片段拼图。
+- 根据控制台截图确认，本次测试中已经没有之前的 WebGL shader 编译错误。
+- 确认当前剩余可见缺陷是光片内部采样内容上下反向，不是左右移动方向，也不是光片几何位置。
+- 新增中英文分析文档：
+  - `docs/analysis/e79f74f-real-device-vertical-comparison.md`
+  - `docs/analysis/e79f74f-real-device-vertical-comparison.zh-CN.md`
+
+### 根因
+- `display-space` 几何坐标中，`y = 0` 表示画面顶部，`y = 1` 表示画面底部。
+- WebGL 顶点位置转换已经正确：`clipY = 1 - displayY * 2`。
+- 问题出在 display-space 到 Three.js 视频纹理的映射：之前使用 `v = y`，在当前渲染路径下会采样到视频纹理垂直相反的一侧。
+- 正确映射应为 `videoV = 1 - displayY`；水平镜像仍然是独立的 `x` 方向规则。
+
+### TDD 证据
+- RED：先更新 `screenSpaceSampling.test.ts` 和 `rendererCore.test.ts` 的期望 UV 行为后，目标测试失败，因为实现仍返回 `v = y`。
+- GREEN：把 `toVideoUv` 修改为返回 `v = 1 - y` 后，目标测试通过：
+  - `npm test -- src/features/scene-sampling/screenSpaceSampling.test.ts src/features/light-sheet-renderer/rendererCore.test.ts`
+  - 2 个测试文件通过，6 个测试通过。
+
+### 本次变更验证方案
+- 自动化：
+  - 重新运行 scene-sampling 和 renderer-core 目标测试；
+  - 运行完整 `npm test`；
+  - 运行 `npm run build`；
+  - 运行中英文文档配对检查；
+  - 运行 `git diff --check`。
+- 浏览器 smoke：
+  - 加载本地 Vite 页面；
+  - 确认应用外壳渲染正常，摄像头启动前没有 console error。
+- 部署后的真实设备验证：
+  - 强制刷新 GitHub Pages 页面；
+  - 保持 Mirror 开启，移动手部左/右/上/下；
+  - 验证左右方向仍然一致；
+  - 验证光片内部采样内容不再上下反向；
+  - 关闭 Mirror 后重复；
+  - 录制短视频作为后续对比证据。
+
+### 验证结果
+- 目标 UV/renderer 测试：2 个测试文件通过，6 个测试通过。
+- 完整测试：10 个测试文件通过，29 个测试通过。
+- 生产构建：通过。
+- 中英文文档配对检查：通过。
+- `git diff --check`：无空白错误；只有 Windows 换行提示。
+- 本地浏览器 smoke，地址 `http://127.0.0.1:5174/gesture-mask-studio/`：
+  - 页面标题：`Gesture Mask Studio`；
+  - 一级标题：`Gesture Mask Studio`；
+  - `Start camera` 按钮可见；
+  - Mirror 图标按钮存在，且 `aria-pressed="true"`；
+  - console error 日志：0。
+
+### 三维效果状态
+- 当前运行时仍然是扁平的屏幕空间光片。
+- 指尖锚定三维模板行为已经作为 ADR-0002 记录，应该作为下一阶段架构能力实现，不应混入本次收敛的 UV bug 修复。

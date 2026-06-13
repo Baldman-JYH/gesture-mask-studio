@@ -672,3 +672,64 @@
 - GitHub Actions still reports a Node.js 20 deprecation annotation for third-party actions.
 - The workflow forces those actions to run on Node.js 24, and the deployment completed successfully.
 - The remaining required validation is real-device movement direction: Mirror on/off, hand left/right, short recording for comparison.
+
+## 2026-06-13 17:35
+
+### Completed
+- Analyzed the real-device recording for commit `e79f74f257c80db9ae39c2b0d3e0b47425a31609`.
+- Extracted FFmpeg evidence:
+  - 179 continuous 1fps frames from the real-device recording;
+  - one 1fps contact sheet;
+  - three 4fps segment contact sheets for 20s-40s, 60s-85s, and 120s-145s.
+- Confirmed from the console screenshot that the previous WebGL shader error is not present in this test.
+- Confirmed the remaining visible defect is vertical inversion of sampled video content inside the light sheet, not left/right movement and not geometry placement.
+- Added bilingual analysis:
+  - `docs/analysis/e79f74f-real-device-vertical-comparison.md`
+  - `docs/analysis/e79f74f-real-device-vertical-comparison.zh-CN.md`
+
+### Root Cause
+- The display-space geometry uses `y = 0` at the top and `y = 1` at the bottom.
+- The WebGL vertex position conversion is already correct: `clipY = 1 - displayY * 2`.
+- The bug was the display-space to Three.js video texture mapping: it used `v = y`, which samples the vertically opposite side of the video texture in the current renderer path.
+- The correct mapping is `videoV = 1 - displayY`; horizontal mirror remains an independent `x` rule.
+
+### TDD Evidence
+- RED: after updating expected UV behavior in `screenSpaceSampling.test.ts` and `rendererCore.test.ts`, the targeted tests failed because implementation still returned `v = y`.
+- GREEN: after changing `toVideoUv` to return `v = 1 - y`, the targeted tests passed:
+  - `npm test -- src/features/scene-sampling/screenSpaceSampling.test.ts src/features/light-sheet-renderer/rendererCore.test.ts`
+  - 2 test files passed, 6 tests passed.
+
+### Verification Plan For This Change
+- Automated:
+  - rerun the targeted scene-sampling and renderer-core tests;
+  - run full `npm test`;
+  - run `npm run build`;
+  - run bilingual documentation pairing check;
+  - run `git diff --check`.
+- Browser smoke:
+  - load the local Vite page;
+  - confirm the app shell renders and no console errors appear before camera start.
+- Real device after deployment:
+  - hard refresh the GitHub Pages URL;
+  - keep Mirror enabled and move hand left/right/up/down;
+  - verify left/right remains aligned;
+  - verify sampled content inside the sheet is no longer vertically inverted;
+  - repeat with Mirror disabled;
+  - record a short video for comparison.
+
+### Verification Results
+- Targeted UV/renderer tests: 2 test files passed, 6 tests passed.
+- Full test suite: 10 test files passed, 29 tests passed.
+- Production build: passed.
+- Bilingual documentation pairing check: passed.
+- `git diff --check`: no whitespace errors; only Windows line-ending warnings.
+- Local browser smoke on `http://127.0.0.1:5174/gesture-mask-studio/`:
+  - page title: `Gesture Mask Studio`;
+  - heading text: `Gesture Mask Studio`;
+  - Start camera button visible;
+  - Mirror icon button present with `aria-pressed="true"`;
+  - console error logs: 0.
+
+### 3D Status
+- The current runtime is still a flat screen-space light sheet.
+- Fingertip-anchored 3D template behavior is intentionally tracked as ADR-0002 and should be implemented as the next architectural stage, not as part of this narrow UV bug fix.
