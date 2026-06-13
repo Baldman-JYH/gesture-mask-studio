@@ -289,3 +289,44 @@ English version: [progress.md](progress.md)
 
 ### 下一步
 - 后续所有文档、功能或问题修复工作，都要同时更新英文和中文文档，并给出具体验证方案。
+
+## 2026-06-13 15:53
+
+### 已完成
+- 排查真实设备反馈：摄像头能打开，但没有看到光片效果。
+- 根因：
+  - MediaPipe 启动日志属于信息/警告，不是致命错误。
+  - 真正阻塞效果的是 `THREE.WebGLProgram: Shader Error`，即光片 fragment shader 编译失败。
+  - 浏览器级 shader 编译测试证明，最初基于 extension 的假设在 WebGL1 可通过，但在 WebGL2 会失败。
+  - 最终根因：fragment shader 依赖 `fwidth()`，该函数在 Chrome/Edge 当前 WebGL2/GLSL 1.00 路径下不可移植。
+- 修复 shader 可移植性：
+  - 移除依赖 derivatives 的 `fwidth()`；
+  - 改为固定宽度 `smoothstep` 网格逻辑；
+  - 添加 `shaderSource.test.ts`，防止再次引入 derivative-only shader 函数。
+- 修正产品行为偏差：
+  - 默认 UI 移除手动 Blueprint/Cards/Organic 页签按钮；
+  - 样式默认由手势驱动选择；
+  - 底部控制栏显示当前 `Auto` 样式状态；
+  - 模型 ready 但未检测到手时，顶部状态显示 `No hands`。
+- 更新中英文文档：
+  - README；
+  - 需求与业务逻辑；
+  - 技术架构；
+  - 验证方案。
+
+### 验证
+- 修复前按 TDD 确认 RED：
+  - shader 可移植性测试因 `fwidth()` 失败；
+  - 手势自动样式选择测试失败；
+  - UI 测试因仍存在手动预设页签失败；
+  - `No hands` 状态测试失败。
+- 修复后自动化检查：
+  - 目标测试：10 个通过；
+  - `npm test`：26 个通过；
+  - `npm run build`：通过。
+- 浏览器/WebGL 检查：
+  - 系统 Chrome WebGL 编译/link 测试在 WebGL1 和 WebGL2 下均通过；
+  - 本地 Browser 检查 `http://127.0.0.1:5174/gesture-mask-studio/` 显示 `Auto` 状态，且无手动预设按钮；
+  - fake camera smoke 进入 `Stop camera`，挂载 1 个 WebGL canvas，且无 shader error。
+- 剩余真实设备检查：
+  - 部署后需要在有摄像头的电脑上分别展示一只手和两只手，验证光片出现和样式自动切换。

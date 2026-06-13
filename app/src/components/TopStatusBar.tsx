@@ -82,7 +82,7 @@ function trackingStateLabel(trackingState: TrackingState, handsCount: number): s
   }
 
   if (trackingState === 'ready') {
-    return handsCount > 0 ? `${handsCount} hand${handsCount > 1 ? 's' : ''}` : 'Ready';
+    return handsCount > 0 ? `${handsCount} hand${handsCount > 1 ? 's' : ''}` : 'No hands';
   }
 
   if (trackingState === 'unavailable') {

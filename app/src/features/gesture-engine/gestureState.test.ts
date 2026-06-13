@@ -21,7 +21,36 @@ function hand(id: string, x: number, y: number, confidence = 0.9): TrackedHand {
   };
 }
 
+function openHand(id: string, x: number, y: number, confidence = 0.9): TrackedHand {
+  return {
+    ...hand(id, x, y, confidence),
+    landmarks: [
+      { x, y },
+      { x, y },
+      { x, y },
+      { x, y },
+      { x: x + 0.08, y: y - 0.02 },
+      { x, y },
+      { x, y },
+      { x, y },
+      { x: x - 0.08, y: y + 0.02 },
+    ],
+  };
+}
+
 describe('deriveLightSheetGestureState', () => {
+  it('selects style from gesture openness without requiring manual preset input', () => {
+    const pinchedState = deriveLightSheetGestureState({
+      hands: [hand('left', 0.2, 0.5), hand('right', 0.8, 0.5)],
+    });
+    const openState = deriveLightSheetGestureState({
+      hands: [openHand('left', 0.2, 0.5), openHand('right', 0.8, 0.5)],
+    });
+
+    expect(pinchedState.stylePresetId).toBe('cards');
+    expect(openState.stylePresetId).toBe('organic');
+  });
+
   it('uses two hands to enter two-hand-sheet mode', () => {
     const state = deriveLightSheetGestureState({
       hands: [hand('right', 0.8, 0.45), hand('left', 0.2, 0.5)],

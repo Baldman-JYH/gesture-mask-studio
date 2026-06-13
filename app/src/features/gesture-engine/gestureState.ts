@@ -8,19 +8,22 @@ import { clampNormalizedPoint } from './geometry';
 
 type DeriveGestureStateInput = {
   hands: TrackedHand[];
-  requestedPresetId: string;
+  requestedPresetId?: string;
 };
 
 const THUMB_TIP_INDEX = 4;
 const INDEX_TIP_INDEX = 8;
+const CARDS_STYLE_OPENNESS_MAX = 0.35;
+const ORGANIC_STYLE_OPENNESS_MIN = 0.72;
 
 export function deriveLightSheetGestureState(
   input: DeriveGestureStateInput,
 ): LightSheetGestureState {
-  const stylePresetId = getLightSheetStylePreset(input.requestedPresetId).id;
   const trackedHands = input.hands.filter((hand) => hand.confidence > 0.2);
 
   if (trackedHands.length === 0) {
+    const stylePresetId = getResolvedStylePresetId(input.requestedPresetId, []);
+
     return {
       mode: 'hidden',
       confidence: 0,
@@ -36,6 +39,10 @@ export function deriveLightSheetGestureState(
     anchor: getPinchAnchor(hand),
     openness: getHandOpenness(hand),
   }));
+  const stylePresetId = getResolvedStylePresetId(
+    input.requestedPresetId,
+    anchors.map((anchor) => anchor.openness),
+  );
 
   anchors.sort((a, b) => a.anchor.x - b.anchor.x);
 
@@ -87,6 +94,31 @@ function getHandOpenness(hand: TrackedHand): number {
 
   const distance = Math.hypot(index.x - thumb.x, index.y - thumb.y);
   return clamp01(distance / 0.18);
+}
+
+function getResolvedStylePresetId(
+  requestedPresetId: string | undefined,
+  opennessValues: number[],
+): string {
+  if (requestedPresetId !== undefined) {
+    return getLightSheetStylePreset(requestedPresetId).id;
+  }
+
+  if (opennessValues.length < 2) {
+    return 'blueprint';
+  }
+
+  const averageOpenness = opennessValues.reduce((sum, value) => sum + value, 0) / opennessValues.length;
+
+  if (averageOpenness < CARDS_STYLE_OPENNESS_MAX) {
+    return 'cards';
+  }
+
+  if (averageOpenness > ORGANIC_STYLE_OPENNESS_MIN) {
+    return 'organic';
+  }
+
+  return 'blueprint';
 }
 
 function averageOptional(left?: number, right?: number): number | undefined {

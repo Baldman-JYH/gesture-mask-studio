@@ -37,7 +37,7 @@ Current verification covers:
 - camera permission state mapping,
 - mirrored/unmirrored scene sampling,
 - renderer geometry conversion,
-- UI preset and mirror controls,
+- automatic gesture style status and mirror controls,
 - production build with local MediaPipe wasm assets.
 
 ## Architecture
@@ -52,6 +52,7 @@ The app is intentionally split by runtime boundary:
 - `light-sheet-styles`: extensible style presets.
 
 New visual styles should be added as `LightSheetStylePreset` entries first. Tracking, geometry, and renderer internals should not be rewritten for ordinary style additions.
+The default user flow is gesture-driven: the app shows the active `Auto` style and does not require manual Blueprint/Cards/Organic tab selection.
 
 ## Deployment
 

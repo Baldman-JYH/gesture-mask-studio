@@ -61,7 +61,8 @@ npx npm@10.9.8 ci
    - 顶部状态栏可见；
    - 摄像头舞台铺满页面主体；
    - 底部控制栏可见；
-   - Blueprint、Cards、Organic、Mirror、Start camera 控件都可见；
+   - 自动手势样式状态、Mirror、Start camera 控件都可见；
+   - Blueprint、Cards、Organic 不再作为手动页签按钮显示；
    - 页面没有横向滚动。
 3. 点击 `Start camera`。
 4. 授权摄像头。
@@ -90,24 +91,18 @@ npx npm@10.9.8 ci
    - 光片内能实时采样背后的内容；
    - 光片内能看到背后运动；
    - 渲染内容不是冻结画面，也不是预生成图片。
-8. 依次尝试所有预设：
-   - Blueprint；
-   - Cards；
-   - Organic。
+8. 用双手改变张开程度。
 9. 预期：
-   - 样式立即变化；
-   - 每个预设都保持实时摄像头采样能力。
+   - 样式根据手势推导的预设自动变化；
+   - 底部控制栏显示当前 `Auto` 样式；
+   - 每种样式都保持实时摄像头采样能力。
 
 ## 控件验证
 
-1. 点击 `Cards`。
+1. 确认底部控制栏显示 `Auto` 和当前样式名。
 2. 预期：
-   - Cards 被选中；
-   - Blueprint 取消选中。
-3. 点击 `Organic`。
-4. 预期：
-   - Organic 被选中；
-   - 光片仍然实时采样摄像头内容。
+   - 没有手动 Blueprint/Cards/Organic 页签按钮；
+   - 样式由手部追踪驱动，不依赖手动选择。
 5. 点击 `Mirror`。
 6. 预期：
    - 预览镜像状态变化；
@@ -152,12 +147,24 @@ npx npm@10.9.8 ci
 
 - 桌面视口约 `1440x900`；
 - 移动视口约 `390x844`；
-- 点击 Cards；
+- 确认 `Auto` 手势样式状态可见；
 - 切换 Mirror；
 - 启动 fake camera；
 - 确认出现 `Stop camera`；
 - 确认 WebGL canvas 已挂载；
 - 确认没有 console errors 或 failed requests。
+
+## Shader 和 WebGL 回归验证
+
+当变更涉及 `features/light-sheet-renderer` shader 代码时：
+
+1. 为要保护的可移植性规则新增或更新 shader source 单元测试。
+2. 运行 `npm test -- src/features/light-sheet-renderer/shaderSource.test.ts`。
+3. 条件允许时，在 Chrome 或 Edge 中运行浏览器级 WebGL 编译检查。
+4. 预期：
+   - fragment shader 在 WebGL1 和 WebGL2 下都能编译；
+   - program 在 WebGL1 和 WebGL2 下都能 link；
+   - console 中没有 `THREE.WebGLProgram: Shader Error`。
 
 ## 变更专项验证模板
 

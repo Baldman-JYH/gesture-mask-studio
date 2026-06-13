@@ -530,3 +530,44 @@
 
 ### Next
 - For future documentation, feature, or bug-fix work, update both English and Chinese documents and include a concrete verification plan.
+
+## 2026-06-13 15:53
+
+### Completed
+- Investigated real-device report: camera opened but no visible light-sheet effect.
+- Root cause:
+  - MediaPipe startup logs were informational/warnings, not fatal.
+  - Actual blocking issue was `THREE.WebGLProgram: Shader Error` from the light-sheet fragment shader.
+  - Browser-level shader compile testing showed the first extension-based hypothesis worked in WebGL1 but failed in WebGL2.
+  - Final root cause: the fragment shader depended on `fwidth()`, which was not portable in the WebGL2/GLSL 1.00 path used by Chrome/Edge.
+- Fixed shader portability:
+  - removed derivative-dependent `fwidth()`,
+  - replaced the grid function with fixed-width `smoothstep` logic,
+  - added `shaderSource.test.ts` to prevent reintroducing derivative-only shader functions.
+- Fixed product behavior mismatch:
+  - removed manual Blueprint/Cards/Organic tab buttons from the default UI,
+  - made style selection gesture-driven by default,
+  - bottom dock now shows active `Auto` style status,
+  - tracking status now shows `No hands` when the model is ready but no hand landmarks are detected.
+- Updated bilingual docs:
+  - README,
+  - requirements/business logic,
+  - technical architecture,
+  - verification plan.
+
+### Verification
+- TDD RED checks confirmed before fixes:
+  - shader portability test failed on `fwidth()`,
+  - gesture style auto-selection test failed,
+  - UI test failed because manual preset tabs still existed,
+  - `No hands` status test failed.
+- Automated checks after fix:
+  - targeted tests: 10 passed,
+  - `npm test`: 26 passed,
+  - `npm run build`: passed.
+- Browser/WebGL checks:
+  - system Chrome WebGL compile/link test passed for WebGL1 and WebGL2,
+  - local Browser check on `http://127.0.0.1:5174/gesture-mask-studio/` showed `Auto` status and no manual preset buttons,
+  - fake-camera smoke reached `Stop camera`, mounted 1 WebGL canvas, and reported no shader errors.
+- Remaining real-device check:
+  - after deployment, verify on the camera-equipped computer with one hand and two hands visible in frame.

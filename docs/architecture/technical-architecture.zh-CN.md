@@ -61,8 +61,9 @@ flowchart LR
   F --> G[Three.js Renderer]
   J --> G
   B --> G
-  H[UI Controls] --> E
-  H --> G
+  E --> K[Active Style Preset]
+  K --> J
+  H[UI Controls] --> G
 ```
 
 关键原则：
@@ -71,7 +72,8 @@ flowchart LR
 - 手部关键点经标准化后进入手势引擎。
 - 手势引擎只输出领域状态和几何，不依赖 DOM、MediaPipe 或 Three.js。
 - WebGL 负责把摄像头视频采样、样式纹理、边缘线和高光映射到动态几何上。
-- UI 控制只改变状态和样式参数，不直接操作渲染内部实现。
+- 样式默认由手势引擎根据手部开合状态自动选择。
+- UI 控制只负责摄像头、镜像和状态展示，不要求用户手动切换样式。
 
 ## 4. 核心模块
 
@@ -100,6 +102,7 @@ flowchart LR
 - 将 `TrackedHand[]` 转换成 `LightSheetGestureState`。
 - 构建一只手预览和双手光片几何。
 - 处理置信度、左右排序、手部张开程度和旋转角。
+- 在未提供调试/手动覆盖时，根据手势开合度输出当前 `stylePresetId`。
 
 ### `features/scene-sampling`
 

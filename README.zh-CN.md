@@ -37,7 +37,7 @@ npm run build
 - 摄像头权限状态映射；
 - 镜像和非镜像的视频采样映射；
 - 渲染器几何转换；
-- UI 样式选择和镜像开关；
+- 自动手势样式状态和镜像开关；
 - 带本地 MediaPipe wasm 资源的生产构建。
 
 完整验证方案见：[verification-plan.zh-CN.md](docs/verification/verification-plan.zh-CN.md)
@@ -54,6 +54,7 @@ npm run build
 - `light-sheet-styles`：可扩展的样式预设。
 
 新增视觉样式时，应优先新增 `LightSheetStylePreset`；普通样式变更不应重写跟踪、几何和渲染核心。
+默认用户流程由手势驱动：应用只显示当前 `Auto` 样式状态，不要求用户手动点选 Blueprint/Cards/Organic 页签。
 
 ## 部署
 

@@ -26,7 +26,7 @@
 .status-pill,
 .dock-actions,
 .camera-button,
-.preset-button,
+.gesture-style-status,
 .permission-overlay {
   display: inline-flex;
   align-items: center;
@@ -178,62 +178,66 @@
   border-top: 1px solid var(--color-border);
 }
 
-.preset-control {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(112px, 1fr));
-  gap: 8px;
-  min-width: 0;
-}
-
 button {
   color: inherit;
 }
 
-.preset-button,
+.gesture-style-status,
 .icon-button,
 .camera-button {
   min-height: 48px;
   border: 1px solid var(--color-border);
   border-radius: 8px;
+}
+
+.icon-button,
+.camera-button {
   cursor: pointer;
 }
 
-.preset-button {
+.gesture-style-status {
   position: relative;
-  justify-content: center;
-  gap: 7px;
+  gap: 9px;
   min-width: 0;
-  padding: 0 11px;
+  padding: 0 15px;
   overflow: hidden;
-  color: var(--color-muted);
-  background: rgba(255, 255, 255, 0.07);
+  color: var(--color-text);
+  background: rgba(56, 213, 255, 0.1);
+  border-color: rgba(56, 213, 255, 0.48);
 }
 
-.preset-button img {
+.gesture-style-status img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.22;
+  opacity: 0.18;
 }
 
-.preset-button svg,
-.preset-button span {
+.gesture-style-status svg,
+.gesture-style-status span,
+.gesture-style-status strong {
   z-index: 1;
 }
 
-.preset-button span,
+.gesture-style-status span,
+.gesture-style-status strong,
 .camera-button span {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.preset-button[aria-pressed='true'] {
-  color: var(--color-text);
-  background: rgba(56, 213, 255, 0.16);
-  border-color: rgba(56, 213, 255, 0.74);
+.gesture-style-status span {
+  color: var(--color-muted);
+  font-size: 12px;
+  text-transform: uppercase;
+}
+
+.gesture-style-status strong {
+  font-size: 15px;
+  font-weight: 720;
 }
 
 .dock-actions {
@@ -298,16 +302,9 @@ button {
     grid-template-columns: 1fr;
   }
 
-  .preset-control {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
-  .preset-button {
-    min-height: 54px;
-    flex-direction: column;
-    gap: 4px;
-    padding: 6px 6px;
-    font-size: 12px;
+  .gesture-style-status {
+    min-height: 44px;
+    justify-content: center;
   }
 
   .dock-actions {
@@ -324,7 +321,7 @@ button {
     max-width: 178px;
   }
 
-  .preset-button span {
+  .gesture-style-status strong {
     font-size: 11px;
   }
 }

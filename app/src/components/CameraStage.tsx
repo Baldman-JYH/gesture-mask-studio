@@ -1,4 +1,4 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
 import { buildOneHandPreviewGeometry, buildTwoHandLightSheetGeometry } from '../features/gesture-engine/geometry';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
@@ -8,7 +8,6 @@ import { isRenderableVideo } from '../features/scene-sampling/screenSpaceSamplin
 import type {
   LightSheetGeometry,
   LightSheetRenderInput,
-  LightSheetStylePreset,
   TrackedHand,
 } from '../shared/runtime/types';
 import { ControlDock } from './ControlDock';
@@ -38,25 +37,16 @@ export function CameraStage() {
   const trackerRef = useRef<HandTracker | null>(null);
   const trackerRequestIdRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
-  const selectedPresetRef = useRef<LightSheetStylePreset>(LIGHT_SHEET_STYLE_PRESETS[0]);
+  const activePresetIdRef = useRef(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const mirroredRef = useRef(true);
 
   const [cameraState, setCameraState] = useState<CameraState>('idle');
   const [trackingState, setTrackingState] = useState<TrackingState>('idle');
   const [handsCount, setHandsCount] = useState(0);
-  const [selectedPresetId, setSelectedPresetId] = useState(LIGHT_SHEET_STYLE_PRESETS[0].id);
+  const [activePresetId, setActivePresetId] = useState(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const [mirrored, setMirrored] = useState(true);
   const [renderInput, setRenderInput] = useState<LightSheetRenderInput | null>(null);
   const [message, setMessage] = useState<string | null>(null);
-
-  const selectedPreset = useMemo(
-    () => getLightSheetStylePreset(selectedPresetId),
-    [selectedPresetId],
-  );
-
-  useEffect(() => {
-    selectedPresetRef.current = selectedPreset;
-  }, [selectedPreset]);
 
   useEffect(() => {
     mirroredRef.current = mirrored;
@@ -84,13 +74,19 @@ export function CameraStage() {
 
     const gestureState = deriveLightSheetGestureState({
       hands,
-      requestedPresetId: selectedPresetRef.current.id,
     });
+    const activePreset = getLightSheetStylePreset(gestureState.stylePresetId);
+
+    if (activePresetIdRef.current !== activePreset.id) {
+      activePresetIdRef.current = activePreset.id;
+      setActivePresetId(activePreset.id);
+    }
+
     const geometry = buildGeometryFromGestureState(gestureState);
 
     setRenderInput({
       geometry,
-      style: selectedPresetRef.current,
+      style: activePreset,
       scene: {
         video,
         mirrored: mirroredRef.current,
@@ -183,6 +179,8 @@ export function CameraStage() {
 
   useEffect(() => stopCamera, [stopCamera]);
 
+  const activePreset = getLightSheetStylePreset(activePresetId);
+
   return (
     <main className="app-shell">
       <TopStatusBar
@@ -212,12 +210,10 @@ export function CameraStage() {
 
       <ControlDock
         cameraState={cameraState}
-        presets={LIGHT_SHEET_STYLE_PRESETS}
-        selectedPresetId={selectedPresetId}
+        activePreset={activePreset}
         mirrored={mirrored}
         onStartCamera={startCamera}
         onStopCamera={stopCamera}
-        onSelectPreset={setSelectedPresetId}
         onToggleMirror={() => setMirrored((value) => !value)}
       />
     </main>

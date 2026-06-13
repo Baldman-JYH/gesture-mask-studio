@@ -33,9 +33,9 @@ float luma(vec3 color) {
 }
 
 float lineGrid(vec2 uv, float scale) {
-  vec2 grid = abs(fract(uv * scale - 0.5) - 0.5) / fwidth(uv * scale);
-  float line = min(grid.x, grid.y);
-  return 1.0 - min(line, 1.0);
+  vec2 cell = abs(fract(uv * scale) - 0.5);
+  float line = min(cell.x, cell.y);
+  return 1.0 - smoothstep(0.018, 0.045, line);
 }
 
 void main() {

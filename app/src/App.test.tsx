@@ -8,18 +8,16 @@ describe('App shell', () => {
 
     expect(screen.getByRole('heading', { name: 'Gesture Mask Studio' })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Start camera' })).toBeEnabled();
-    expect(screen.getByRole('button', { name: 'Blueprint' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'false');
-    expect(screen.getByRole('button', { name: 'Organic' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByLabelText('Gesture driven style')).toHaveTextContent('Auto');
+    expect(screen.queryByRole('button', { name: 'Blueprint' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cards' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Organic' })).not.toBeInTheDocument();
   });
 
-  it('selects the Cards preset', () => {
+  it('shows tracking idle before the camera starts', () => {
     render(<App />);
 
-    fireEvent.click(screen.getByRole('button', { name: 'Cards' }));
-
-    expect(screen.getByRole('button', { name: 'Cards' })).toHaveAttribute('aria-pressed', 'true');
-    expect(screen.getByRole('button', { name: 'Blueprint' })).toHaveAttribute('aria-pressed', 'false');
+    expect(screen.getByText('Tracking idle')).toBeInTheDocument();
   });
 
   it('toggles mirrored camera preview', () => {

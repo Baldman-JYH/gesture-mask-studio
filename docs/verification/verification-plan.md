@@ -59,7 +59,8 @@ Use Chrome or Edge on HTTPS deployment or local `127.0.0.1`.
    - top status bar is visible,
    - camera stage fills the page,
    - bottom dock is visible,
-   - Blueprint, Cards, Organic, Mirror, and Start camera controls are visible,
+   - automatic gesture style status, Mirror, and Start camera controls are visible,
+   - Blueprint, Cards, and Organic are not shown as manual tab buttons,
    - no horizontal scrolling.
 3. Click `Start camera`.
 4. Grant camera permission.
@@ -88,24 +89,18 @@ The core effect is a realtime live-sampling light sheet. It must not behave like
    - content behind the sheet is sampled live,
    - movement behind the sheet is visible through the sheet,
    - the rendered content is not frozen and not a pre-generated image.
-8. Try all presets:
-   - Blueprint,
-   - Cards,
-   - Organic.
+8. Change hand openness with two hands.
 9. Expected:
-   - style changes immediately,
-   - live camera sampling remains enabled for every preset.
+   - style changes automatically according to the gesture-derived preset,
+   - the bottom dock shows the active `Auto` style,
+   - live camera sampling remains enabled for every style.
 
 ## Control Verification
 
-1. Click `Cards`.
+1. Confirm the bottom dock shows `Auto` plus the current style name.
 2. Expected:
-   - Cards becomes selected,
-   - Blueprint becomes unselected.
-3. Click `Organic`.
-4. Expected:
-   - Organic becomes selected,
-   - live sheet still samples camera content.
+   - there are no manual Blueprint/Cards/Organic tab buttons,
+   - style changes are driven by hand tracking, not by manual selection.
 5. Click `Mirror`.
 6. Expected:
    - preview mirror state changes,
@@ -150,12 +145,24 @@ For layout regressions, run a browser smoke check with Playwright or equivalent:
 
 - desktop viewport around `1440x900`,
 - mobile viewport around `390x844`,
-- click Cards,
+- confirm the `Auto` gesture style status is visible,
 - toggle Mirror,
 - start fake camera,
 - confirm `Stop camera` appears,
 - confirm WebGL canvas is mounted,
 - confirm no console errors or failed requests.
+
+## Shader And WebGL Regression Verification
+
+When a change touches `features/light-sheet-renderer` shader code:
+
+1. Add or update a shader-source unit test for the portability rule being protected.
+2. Run `npm test -- src/features/light-sheet-renderer/shaderSource.test.ts`.
+3. Run a browser-level WebGL compile check in Chrome or Edge when possible.
+4. Expected:
+   - fragment shader compiles in WebGL1 and WebGL2,
+   - program links in WebGL1 and WebGL2,
+   - console does not contain `THREE.WebGLProgram: Shader Error`.
 
 ## Change-Specific Verification Template
 
