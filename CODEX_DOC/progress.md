@@ -460,3 +460,24 @@
 ### Next
 - Use the deployed URL for public testing.
 - Continue with real-device camera/gesture validation if needed.
+
+## 2026-06-13 15:16
+
+### Completed
+- Added standing verification plan:
+  - `docs/verification/verification-plan.md`
+- Defined future rule:
+  - every new feature or bug fix must include a concrete verification plan.
+- Covered verification scopes:
+  - baseline commands,
+  - deployment,
+  - realtime camera,
+  - gesture effect,
+  - controls,
+  - permission failures,
+  - mobile,
+  - browser automation smoke,
+  - change-specific and bug-fix templates.
+
+### Next
+- Use this checklist for all subsequent feature and fix work.
