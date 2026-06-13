@@ -481,3 +481,30 @@
 
 ### Next
 - Use this checklist for all subsequent feature and fix work.
+
+## 2026-06-13 15:25
+
+### Completed
+- Added Chinese companion documentation for existing English project docs.
+- Added Chinese README:
+  - `README.zh-CN.md`
+- Added Chinese verification plan:
+  - `docs/verification/verification-plan.zh-CN.md`
+- Added Chinese planning, product, architecture, deployment, and implementation-plan documents with `.zh-CN.md` naming.
+- Added bilingual documentation policy:
+  - `docs/documentation-bilingual-policy.md`
+- Added Chinese bilingual policy:
+  - `docs/documentation-bilingual-policy.zh-CN.md`
+- Added Chinese progress document:
+  - `CODEX_DOC/progress.zh-CN.md`
+- Updated `README.md` to link Chinese companion documents.
+
+### Documentation Rule
+- Future user-facing project documents must be maintained bilingually.
+- English documents keep their existing path.
+- Chinese companion documents use the same path plus `.zh-CN.md` before the extension.
+- If a future change updates one language only, the other language must be recorded as incomplete before the change is considered done.
+
+### Next
+- Verify all tracked English project docs have Chinese companions.
+- Commit and push the bilingual documentation update.

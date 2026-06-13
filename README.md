@@ -4,6 +4,8 @@ Gesture Mask Studio is a one-page browser prototype for a gesture-driven live-sa
 
 The implementation follows the reference-video analysis in `docs/analysis/video-effect-analysis.md`. The effect is not a static image overlay and not face-only rendering; the sheet samples the live camera frame in real time through geometry driven by hand tracking.
 
+Chinese version: [README.zh-CN.md](README.zh-CN.md)
+
 ## Run Locally
 
 ```bash
@@ -67,12 +69,28 @@ MediaPipe wasm files are copied from `node_modules/@mediapipe/tasks-vision/wasm`
 ## Key Docs
 
 - `docs/analysis/video-effect-analysis.md`
+- `docs/analysis/video-effect-analysis.zh-CN.md`
 - `docs/product/requirements-and-business-logic.md`
+- `docs/product/requirements-and-business-logic.zh-CN.md`
 - `docs/product/prototype-directions.md`
+- `docs/product/prototype-directions.zh-CN.md`
 - `docs/architecture/technical-architecture.md`
+- `docs/architecture/technical-architecture.zh-CN.md`
 - `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.md`
+- `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.zh-CN.md`
 - `docs/architecture/runtime-contracts.md`
+- `docs/architecture/runtime-contracts.zh-CN.md`
 - `docs/architecture/architecture-quality-gate.md`
+- `docs/architecture/architecture-quality-gate.zh-CN.md`
 - `docs/architecture/brooks-debt-architecture-review.md`
+- `docs/architecture/brooks-debt-architecture-review.zh-CN.md`
 - `docs/deployment/github-pages-evaluation.md`
+- `docs/deployment/github-pages-evaluation.zh-CN.md`
+- `docs/superpowers/plans/2026-06-13-realtime-light-sheet-mvp.md`
+- `docs/superpowers/plans/2026-06-13-realtime-light-sheet-mvp.zh-CN.md`
+- `docs/verification/verification-plan.md`
+- `docs/verification/verification-plan.zh-CN.md`
+- `docs/documentation-bilingual-policy.md`
+- `docs/documentation-bilingual-policy.zh-CN.md`
 - `CODEX_DOC/progress.md`
+- `CODEX_DOC/progress.zh-CN.md`
