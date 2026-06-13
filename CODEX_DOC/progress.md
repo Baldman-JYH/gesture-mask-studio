@@ -281,3 +281,20 @@
 ### Next
 - Commit Task 1 scaffold.
 - Start Task 2 runtime contracts and light sheet style presets.
+
+## 2026-06-13 14:47
+
+### Completed
+- Completed Task 2 runtime contracts and style presets.
+- Verified TDD RED:
+  - `npm test -- src/features/light-sheet-styles/presets.test.ts` failed because `presets.ts` did not exist.
+- Added canonical runtime types in `app/src/shared/runtime/types.ts`.
+- Added `blueprint`, `cards`, and `organic` style presets in `app/src/features/light-sheet-styles/presets.ts`.
+- Verification:
+  - targeted preset test: 3 tests passed.
+  - `npm test`: 4 tests passed.
+  - `npm run build`: production build passed.
+
+### Next
+- Commit Task 2.
+- Start Task 3 gesture engine geometry and state.
