@@ -662,3 +662,13 @@
   - `Mirror` button count: 1;
   - `Mirror` default `aria-pressed`: `true`;
   - console error logs: 0.
+- Commit and deployment:
+  - Commit: `3774e09 fix: align mirrored gesture coordinates`;
+  - GitHub Actions run: `27462088325`;
+  - build job: success;
+  - deploy job: success.
+
+### Deployment Notes
+- GitHub Actions still reports a Node.js 20 deprecation annotation for third-party actions.
+- The workflow forces those actions to run on Node.js 24, and the deployment completed successfully.
+- The remaining required validation is real-device movement direction: Mirror on/off, hand left/right, short recording for comparison.
