@@ -237,3 +237,14 @@
 - Brooks debt assessment completed for planning-stage architecture.
 - Active known architecture debt before development: 0.
 - Development is allowed only after accepting the quality gate documents as implementation constraints.
+
+## 2026-06-13 14:30
+
+### Completed
+- Started Superpowers-guided implementation flow.
+- Verified current checkout is normal `main`, not an isolated worktree.
+- Added `.worktrees/` to `.gitignore` so implementation worktrees cannot be accidentally committed.
+
+### Next
+- Commit and push `.gitignore`/progress update.
+- Create an isolated implementation worktree for the realtime light sheet MVP.
