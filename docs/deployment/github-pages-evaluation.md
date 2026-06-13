@@ -66,7 +66,9 @@ export default defineConfig({
 - GitHub CLI: available.
 - Authenticated account: `Baldman-JYH`.
 - Target repository checked: `Baldman-JYH/gesture-mask-studio`.
-- Current result: repository does not exist and can be created.
+- Current result: repository has been created.
+- Repository URL: `https://github.com/Baldman-JYH/gesture-mask-studio`.
+- Local `main` branch tracks `origin/main`.
 
 ## 6. 仓库创建计划
 
@@ -86,3 +88,9 @@ export default defineConfig({
 - `.gitignore`
 
 是否推送：是。用户已明确要求建立对应 GitHub 远程个人仓库。
+
+## 7. 已执行结果
+
+- Created public repository: `https://github.com/Baldman-JYH/gesture-mask-studio`.
+- Pushed current planning documents and extracted frame evidence to `main`.
+- GitHub Pages workflow is not yet added because the runnable `app/` project has not been implemented.
