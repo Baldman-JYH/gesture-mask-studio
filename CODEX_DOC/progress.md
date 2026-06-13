@@ -116,3 +116,21 @@
 ### Next
 - Update deployment document from "planned repository" to "created repository".
 - Continue to Product Design prototype image workflow.
+
+## 2026-06-13 13:34
+
+### Completed
+- Generated 3 Product Design prototype directions:
+  - `assets/design/prototype-01-immersive-stage.png`
+  - `assets/design/prototype-02-precision-tool.png`
+  - `assets/design/prototype-03-performance-lens.png`
+- Wrote `docs/product/prototype-directions.md`.
+- Updated `README.md` with the prototype document.
+
+### Design Recommendation
+- Use `prototype-01-immersive-stage.png` as the MVP visual target.
+- Keep `prototype-02-precision-tool.png` as the future advanced/debug mode reference.
+- Reuse the preset rail and gesture-status ideas from `prototype-03-performance-lens.png` selectively.
+
+### Next
+- Commit and push prototype assets and docs.

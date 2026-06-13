@@ -27,6 +27,7 @@ Implementation is intentionally deferred until the visual prototype direction is
 
 - `docs/analysis/video-effect-analysis.md`
 - `docs/product/requirements-and-business-logic.md`
+- `docs/product/prototype-directions.md`
 - `docs/architecture/technical-architecture.md`
 - `docs/deployment/github-pages-evaluation.md`
 - `CODEX_DOC/progress.md`
