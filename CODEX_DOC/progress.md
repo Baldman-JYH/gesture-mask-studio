@@ -442,3 +442,21 @@
 ### Next
 - Commit and push workflow/lockfile/progress fixes.
 - Confirm the next GitHub Actions deployment run completes successfully.
+
+## 2026-06-13 15:07
+
+### Completed
+- Pushed workflow/lockfile/progress fix commit:
+  - `a27177e fix: stabilize github pages workflow`
+- Confirmed GitHub Actions run succeeded:
+  - Run: `27459870548`
+  - build job: success
+  - deploy job: success
+- Confirmed GitHub Pages URL is reachable:
+  - `https://baldman-jyh.github.io/gesture-mask-studio/`
+  - HTTP status: `200`
+  - HTML title: `Gesture Mask Studio`
+
+### Next
+- Use the deployed URL for public testing.
+- Continue with real-device camera/gesture validation if needed.
