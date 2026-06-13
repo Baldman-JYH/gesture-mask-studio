@@ -174,3 +174,15 @@
 
 ### Next
 - Commit and push this corrected architecture decision.
+
+## 2026-06-13 13:58
+
+### Completed
+- Committed and pushed corrected architecture decision.
+- Commit: `4d9cb6a`
+- Remote branch: `origin/main`
+
+### Confirmed Foundation
+- Adopted term: gesture-driven live-sampling light sheet / 手势驱动实时采样光片.
+- Project name can remain `Gesture Mask Studio`.
+- Runtime must sample the live camera scene behind the sheet, not only render a face and not only apply a static texture.
