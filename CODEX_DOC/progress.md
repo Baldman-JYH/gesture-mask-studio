@@ -586,3 +586,79 @@
 ### Notes
 - GitHub Actions still reports Node.js 20 deprecation annotations for third-party actions, but the workflow is forced to Node.js 24 and completed successfully.
 - Next real-device validation should hard refresh the deployed URL and retest hand-driven rendering.
+
+## 2026-06-13 16:29
+
+### Completed
+- Analyzed the real-device validation video for commit `cad0446f108e5873c13a44582709af8191474a0a` against the original reference video.
+- Extracted comparison evidence with FFmpeg:
+  - 74 continuous 1fps frames from the test video.
+  - 38 continuous 4fps frames from the reference video.
+  - 1fps/4fps/8fps overview contact sheets and three 6fps dynamic test segments.
+- Read the browser console log and confirmed there is no remaining `THREE.WebGLProgram: Shader Error`.
+- Added bilingual analysis:
+  - `docs/analysis/cad0446-real-device-video-comparison.md`
+  - `docs/analysis/cad0446-real-device-video-comparison.zh-CN.md`
+
+### Findings
+- The `cad0446` shader fix is effective; the remaining failure is visual fidelity and architecture, not WebGL compilation.
+- The reference video behaves like a hand-anchored 3D template/folded ribbon with multiple textured faces, perspective, edge highlights, and flip/rotation behavior.
+- The current implementation behaves like a flat 2D screen-space triangle/quadrilateral with live video sampling, which is insufficient for the reference.
+- The left/right reversal is a coordinate-space bug: the video preview is mirrored with CSS, but hand landmarks are not mirrored before geometry generation.
+
+### Next
+- Fix the mirror coordinate bug with unit tests and a real-device verification checklist.
+- Prepare a new architecture decision for replacing flat `LightSheetGeometry` with a hand-anchored 3D textured template model.
+
+## 2026-06-13 16:41
+
+### Completed
+- Added a tested `features/coordinate-space` module to separate camera-space tracking results from display-space visible geometry.
+- Fixed the mirror bug by converting tracked hand landmarks to display-space before `deriveLightSheetGestureState`.
+- Preserved the existing mirrored video UV sampling path so the rendered texture still maps to the source camera frame.
+- Added architecture decision documents:
+  - `docs/architecture/adr-0002-hand-anchored-3d-template-model.md`
+  - `docs/architecture/adr-0002-hand-anchored-3d-template-model.zh-CN.md`
+- Updated runtime contracts and README documents to include `coordinate-space`, the real-device comparison, and ADR-0002.
+- Added `测试记录/` to `.gitignore` so raw real-device videos and console logs are not accidentally pushed to the public repository.
+
+### TDD Evidence
+- RED: `npm test -- src/features/coordinate-space/displaySpace.test.ts` failed because `./displaySpace` did not exist.
+- GREEN: after implementing the minimal coordinate conversion, `npm test -- src/features/coordinate-space/displaySpace.test.ts` passed with 3 tests.
+- Related sampling regression check passed:
+  - `npm test -- src/features/scene-sampling/screenSpaceSampling.test.ts src/features/light-sheet-renderer/rendererCore.test.ts`
+
+### Verification Plan For This Change
+- Automated:
+  - run the coordinate-space target test;
+  - run the scene-sampling and renderer-core tests;
+  - run the full `npm test`;
+  - run `npm run build`;
+  - run `git diff --check`;
+  - verify every new English doc has a `.zh-CN.md` companion.
+- Repository hygiene:
+  - keep raw `测试记录/` files local;
+  - commit only derived analysis evidence under `assets/analysis/`.
+- Real device:
+  - hard refresh the GitHub Pages page after deployment;
+  - keep Mirror enabled and move one hand visually left and right;
+  - confirm the rendered effect follows the same visible direction as the hand;
+  - toggle Mirror off and repeat;
+  - record a short video for comparison against the extracted contact sheets.
+
+### Next
+- Run full verification.
+- If verification passes, commit and push the mirror fix plus ADR-0002.
+- After deployment, perform the real-device mirror-direction check.
+
+### Verification Results
+- `npm test`: 29 tests passed.
+- `npm run build`: passed.
+- Project documentation pairing check: all English project docs have `.zh-CN.md` companions.
+- `git diff --check`: only Windows line-ending warnings, no whitespace errors.
+- Browser smoke on `http://127.0.0.1:5174/gesture-mask-studio/`:
+  - heading count: 1;
+  - `Start camera` button count: 1;
+  - `Mirror` button count: 1;
+  - `Mirror` default `aria-pressed`: `true`;
+  - console error logs: 0.

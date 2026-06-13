@@ -1,5 +1,6 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
+import { toDisplayHands } from '../features/coordinate-space/displaySpace';
 import { buildOneHandPreviewGeometry, buildTwoHandLightSheetGeometry } from '../features/gesture-engine/geometry';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
 import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-tracking/handTracker';
@@ -70,10 +71,11 @@ export function CameraStage() {
 
     const timestampMs = performance.now();
     const hands = detectHands(trackerRef.current, video, timestampMs);
+    const displayHands = toDisplayHands(hands, mirroredRef.current);
     setHandsCount(hands.length);
 
     const gestureState = deriveLightSheetGestureState({
-      hands,
+      hands: displayHands,
     });
     const activePreset = getLightSheetStylePreset(gestureState.stylePresetId);
 

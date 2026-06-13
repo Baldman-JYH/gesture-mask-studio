@@ -345,3 +345,79 @@ English version: [progress.md](progress.md)
 ### 说明
 - GitHub Actions 仍会显示第三方 actions 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功。
 - 下一轮真实设备验证应在部署地址强制刷新后，重新测试手势驱动渲染。
+
+## 2026-06-13 16:29
+
+### 已完成
+- 对基于提交 `cad0446f108e5873c13a44582709af8191474a0a` 的真实设备验证视频与原始参考视频进行了对比分析。
+- 使用 FFmpeg 抽取对比证据：
+  - 测试视频 74 张 1fps 连续帧；
+  - 参考视频 38 张 4fps 连续帧；
+  - 1fps/4fps/8fps 总览拼图，以及三个 6fps 测试动态片段。
+- 读取浏览器控制台日志，确认已经没有 `THREE.WebGLProgram: Shader Error`。
+- 新增中英文分析文档：
+  - `docs/analysis/cad0446-real-device-video-comparison.md`
+  - `docs/analysis/cad0446-real-device-video-comparison.zh-CN.md`
+
+### 结论
+- `cad0446` 的 shader 修复有效；当前剩余问题是视觉拟真度和架构问题，不是 WebGL 编译失败。
+- 参考视频更像手势锚定的三维模板/折叠光带，具有多面纹理、透视、边缘高光和翻转/旋转行为。
+- 当前实现更像扁平二维屏幕空间三角形/四边形光片，虽然有实时视频采样，但不足以复现参考视频。
+- 左右反转是坐标空间 bug：视频预览通过 CSS 镜像，但手部 landmark 没有在几何生成前镜像。
+
+### 下一步
+- 用单元测试和真实设备验证清单修复镜像坐标 bug。
+- 准备新的架构决策，用手势锚定三维纹理模板模型替代当前扁平 `LightSheetGeometry` 主线。
+
+## 2026-06-13 16:41
+
+### 已完成
+- 新增有测试覆盖的 `features/coordinate-space` 模块，用于区分 camera-space 追踪结果和 display-space 可见几何。
+- 修复镜像 bug：在进入 `deriveLightSheetGestureState` 前，先把手部 landmark 转换到显示坐标。
+- 保留现有镜像视频 UV 采样路径，使渲染纹理仍能正确映射源摄像头画面。
+- 新增架构决策文档：
+  - `docs/architecture/adr-0002-hand-anchored-3d-template-model.md`
+  - `docs/architecture/adr-0002-hand-anchored-3d-template-model.zh-CN.md`
+- 更新运行时契约和 README，补充 `coordinate-space`、真实设备视频对比和 ADR-0002。
+- 将 `测试记录/` 加入 `.gitignore`，避免真实设备原始录像和控制台日志被误推送到公开仓库。
+
+### TDD 证据
+- RED：`npm test -- src/features/coordinate-space/displaySpace.test.ts` 因 `./displaySpace` 不存在而失败。
+- GREEN：实现最小坐标转换后，`npm test -- src/features/coordinate-space/displaySpace.test.ts` 通过，3 个测试通过。
+- 相关采样回归检查通过：
+  - `npm test -- src/features/scene-sampling/screenSpaceSampling.test.ts src/features/light-sheet-renderer/rendererCore.test.ts`
+
+### 本次变更验证方案
+- 自动化：
+  - 运行 coordinate-space 目标测试；
+  - 运行 scene-sampling 和 renderer-core 测试；
+  - 运行完整 `npm test`；
+  - 运行 `npm run build`；
+  - 运行 `git diff --check`；
+  - 验证每个新增英文文档都有 `.zh-CN.md` 中文对应文件。
+- 仓库卫生：
+  - 原始 `测试记录/` 文件只保留在本地；
+  - 只提交 `assets/analysis/` 下的派生分析证据。
+- 真实设备：
+  - 部署后强制刷新 GitHub Pages 页面；
+  - 保持 Mirror 开启，左右移动一只手；
+  - 确认渲染效果与手部可见移动方向一致；
+  - 关闭 Mirror 后重复一次；
+  - 录制短视频，与已抽取拼图继续对比。
+
+### 下一步
+- 运行完整验证。
+- 如果验证通过，提交并推送镜像修复和 ADR-0002。
+- 部署后执行真实设备左右方向验证。
+
+### 验证结果
+- `npm test`：29 个测试通过。
+- `npm run build`：通过。
+- 项目文档配对检查：所有英文项目文档都有 `.zh-CN.md` 中文对应文件。
+- `git diff --check`：只有 Windows 换行提示，没有空白错误。
+- 浏览器 smoke，地址 `http://127.0.0.1:5174/gesture-mask-studio/`：
+  - 标题数量：1；
+  - `Start camera` 按钮数量：1；
+  - `Mirror` 按钮数量：1；
+  - `Mirror` 默认 `aria-pressed`：`true`；
+  - 控制台 error 日志：0。

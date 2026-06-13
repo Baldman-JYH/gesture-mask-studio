@@ -49,6 +49,7 @@ npm run build
 - `camera`：摄像头权限和媒体流生命周期。
 - `hand-tracking`：MediaPipe 适配层，只输出标准 `TrackedHand` 对象。
 - `gesture-engine`：纯手势状态到光片几何的推导。
+- `coordinate-space`：摄像头坐标、显示坐标和视频 UV 坐标转换。
 - `scene-sampling`：屏幕坐标和视频 UV 采样映射。
 - `light-sheet-renderer`：Three.js/WebGL 视频纹理渲染。
 - `light-sheet-styles`：可扩展的样式预设。
@@ -78,10 +79,12 @@ https://baldman-jyh.github.io/gesture-mask-studio/
 ## 关键文档
 
 - [视频效果分析](docs/analysis/video-effect-analysis.zh-CN.md)
+- [cad0446 真实设备视频对比分析](docs/analysis/cad0446-real-device-video-comparison.zh-CN.md)
 - [需求与业务逻辑](docs/product/requirements-and-business-logic.zh-CN.md)
 - [原型方向](docs/product/prototype-directions.zh-CN.md)
 - [技术架构](docs/architecture/technical-architecture.zh-CN.md)
 - [ADR-0001 实时采样光片](docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.zh-CN.md)
+- [ADR-0002 手势锚定三维模板模型](docs/architecture/adr-0002-hand-anchored-3d-template-model.zh-CN.md)
 - [运行时契约](docs/architecture/runtime-contracts.zh-CN.md)
 - [架构质量门禁](docs/architecture/architecture-quality-gate.zh-CN.md)
 - [技术债架构评审](docs/architecture/brooks-debt-architecture-review.zh-CN.md)

@@ -9,6 +9,7 @@
 | 推荐术语 | 用途 | 禁止替代 |
 |---|---|---|
 | `LightSheet` / 光片 | 手势驱动的实时采样面片 | `Mask`、`Overlay`、`Card` |
+| `CoordinateSpace` / 坐标空间 | 在摄像头坐标、可视显示坐标和视频 UV 坐标之间转换 | 组件内临时镜像计算 |
 | `SceneSampling` / 场景采样 | 从实时摄像头画面采样光片背后的内容 | `FaceSampling`、`BackgroundOnly` |
 | `GestureEngine` | 将手部关键点转换为光片状态 | `Effects`、`MagicLogic` |
 | `LightSheetStylePreset` | 光片样式扩展配置 | 散落在 renderer 中的样式常量 |
@@ -24,12 +25,14 @@ flowchart TD
   App[App Composition] --> UI[UI Components]
   App --> Camera[features/camera]
   App --> Tracking[features/hand-tracking]
+  App --> Coordinates[features/coordinate-space]
   App --> Gesture[features/gesture-engine]
   App --> Sampling[features/scene-sampling]
   App --> Renderer[features/light-sheet-renderer]
   App --> Styles[features/light-sheet-styles]
 
-  Tracking --> Gesture
+  Tracking --> Coordinates
+  Coordinates --> Gesture
   Camera --> Sampling
   Gesture --> Renderer
   Sampling --> Renderer
@@ -40,6 +43,7 @@ flowchart TD
 
 - `camera` 不得依赖 UI、renderer、gesture-engine。
 - `hand-tracking` 不得依赖 renderer、scene-sampling、UI。
+- `coordinate-space` 不得依赖 DOM、React、Three.js 或 MediaPipe 类型；它只能处理标准运行时类型。
 - `gesture-engine` 不得依赖 MediaPipe、Three.js、DOM、React。
 - `scene-sampling` 不得依赖 hand-tracking 或 gesture-engine。
 - `light-sheet-styles` 不得依赖 renderer 内部实现。
@@ -199,6 +203,7 @@ features/vision-extensions/
 实现阶段必须优先覆盖：
 
 - `gesture-engine`: 两手、一手、丢失、交叉、低置信度。
+- `coordinate-space`: 镜像和非镜像显示坐标转换，且不得修改输入 tracking 结果。
 - `light-sheet-renderer/geometry`: 四边形、三角退化、镜像坐标。
 - `light-sheet-styles`: preset schema、默认值、非法配置。
 - `scene-sampling`: video texture 输入、viewport/mirror 坐标映射。
