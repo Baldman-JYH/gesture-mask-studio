@@ -12,6 +12,8 @@
   --color-text: #f8fafc;
   --color-muted: #b8c2cc;
   --color-accent: #35c8ff;
+  --color-primary: #82ec69;
+  --color-warn: #f4b949;
   --color-success: #72e65d;
   --color-border: rgba(255, 255, 255, 0.14);
   --shadow-panel: 0 18px 48px rgba(0, 0, 0, 0.36);

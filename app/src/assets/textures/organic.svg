@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" role="img" aria-label="Organic texture">
+  <rect width="96" height="64" fill="#10251b"/>
+  <path d="M10 50C22 22 46 18 84 12C68 30 48 48 10 50Z" fill="#7ee05f" fill-opacity=".74"/>
+  <path d="M18 48C38 40 56 28 78 16" stroke="#f0fff2" stroke-width="3" stroke-linecap="round"/>
+  <path d="M35 40C35 30 31 24 24 18M54 30C58 23 58 18 56 12" stroke="#f0fff2" stroke-opacity=".72" stroke-width="2" stroke-linecap="round"/>
+</svg>

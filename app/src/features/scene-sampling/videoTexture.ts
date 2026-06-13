@@ -1,11 +1,4 @@
-import {
-  LinearFilter,
-  SRGBColorSpace,
-  VideoTexture,
-  type Texture,
-} from 'three';
-
-const HAVE_CURRENT_DATA = 2;
+import { LinearFilter, SRGBColorSpace, VideoTexture, type Texture } from 'three';
 
 export function createVideoTexture(video: HTMLVideoElement): VideoTexture {
   const texture = new VideoTexture(video);
@@ -19,8 +12,4 @@ export function createVideoTexture(video: HTMLVideoElement): VideoTexture {
 
 export function disposeTexture(texture: Texture | null): void {
   texture?.dispose();
-}
-
-export function isRenderableVideo(video: HTMLVideoElement): boolean {
-  return video.readyState >= HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0;
 }

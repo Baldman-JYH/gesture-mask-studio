@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" role="img" aria-label="Cards texture">
+  <rect width="96" height="64" fill="#211d20"/>
+  <rect x="16" y="12" width="34" height="42" rx="4" fill="#f6f0e7" transform="rotate(-8 33 33)"/>
+  <rect x="44" y="10" width="34" height="42" rx="4" fill="#2e5f76" transform="rotate(8 61 31)"/>
+  <path d="M33 22L38 31L33 40L28 31Z" fill="#b43445"/>
+  <path d="M60 20L67 28L60 36L53 28Z" fill="#f8f1e7"/>
+</svg>

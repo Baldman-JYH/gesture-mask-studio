@@ -1,5 +1,7 @@
 import type { LightSheetGeometry, NormalizedPoint } from '../../shared/runtime/types';
 
+const HAVE_CURRENT_DATA = 2;
+
 export type VideoUv = {
   u: number;
   v: number;
@@ -22,6 +24,10 @@ export function geometryToSamplingPoints(
   return geometry.vertices
     .filter((vertex): vertex is NormalizedPoint => Boolean(vertex))
     .map((vertex) => toVideoUv(vertex, mirrored));
+}
+
+export function isRenderableVideo(video: HTMLVideoElement): boolean {
+  return video.readyState >= HAVE_CURRENT_DATA && video.videoWidth > 0 && video.videoHeight > 0;
 }
 
 function clamp01(value: number): number {

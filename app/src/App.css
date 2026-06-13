@@ -1,110 +1,330 @@
 .app-shell {
   position: relative;
   display: grid;
-  grid-template-rows: 72px minmax(0, 1fr) auto;
+  grid-template-rows: 68px minmax(0, 1fr) auto;
+  width: 100%;
   min-height: 100vh;
   overflow: hidden;
-  background: var(--color-bg);
   color: var(--color-text);
+  background: var(--color-bg);
 }
 
 .top-status {
-  z-index: 2;
+  z-index: 4;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 24px;
-  padding: 0 36px;
-  background: linear-gradient(180deg, rgba(10, 15, 20, 0.98), rgba(10, 15, 20, 0.82));
+  gap: 18px;
+  min-width: 0;
+  padding: 0 clamp(16px, 3vw, 34px);
+  background: rgba(8, 10, 12, 0.94);
   border-bottom: 1px solid var(--color-border);
 }
 
 .brand-lockup,
-.tracking-state {
+.runtime-status,
+.status-pill,
+.dock-actions,
+.camera-button,
+.preset-button,
+.permission-overlay {
   display: inline-flex;
   align-items: center;
-  gap: 14px;
+}
+
+.brand-lockup {
+  min-width: 0;
+  gap: 12px;
 }
 
 .brand-lockup h1 {
+  min-width: 0;
   margin: 0;
-  font-size: 22px;
-  line-height: 1;
-  font-weight: 700;
+  overflow: hidden;
+  font-size: clamp(17px, 2vw, 22px);
+  font-weight: 730;
+  line-height: 1.05;
   letter-spacing: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .brand-mark {
+  position: relative;
+  flex: 0 0 auto;
   width: 30px;
   height: 30px;
-  border: 3px solid var(--color-accent);
-  border-radius: 8px;
-  clip-path: polygon(50% 100%, 0 0, 100% 0);
 }
 
-.status-dot {
-  width: 11px;
-  height: 11px;
-  border-radius: 50%;
-  background: var(--color-success);
-  box-shadow: 0 0 16px rgba(114, 230, 93, 0.55);
+.brand-mark::before {
+  position: absolute;
+  inset: 4px 5px 6px;
+  content: '';
+  border-right: 3px solid var(--color-accent);
+  border-bottom: 3px solid var(--color-accent);
+  border-radius: 3px;
+  transform: rotate(45deg);
 }
 
-.tracking-state {
+.brand-mark::after {
+  position: absolute;
+  top: 3px;
+  left: 7px;
+  width: 16px;
+  height: 3px;
+  content: '';
+  background: var(--color-text);
+  border-radius: 3px;
+}
+
+.runtime-status {
+  justify-content: flex-end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.status-pill {
+  gap: 7px;
+  min-width: 0;
+  height: 34px;
+  padding: 0 11px;
   color: var(--color-muted);
-  font-size: 16px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  font-size: 13px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.status-pill--ready {
+  color: var(--color-text);
+  border-color: rgba(119, 218, 96, 0.46);
 }
 
 .camera-stage {
   position: relative;
-  display: grid;
-  place-items: center;
   min-height: 0;
+  overflow: hidden;
   background:
-    radial-gradient(circle at 40% 28%, rgba(53, 200, 255, 0.18), transparent 32%),
-    linear-gradient(135deg, #111923 0%, #0a0f14 100%);
+    linear-gradient(90deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(0deg, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(135deg, #101416 0%, #090b0d 54%, #111614 100%);
+  background-size: 46px 46px, 46px 46px, auto;
 }
 
-.stage-copy {
-  max-width: min(520px, calc(100vw - 48px));
+.camera-video,
+.light-sheet-canvas,
+.stage-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.camera-video {
+  object-fit: cover;
+  background: transparent;
+}
+
+.camera-video[data-mirrored='true'] {
+  transform: scaleX(-1);
+}
+
+.light-sheet-canvas {
+  z-index: 2;
+  pointer-events: none;
+}
+
+.stage-grid {
+  z-index: 1;
+  pointer-events: none;
+  background:
+    linear-gradient(90deg, transparent 0, rgba(56, 213, 255, 0.1) 50%, transparent 100%),
+    repeating-linear-gradient(90deg, transparent 0 31px, rgba(255, 255, 255, 0.05) 32px 33px),
+    repeating-linear-gradient(0deg, transparent 0 31px, rgba(255, 255, 255, 0.05) 32px 33px);
+  mix-blend-mode: screen;
+  opacity: 0.58;
+}
+
+.permission-overlay {
+  position: absolute;
+  z-index: 3;
+  top: 18px;
+  left: 50%;
+  gap: 10px;
+  max-width: calc(100% - 32px);
+  min-height: 44px;
+  padding: 0 15px;
+  color: var(--color-text);
+  background: rgba(8, 10, 12, 0.76);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  transform: translateX(-50%);
+  box-shadow: var(--shadow-panel);
+  font-size: 14px;
+  line-height: 1.2;
   text-align: center;
 }
 
-.stage-label {
-  margin: 0 0 12px;
-  color: var(--color-accent);
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1.2;
-  text-transform: uppercase;
-}
-
-.stage-title {
-  margin: 0;
-  color: var(--color-muted);
-  font-size: 18px;
-  line-height: 1.45;
-}
-
 .control-dock {
-  z-index: 2;
-  display: flex;
-  justify-content: center;
-  padding: 20px;
-  background: linear-gradient(0deg, rgba(10, 15, 20, 0.96), rgba(10, 15, 20, 0.6));
+  z-index: 4;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 14px clamp(14px, 3vw, 34px) calc(14px + env(safe-area-inset-bottom));
+  background: rgba(8, 10, 12, 0.96);
+  border-top: 1px solid var(--color-border);
 }
 
-.control-dock button {
-  min-width: 154px;
+.preset-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(112px, 1fr));
+  gap: 8px;
+  min-width: 0;
+}
+
+button {
+  color: inherit;
+}
+
+.preset-button,
+.icon-button,
+.camera-button {
   min-height: 48px;
-  padding: 0 18px;
-  color: var(--color-text);
-  background: rgba(255, 255, 255, 0.08);
   border: 1px solid var(--color-border);
   border-radius: 8px;
+  cursor: pointer;
 }
 
-.control-dock button:disabled {
-  color: rgba(248, 250, 252, 0.62);
-  cursor: not-allowed;
+.preset-button {
+  position: relative;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 0 11px;
+  overflow: hidden;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.preset-button img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.22;
+}
+
+.preset-button svg,
+.preset-button span {
+  z-index: 1;
+}
+
+.preset-button span,
+.camera-button span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-button[aria-pressed='true'] {
+  color: var(--color-text);
+  background: rgba(56, 213, 255, 0.16);
+  border-color: rgba(56, 213, 255, 0.74);
+}
+
+.dock-actions {
+  gap: 8px;
+}
+
+.icon-button {
+  justify-content: center;
+  width: 48px;
+  padding: 0;
+  color: var(--color-muted);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.icon-button[aria-pressed='true'] {
+  color: var(--color-text);
+  border-color: rgba(244, 185, 73, 0.64);
+  background: rgba(244, 185, 73, 0.14);
+}
+
+.camera-button {
+  justify-content: center;
+  gap: 8px;
+  min-width: 150px;
+  padding: 0 17px;
+  color: #06100b;
+  background: var(--color-primary);
+  border-color: rgba(130, 236, 105, 0.72);
+  font-weight: 720;
+}
+
+.camera-button:disabled {
+  cursor: wait;
+  opacity: 0.68;
+}
+
+@media (max-width: 760px) {
+  .app-shell {
+    grid-template-rows: 62px minmax(0, 1fr) auto;
+  }
+
+  .runtime-status {
+    gap: 6px;
+  }
+
+  .status-pill {
+    width: 34px;
+    justify-content: center;
+    padding: 0;
+  }
+
+  .status-pill span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .control-dock {
+    grid-template-columns: 1fr;
+  }
+
+  .preset-control {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .preset-button {
+    min-height: 54px;
+    flex-direction: column;
+    gap: 4px;
+    padding: 6px 6px;
+    font-size: 12px;
+  }
+
+  .dock-actions {
+    justify-content: stretch;
+  }
+
+  .camera-button {
+    flex: 1;
+  }
+}
+
+@media (max-width: 420px) {
+  .brand-lockup h1 {
+    max-width: 178px;
+  }
+
+  .preset-button span {
+    font-size: 11px;
+  }
 }

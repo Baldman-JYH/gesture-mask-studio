@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 64" role="img" aria-label="Blueprint texture">
+  <rect width="96" height="64" fill="#0b2730"/>
+  <path d="M0 16H96M0 32H96M0 48H96M16 0V64M32 0V64M48 0V64M64 0V64M80 0V64" stroke="#38d5ff" stroke-opacity=".36" stroke-width="1"/>
+  <path d="M12 48L38 18L60 42L82 16" fill="none" stroke="#e9fbff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="38" cy="18" r="4" fill="#e9fbff"/>
+</svg>

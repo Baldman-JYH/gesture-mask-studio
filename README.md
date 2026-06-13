@@ -1,28 +1,68 @@
 # Gesture Mask Studio
 
-Gesture Mask Studio is a planned one-page browser experience for real-time webcam gesture mask effects.
+Gesture Mask Studio is a one-page browser prototype for a gesture-driven live-sampling light sheet effect. Users open the page, grant camera access, and use hand landmarks to shape a translucent WebGL sheet that samples the live camera scene behind it.
 
-The target interaction is based on the local reference video `视频采集蒙版效果.mp4`: users open a URL, grant camera permission, and use hand gestures to stretch and reshape a translucent textured mask in the live camera view.
+The implementation follows the reference-video analysis in `docs/analysis/video-effect-analysis.md`. The effect is not a static image overlay and not face-only rendering; the sheet samples the live camera frame in real time through geometry driven by hand tracking.
 
-## Current Status
+## Run Locally
 
-This repository currently contains the analysis and planning phase:
+```bash
+cd app
+npm install
+npm run dev
+```
 
-- Video frame extraction evidence.
-- Visual effect analysis.
-- Product requirements and business logic.
-- Technical architecture.
-- Runtime contracts and architecture quality gate.
-- GitHub Pages deployment evaluation.
+Vite serves the app at:
 
-Implementation is intentionally deferred until the visual prototype direction is confirmed.
+```text
+http://127.0.0.1:5173/gesture-mask-studio/
+```
 
-## Planned Stack
+The camera requires a secure context. `localhost` and `127.0.0.1` work for development; GitHub Pages works for deployment because it serves HTTPS.
 
-- React + Vite + TypeScript
-- MediaPipe Tasks Vision HandLandmarker
-- Three.js/WebGL
-- GitHub Pages
+## Verify
+
+```bash
+cd app
+npm test
+npm run build
+```
+
+Current verification covers:
+
+- runtime contracts and style presets,
+- gesture-state geometry,
+- camera permission state mapping,
+- mirrored/unmirrored scene sampling,
+- renderer geometry conversion,
+- UI preset and mirror controls,
+- production build with local MediaPipe wasm assets.
+
+## Architecture
+
+The app is intentionally split by runtime boundary:
+
+- `camera`: permission and stream lifecycle.
+- `hand-tracking`: MediaPipe adapter; emits canonical `TrackedHand` objects only.
+- `gesture-engine`: pure hand-to-geometry state derivation.
+- `scene-sampling`: normalized screen/video UV mapping.
+- `light-sheet-renderer`: Three.js/WebGL video-texture renderer.
+- `light-sheet-styles`: extensible style presets.
+
+New visual styles should be added as `LightSheetStylePreset` entries first. Tracking, geometry, and renderer internals should not be rewritten for ordinary style additions.
+
+## Deployment
+
+GitHub Pages deployment is configured in `.github/workflows/pages.yml`.
+
+The workflow:
+
+1. installs dependencies in `app/`,
+2. runs `npm test`,
+3. runs `npm run build`,
+4. deploys `app/dist`.
+
+MediaPipe wasm files are copied from `node_modules/@mediapipe/tasks-vision/wasm` into `dist/mediapipe/wasm` during the Vite build, so the deployed page does not depend on a third-party wasm CDN.
 
 ## Key Docs
 

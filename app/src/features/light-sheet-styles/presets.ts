@@ -1,11 +1,14 @@
 import type { LightSheetStylePreset } from '../../shared/runtime/types';
+import blueprintTextureUrl from '../../assets/textures/blueprint.svg';
+import cardsTextureUrl from '../../assets/textures/cards.svg';
+import organicTextureUrl from '../../assets/textures/organic.svg';
 
 export const LIGHT_SHEET_STYLE_PRESETS: LightSheetStylePreset[] = [
   {
     id: 'blueprint',
     label: 'Blueprint',
-    thumbnailUrl: '/textures/blueprint.svg',
-    textureUrl: '/textures/blueprint.svg',
+    thumbnailUrl: blueprintTextureUrl,
+    textureUrl: blueprintTextureUrl,
     shader: 'blueprint',
     opacity: 0.82,
     edgeColor: '#e9fbff',
@@ -26,8 +29,8 @@ export const LIGHT_SHEET_STYLE_PRESETS: LightSheetStylePreset[] = [
   {
     id: 'cards',
     label: 'Cards',
-    thumbnailUrl: '/textures/cards.svg',
-    textureUrl: '/textures/cards.svg',
+    thumbnailUrl: cardsTextureUrl,
+    textureUrl: cardsTextureUrl,
     shader: 'cards',
     opacity: 0.88,
     edgeColor: '#fff9f0',
@@ -48,8 +51,8 @@ export const LIGHT_SHEET_STYLE_PRESETS: LightSheetStylePreset[] = [
   {
     id: 'organic',
     label: 'Organic',
-    thumbnailUrl: '/textures/organic.svg',
-    textureUrl: '/textures/organic.svg',
+    thumbnailUrl: organicTextureUrl,
+    textureUrl: organicTextureUrl,
     shader: 'organic',
     opacity: 0.78,
     edgeColor: '#f0fff2',

@@ -341,3 +341,62 @@
 ### Next
 - Commit Task 4.
 - Start Task 5 camera stage UI, GitHub Pages workflow, browser verification, and final review.
+
+## 2026-06-13 14:41
+
+### Completed
+- Completed Task 5 camera stage UI, GitHub Pages workflow, and browser verification.
+- Verified UI behavior RED:
+  - App tests failed because preset buttons, mirror toggle, and enabled camera control were not implemented.
+- Implemented one-page realtime camera stage:
+  - full-viewport camera/video stage,
+  - compact top runtime status bar,
+  - bottom control dock,
+  - Blueprint/Cards/Organic style selection,
+  - mirror toggle,
+  - camera start/stop flow.
+- Connected runtime modules:
+  - camera lifecycle,
+  - MediaPipe hand tracker adapter,
+  - gesture-state geometry,
+  - scene sampling,
+  - Three.js light-sheet canvas.
+- Added Vite-managed local MediaPipe wasm serving/copying so GitHub Pages deployment does not depend on a third-party wasm CDN.
+- Added GitHub Pages workflow at `.github/workflows/pages.yml`.
+- Updated README with run, verify, architecture, and deployment notes.
+- Browser verification with Chrome + Playwright:
+  - desktop `1440x900`: no horizontal overflow, controls visible, camera fake device reaches `Stop camera`, WebGL canvas mounted.
+  - mobile `390x844`: no horizontal overflow, controls visible, camera fake device reaches `Stop camera`, WebGL canvas mounted.
+  - preset click changes Cards to `aria-pressed="true"`.
+  - mirror toggle changes `aria-pressed` from `true` to `false`.
+  - no console errors, page errors, or failed requests after MediaPipe wasm local serving fix.
+- Verification:
+  - `npm test`: 23 tests passed.
+  - `npm run build`: production build passed and copied MediaPipe wasm into `dist/mediapipe/wasm`.
+
+### Next
+- Run final full verification.
+- Run code quality/self-review using the required Brooks review workflow.
+- Commit Task 5 implementation.
+
+## 2026-06-13 14:45
+
+### Completed
+- Completed final verification and Brooks-style pre-merge self-review.
+- Self-review scope:
+  - implementation branch changes vs `main`,
+  - current Task 5 uncommitted changes.
+- Review outcome:
+  - no Critical/Warning/Suggestion findings requiring code changes after fixes below.
+- Self-review fixes applied:
+  - guarded late MediaPipe tracker promise resolution so stopping the camera cannot leave a stale tracker writing back into state.
+  - rejected path-like wasm filenames in the Vite MediaPipe dev middleware.
+  - added `actions/configure-pages@v5` to the GitHub Pages workflow.
+- Final verification:
+  - `npm test`: 23 tests passed.
+  - `npm run build`: production build passed.
+  - Chrome + Playwright smoke: fake camera reaches `Stop camera`, WebGL canvas visible, Cards selected, Mirror toggled off, no horizontal overflow, no console errors, no failed requests.
+
+### Next
+- Commit Task 5 implementation.
+- Prepare branch for merge/push.

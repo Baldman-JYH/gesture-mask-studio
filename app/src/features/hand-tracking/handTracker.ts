@@ -1,8 +1,4 @@
-import {
-  FilesetResolver,
-  HandLandmarker,
-  type HandLandmarkerResult,
-} from '@mediapipe/tasks-vision';
+import type { HandLandmarkerResult } from '@mediapipe/tasks-vision';
 import type { NormalizedPoint, TrackedHand } from '../../shared/runtime/types';
 
 export type HandTracker = {
@@ -17,14 +13,14 @@ export type HandTrackerOptions = {
   minConfidence?: number;
 };
 
-const DEFAULT_WASM_BASE_URL =
-  'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.22/wasm';
+const DEFAULT_WASM_BASE_URL = `${import.meta.env.BASE_URL}mediapipe/wasm`;
 const DEFAULT_MODEL_ASSET_PATH =
   'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 
 export async function createMediaPipeHandTracker(
   options: HandTrackerOptions = {},
 ): Promise<HandTracker> {
+  const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
   const vision = await FilesetResolver.forVisionTasks(options.wasmBaseUrl ?? DEFAULT_WASM_BASE_URL);
   const landmarker = await HandLandmarker.createFromOptions(vision, {
     baseOptions: {
