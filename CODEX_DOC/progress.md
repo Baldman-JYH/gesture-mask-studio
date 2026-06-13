@@ -989,3 +989,22 @@
   - `docs/verification/verification-plan.md`
   - `docs/verification/verification-plan.zh-CN.md`
 - The real-device pass criteria now explicitly cover false `2 hands`, folded rectangular one-hand geometry, multi-face two-hand geometry, edge visibility, perspective/depth motion, and absence of WebGL shader errors.
+
+## 2026-06-13 21:49
+
+### Commit And Push
+- PR #1 was already merged, so the fix was moved to a new branch based on latest `origin/main` instead of pushing more work to the old merged feature branch.
+- New branch: `codex/fix-3d-template-dedupe`.
+- Included prior local progress-doc commit:
+  - `f560788 docs: record spatial template pull request`
+- Main fix commit:
+  - `89f9ef4 fix: improve spatial template hand anchoring`
+- Push result: success.
+- Draft PR:
+  - `https://github.com/Baldman-JYH/gesture-mask-studio/pull/2`
+
+### Pre-Push Verification
+- `npm test`: passed, 14 test files and 47 tests.
+- `npm run build`: passed.
+- Bilingual docs pairing check: passed.
+- `git diff --check`: passed.

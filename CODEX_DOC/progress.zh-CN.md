@@ -748,3 +748,22 @@ English version: [progress.md](progress.md)
   - `docs/verification/verification-plan.md`
   - `docs/verification/verification-plan.zh-CN.md`
 - 真实设备通过标准已明确覆盖：误显示 `2 hands`、单手折叠矩形几何、双手多面几何、边缘可见性、透视/深度运动，以及无 WebGL shader error。
+
+## 2026-06-13 21:49
+
+### 提交和推送
+- PR #1 已经合并，因此本轮修复没有继续推送到旧的已合并 feature 分支，而是基于最新 `origin/main` 新建修复分支。
+- 新分支：`codex/fix-3d-template-dedupe`。
+- 已带入此前本地进展文档提交：
+  - `f560788 docs: record spatial template pull request`
+- 主修复提交：
+  - `89f9ef4 fix: improve spatial template hand anchoring`
+- 推送结果：成功。
+- Draft PR：
+  - `https://github.com/Baldman-JYH/gesture-mask-studio/pull/2`
+
+### 推送前验证
+- `npm test`：通过，14 个测试文件、47 个测试。
+- `npm run build`：通过。
+- 中英文文档配对检查：通过。
+- `git diff --check`：通过。
