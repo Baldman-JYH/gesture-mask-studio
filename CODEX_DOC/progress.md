@@ -263,3 +263,21 @@
 ### Next
 - Commit implementation plan.
 - Execute the plan inline with TDD checkpoints.
+
+## 2026-06-13 14:42
+
+### Completed
+- Completed Task 1 app scaffold.
+- Created React + Vite + TypeScript app under `app/`.
+- Verified TDD RED for App shell:
+  - `npm test -- src/App.test.tsx` failed because `App` did not exist.
+- Implemented minimal App shell.
+- Unified frontend tooling on Vite `8.0.16`, Vitest `4.1.8`, and `@vitejs/plugin-react` `6.0.2`.
+- Verification:
+  - `npm test`: 1 test passed.
+  - `npm run build`: production build passed.
+  - `npm audit --omit=dev`: 0 vulnerabilities.
+
+### Next
+- Commit Task 1 scaffold.
+- Start Task 2 runtime contracts and light sheet style presets.

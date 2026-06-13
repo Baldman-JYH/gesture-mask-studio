@@ -1,0 +1,110 @@
+.app-shell {
+  position: relative;
+  display: grid;
+  grid-template-rows: 72px minmax(0, 1fr) auto;
+  min-height: 100vh;
+  overflow: hidden;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.top-status {
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 0 36px;
+  background: linear-gradient(180deg, rgba(10, 15, 20, 0.98), rgba(10, 15, 20, 0.82));
+  border-bottom: 1px solid var(--color-border);
+}
+
+.brand-lockup,
+.tracking-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.brand-lockup h1 {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.brand-mark {
+  width: 30px;
+  height: 30px;
+  border: 3px solid var(--color-accent);
+  border-radius: 8px;
+  clip-path: polygon(50% 100%, 0 0, 100% 0);
+}
+
+.status-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 16px rgba(114, 230, 93, 0.55);
+}
+
+.tracking-state {
+  color: var(--color-muted);
+  font-size: 16px;
+}
+
+.camera-stage {
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  background:
+    radial-gradient(circle at 40% 28%, rgba(53, 200, 255, 0.18), transparent 32%),
+    linear-gradient(135deg, #111923 0%, #0a0f14 100%);
+}
+
+.stage-copy {
+  max-width: min(520px, calc(100vw - 48px));
+  text-align: center;
+}
+
+.stage-label {
+  margin: 0 0 12px;
+  color: var(--color-accent);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-transform: uppercase;
+}
+
+.stage-title {
+  margin: 0;
+  color: var(--color-muted);
+  font-size: 18px;
+  line-height: 1.45;
+}
+
+.control-dock {
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  padding: 20px;
+  background: linear-gradient(0deg, rgba(10, 15, 20, 0.96), rgba(10, 15, 20, 0.6));
+}
+
+.control-dock button {
+  min-width: 154px;
+  min-height: 48px;
+  padding: 0 18px;
+  color: var(--color-text);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+}
+
+.control-dock button:disabled {
+  color: rgba(248, 250, 252, 0.62);
+  cursor: not-allowed;
+}
