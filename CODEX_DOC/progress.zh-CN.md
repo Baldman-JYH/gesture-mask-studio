@@ -667,3 +667,10 @@ English version: [progress.md](progress.md)
 ### 下一步
 - 提交 spatial template MVP 实现和配套双语文档。
 - 如网络可用，将 feature branch 推送到 GitHub。
+
+### 提交与推送
+- Commit：`4a37af5 feat: add spatial template mvp`。
+- 分支：`feat/spatial-template-mvp`。
+- 推送结果：成功。
+- 远程分支：`origin/feat/spatial-template-mvp`。
+- PR 创建地址：`https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/feat/spatial-template-mvp`。

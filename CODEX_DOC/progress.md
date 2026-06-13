@@ -908,3 +908,10 @@
 ### Next
 - Commit the spatial template MVP implementation and supporting bilingual docs.
 - Push the feature branch to GitHub if network access succeeds.
+
+### Commit And Push
+- Commit: `4a37af5 feat: add spatial template mvp`.
+- Branch: `feat/spatial-template-mvp`.
+- Push result: success.
+- Remote branch: `origin/feat/spatial-template-mvp`.
+- PR creation URL: `https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/feat/spatial-template-mvp`.
