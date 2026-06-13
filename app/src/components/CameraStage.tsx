@@ -1,36 +1,21 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
 import { toDisplayHands } from '../features/coordinate-space/displaySpace';
-import { buildTwoHandLightSheetGeometry } from '../features/gesture-engine/geometry';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
 import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-tracking/handTracker';
 import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features/light-sheet-styles/presets';
 import { isRenderableVideo } from '../features/scene-sampling/screenSpaceSampling';
-import type {
-  LightSheetGeometry,
-  LightSheetRenderInput,
-  TrackedHand,
-} from '../shared/runtime/types';
+import { createSpatialTemplateRenderInput, type SpatialTemplateRenderInput } from '../features/spatial-template-renderer/renderInput';
+import type { TrackedHand } from '../shared/runtime/types';
 import { ControlDock } from './ControlDock';
 import { PermissionOverlay } from './PermissionOverlay';
 import { TopStatusBar, type TrackingState } from './TopStatusBar';
 
-const LightSheetCanvas = lazy(() =>
-  import('../features/light-sheet-renderer/LightSheetCanvas').then((module) => ({
-    default: module.LightSheetCanvas,
+const SpatialTemplateCanvas = lazy(() =>
+  import('../features/spatial-template-renderer/SpatialTemplateCanvas').then((module) => ({
+    default: module.SpatialTemplateCanvas,
   })),
 );
-
-const HIDDEN_GEOMETRY: LightSheetGeometry = {
-  mode: 'hidden',
-  vertices: [
-    { x: 0.5, y: 0.5 },
-    { x: 0.5, y: 0.5 },
-    { x: 0.5, y: 0.5 },
-  ],
-  opacity: 0,
-  confidence: 0,
-};
 
 export function CameraStage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -46,7 +31,7 @@ export function CameraStage() {
   const [handsCount, setHandsCount] = useState(0);
   const [activePresetId, setActivePresetId] = useState(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const [mirrored, setMirrored] = useState(true);
-  const [renderInput, setRenderInput] = useState<LightSheetRenderInput | null>(null);
+  const [renderInput, setRenderInput] = useState<SpatialTemplateRenderInput | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -84,11 +69,16 @@ export function CameraStage() {
       setActivePresetId(activePreset.id);
     }
 
-    const geometry = buildGeometryFromGestureState(gestureState);
-
-    setRenderInput({
-      geometry,
+    const nextRenderInput = createSpatialTemplateRenderInput({
+      displayHands,
+      video,
+      mirrored: mirroredRef.current,
       style: activePreset,
+      timestampMs,
+    });
+
+    setRenderInput(nextRenderInput.mesh.mode === 'hidden' ? null : {
+      ...nextRenderInput,
       scene: {
         video,
         mirrored: mirroredRef.current,
@@ -97,7 +87,6 @@ export function CameraStage() {
           height: video.clientHeight || video.videoHeight,
         },
       },
-      timestampMs,
     });
 
     animationFrameRef.current = requestAnimationFrame(runFrame);
@@ -201,7 +190,7 @@ export function CameraStage() {
         />
         {renderInput ? (
           <Suspense fallback={<div className="light-sheet-canvas" aria-hidden="true" />}>
-            <LightSheetCanvas renderInput={renderInput} className="light-sheet-canvas" />
+            <SpatialTemplateCanvas renderInput={renderInput} className="light-sheet-canvas" />
           </Suspense>
         ) : (
           <div className="light-sheet-canvas" aria-hidden="true" />
@@ -236,19 +225,4 @@ function detectHands(
   } catch {
     return [];
   }
-}
-
-function buildGeometryFromGestureState(
-  gestureState: ReturnType<typeof deriveLightSheetGestureState>,
-): LightSheetGeometry {
-  if (gestureState.mode === 'two-hand-sheet' && gestureState.anchors.right) {
-    return buildTwoHandLightSheetGeometry({
-      left: gestureState.anchors.left,
-      right: gestureState.anchors.right,
-      openness: gestureState.openness,
-      confidence: gestureState.confidence,
-    });
-  }
-
-  return HIDDEN_GEOMETRY;
 }

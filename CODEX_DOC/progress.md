@@ -810,3 +810,101 @@
 - build job: success.
 - deploy job: success.
 - GitHub still reports the known Node.js 20 deprecation annotation for third-party actions, but the workflow forced Node.js 24 and completed successfully.
+
+## 2026-06-13 19:10
+
+### Completed
+- Reviewed the real-device validation recording for commit `2719a35a7abd998f3c3818efd30e84b1c1c5a736`.
+- Extracted FFmpeg evidence under `assets/analysis/2719a35-real-device-architecture-decision/`:
+  - 69 continuous 1fps frames from the real-device recording;
+  - 25 continuous 1fps frames from the refreshed reference video;
+  - 1fps contact sheets for both videos;
+  - 4fps segment contact sheets for the test and reference videos.
+- Added bilingual analysis documents:
+  - `docs/analysis/2719a35-offset-vs-3d-template-decision.md`
+  - `docs/analysis/2719a35-offset-vs-3d-template-decision.zh-CN.md`
+
+### Finding
+- The remaining visible mismatch is now primarily architectural, not just a coordinate offset.
+- The current implementation is still a flat screen-space light sheet using live video sampling, while the reference video is a fingertip-anchored 3D template with multi-face materials, perspective, folding, and flipping.
+- Continuing to tune the 2D sheet may improve the interim demo, but it will not converge to the reference behavior.
+
+### Decision
+- Move to the ADR-0002 3D template implementation next.
+- Keep the current 2D renderer only as a calibration/debug harness for coordinate-space and video-uv mapping.
+- Brooks-debt check: continuing to encode folded multi-face behavior inside `light-sheet-renderer` would create Domain Model Distortion and Change Propagation debt; the spatial-template boundary is the lower-debt route.
+
+### Verification Plan For Next Change
+- Add tests for landmark-to-anchor-frame conversion.
+- Add tests for mesh construction, face ordering, material ids, and fold state.
+- Add renderer smoke coverage for template materials and shader compilation.
+- Run full `npm test`, `npm run build`, bilingual documentation pairing check, and `git diff --check`.
+- For real-device validation, verify spatial movement, near/far perspective, multi-face visibility, and compare the new recording against the reference contact sheets.
+
+## 2026-06-13 19:20
+
+### Completed
+- Created implementation branch `feat/spatial-template-mvp` to avoid implementing on `main`.
+- Ran clean baseline before new implementation:
+  - command: `npm test`
+  - result: 10 test files passed, 31 tests passed.
+- Added bilingual Superpowers implementation plans:
+  - `docs/superpowers/plans/2026-06-13-spatial-template-mvp.md`
+  - `docs/superpowers/plans/2026-06-13-spatial-template-mvp.zh-CN.md`
+
+### Plan
+- Implement the first ADR-0002 milestone with three new boundaries:
+  - `gesture-anchor-frame`
+  - `spatial-template-model`
+  - `spatial-template-renderer`
+- Use TDD for anchor derivation, mesh construction, and renderer buffer conversion before React integration.
+
+### TDD Progress
+- RED: `npm test -- src/features/gesture-anchor-frame/anchorFrame.test.ts` failed because `./anchorFrame` did not exist.
+- GREEN: implemented `deriveGestureAnchorFrame`; target test passed with 1 test file and 3 tests.
+- RED: `npm test -- src/features/spatial-template-model/templateMesh.test.ts` failed because `./templateMesh` did not exist.
+- GREEN: implemented `buildSpatialTemplateMesh`; target test passed with 1 test file and 4 tests.
+- RED: `npm test -- src/features/spatial-template-renderer/rendererCore.test.ts` failed because `./rendererCore` did not exist.
+- REPAIR: after minimal implementation, one assertion failed due strict floating-point equality; updated the test to use `toBeCloseTo`.
+- GREEN: implemented `spatialTemplateToBufferData`; target test passed with 1 test file and 2 tests.
+- RED: `npm test -- src/features/spatial-template-renderer/renderInput.test.ts` failed because `./renderInput` did not exist.
+- GREEN: implemented `createSpatialTemplateRenderInput`; target test passed with 1 test file and 2 tests.
+
+### Implementation
+- Added `SpatialTemplateCanvas`, a Three.js perspective renderer for spatial template meshes.
+- Updated `CameraStage` to build spatial template render input from display-space hands and render the new spatial template canvas.
+- Current renderer behavior:
+  - one confident hand -> explicit `one-hand-wedge` spatial template;
+  - two confident hands -> `two-hand-ribbon` spatial template;
+  - no confident hands -> no template render input.
+
+### Verification Results
+- Target spatial tests: 4 test files passed, 11 tests passed.
+- App shell tests: 2 test files passed, 4 tests passed.
+- Brooks-review self-check found one maintainability issue: `updateRenderInput` mixed texture, geometry, and material updates. Refactored it into focused helper functions.
+- Full test suite after refactor: 14 test files passed, 42 tests passed.
+- Production build after refactor: passed.
+- Local HTTP smoke: `http://127.0.0.1:5174/gesture-mask-studio/` returned 200 and contained `Gesture Mask Studio`.
+- Playwright browser snapshot confirmed page title, camera status, tracking status, Mirror button, and Start camera button are visible.
+
+### Real-Device Verification Plan
+- Deploy or open the local app on a camera-enabled device.
+- Hard refresh the page and start the camera.
+- With one visible hand, confirm the effect is a small triangular/wedge spatial template, not the old full flat sheet.
+- With two visible hands, confirm the effect becomes a ribbon/prism with visible perspective and at least two material faces.
+- Move hands left/right/up/down and confirm the template moves in the same visible direction.
+- Move hands closer/farther from the camera and confirm size/depth changes are visible.
+- Record a short video and compare against `assets/analysis/2719a35-real-device-architecture-decision/reference_segment_000_024_4fps.jpg`.
+
+## 2026-06-13 19:56
+
+### Pre-Commit Verification
+- Branch: `feat/spatial-template-mvp`.
+- Full test suite: 14 test files passed, 42 tests passed.
+- Production build: passed.
+- Bilingual documentation pairing check: passed.
+- `git diff --check`: no whitespace errors; only Windows line-ending warnings.
+
+### Next
+- Commit the spatial template MVP implementation and supporting bilingual docs.
+- Push the feature branch to GitHub if network access succeeds.

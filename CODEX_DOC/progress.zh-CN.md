@@ -569,3 +569,101 @@ English version: [progress.md](progress.md)
 - build job：success。
 - deploy job：success。
 - GitHub 仍然报告第三方 action 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功完成。
+
+## 2026-06-13 19:10
+
+### 已完成
+- 复核了基于提交 `2719a35a7abd998f3c3818efd30e84b1c1c5a736` 的真实设备验证录屏。
+- 使用 FFmpeg 在 `assets/analysis/2719a35-real-device-architecture-decision/` 下抽取证据：
+  - 真实设备录屏 69 张 1fps 连续帧；
+  - 重新获取的参考视频 25 张 1fps 连续帧；
+  - 两个视频各 1 张 1fps 总览拼图；
+  - 测试视频和参考视频的 4fps 分段拼图。
+- 新增中英文分析文档：
+  - `docs/analysis/2719a35-offset-vs-3d-template-decision.md`
+  - `docs/analysis/2719a35-offset-vs-3d-template-decision.zh-CN.md`
+
+### 发现
+- 当前剩余可见差异主要是架构问题，而不只是坐标偏移问题。
+- 当前实现仍是基于实时视频采样的扁平屏幕空间光片；参考视频则是指尖锚定的三维模板，包含多面材质、透视、折叠和翻转。
+- 继续调整二维光片可以改善过渡 demo，但不会收敛到参考视频的目标行为。
+
+### 决策
+- 下一步进入 ADR-0002 三维模板实现。
+- 当前二维 renderer 只保留为坐标空间和 video-uv 映射的校准/调试工具。
+- brooks-debt 复核：继续把折叠多面行为写进 `light-sheet-renderer` 会形成 Domain Model Distortion 和 Change Propagation 债务；新增 spatial-template 边界是更低债务路线。
+
+### 下一次变更验证方案
+- 增加 landmark 到 anchor-frame 转换测试。
+- 增加 mesh 构造、面顺序、材质 id 和折叠状态测试。
+- 增加模板材质和 shader 编译的 renderer smoke 覆盖。
+- 执行完整 `npm test`、`npm run build`、中英文文档配对检查和 `git diff --check`。
+- 真实设备验证时，检查空间移动、前后透视、多面可见性，并将新录屏与参考视频拼图对比。
+
+## 2026-06-13 19:20
+
+### 已完成
+- 创建实现分支 `feat/spatial-template-mvp`，避免直接在 `main` 上实施代码。
+- 在新增实现前运行干净基线：
+  - 命令：`npm test`
+  - 结果：10 个测试文件通过，31 个测试通过。
+- 新增双语 Superpowers 实施计划：
+  - `docs/superpowers/plans/2026-06-13-spatial-template-mvp.md`
+  - `docs/superpowers/plans/2026-06-13-spatial-template-mvp.zh-CN.md`
+
+### 计划
+- 实现 ADR-0002 的第一个里程碑，新增三个边界：
+  - `gesture-anchor-frame`
+  - `spatial-template-model`
+  - `spatial-template-renderer`
+- 在 React 接入前，先用 TDD 覆盖锚点推导、mesh 构造和 renderer buffer 转换。
+
+### TDD 进展
+- RED：`npm test -- src/features/gesture-anchor-frame/anchorFrame.test.ts` 失败，原因是 `./anchorFrame` 不存在。
+- GREEN：实现 `deriveGestureAnchorFrame`；目标测试通过，1 个测试文件、3 个测试通过。
+- RED：`npm test -- src/features/spatial-template-model/templateMesh.test.ts` 失败，原因是 `./templateMesh` 不存在。
+- GREEN：实现 `buildSpatialTemplateMesh`；目标测试通过，1 个测试文件、4 个测试通过。
+- RED：`npm test -- src/features/spatial-template-renderer/rendererCore.test.ts` 失败，原因是 `./rendererCore` 不存在。
+- REPAIR：最小实现后有一个断言因浮点严格相等失败；已将测试改为 `toBeCloseTo` 近似断言。
+- GREEN：实现 `spatialTemplateToBufferData`；目标测试通过，1 个测试文件、2 个测试通过。
+- RED：`npm test -- src/features/spatial-template-renderer/renderInput.test.ts` 失败，原因是 `./renderInput` 不存在。
+- GREEN：实现 `createSpatialTemplateRenderInput`；目标测试通过，1 个测试文件、2 个测试通过。
+
+### 实现
+- 新增 `SpatialTemplateCanvas`，用于空间模板 mesh 的 Three.js 透视渲染。
+- 更新 `CameraStage`，从 display-space hands 构建 spatial template render input，并渲染新的空间模板 canvas。
+- 当前 renderer 行为：
+  - 一只可信手 -> 明确的 `one-hand-wedge` 空间模板；
+  - 两只可信手 -> `two-hand-ribbon` 空间模板；
+  - 没有可信手 -> 不生成模板渲染输入。
+
+### 验证结果
+- 空间模板目标测试：4 个测试文件通过，11 个测试通过。
+- App shell 测试：2 个测试文件通过，4 个测试通过。
+- Brooks-review 自审发现一个维护性问题：`updateRenderInput` 混合了 texture、geometry 和 material 更新。已拆分为更聚焦的辅助函数。
+- refactor 后完整测试：14 个测试文件通过，42 个测试通过。
+- refactor 后生产构建：通过。
+- 本地 HTTP smoke：`http://127.0.0.1:5174/gesture-mask-studio/` 返回 200，并包含 `Gesture Mask Studio`。
+- Playwright 浏览器快照确认页面标题、摄像头状态、追踪状态、Mirror 按钮和 Start camera 按钮可见。
+
+### 真实设备验证方案
+- 在有摄像头的设备上打开部署版或本地应用。
+- 强制刷新页面并启动摄像头。
+- 只有一只手可见时，确认效果是小型三角/楔形空间模板，而不是旧的大面积扁平光片。
+- 两只手可见时，确认效果变为带状/棱柱模板，并能看到透视和至少两个材质面。
+- 左/右/上/下移动手部，确认模板沿可见同方向移动。
+- 前后移动手部，确认模板出现尺寸/深度变化。
+- 录制短视频，并与 `assets/analysis/2719a35-real-device-architecture-decision/reference_segment_000_024_4fps.jpg` 对比。
+
+## 2026-06-13 19:56
+
+### 提交前验证
+- 分支：`feat/spatial-template-mvp`。
+- 完整测试：14 个测试文件通过，42 个测试通过。
+- 生产构建：通过。
+- 中英文文档配对检查：通过。
+- `git diff --check`：无空白错误；仅有 Windows 换行提示。
+
+### 下一步
+- 提交 spatial template MVP 实现和配套双语文档。
+- 如网络可用，将 feature branch 推送到 GitHub。
