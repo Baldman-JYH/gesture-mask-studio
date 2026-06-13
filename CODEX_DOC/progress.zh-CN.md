@@ -268,3 +268,24 @@ English version: [progress.md](progress.md)
 - 验证所有英文项目文档都有中文对应文档。
 - 提交并推送双语文档更新。
 
+## 2026-06-13 15:34
+
+### 已完成
+- 验证所有已跟踪英文项目文档都有中文对应文件。
+- 验证 `git diff --check` 只报告 Windows 换行提示，没有空白错误。
+- 提交双语文档更新：
+  - Commit：`7b8a430`
+  - Message：`docs: add bilingual documentation`
+- 推送 `main` 到 GitHub。
+- 确认 GitHub Pages workflow 成功：
+  - Run：`27460474005`
+  - build job：success
+  - deploy job：success
+
+### 本次使用的验证方案
+- 文档配对检查：每个英文 `README.md`、`docs/**/*.md` 和 `CODEX_DOC/**/*.md` 文件必须有 `.zh-CN.md` 中文对应文件。
+- 空白检查：`git diff --check`。
+- 部署检查：`gh run watch 27460474005 --exit-status`。
+
+### 下一步
+- 后续所有文档、功能或问题修复工作，都要同时更新英文和中文文档，并给出具体验证方案。
