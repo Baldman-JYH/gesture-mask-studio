@@ -26,6 +26,9 @@ const MIN_TRACKING_CONFIDENCE = 0.2;
 const THUMB_TIP_INDEX = 4;
 const INDEX_TIP_INDEX = 8;
 const OPENNESS_NORMALIZER = 0.18;
+const DUPLICATE_ANCHOR_DISTANCE = 0.12;
+const DUPLICATE_SAME_HAND_DISTANCE = 0.18;
+const DUPLICATE_BOUNDS_OVERLAP = 0.46;
 
 type HandAnchorSample = {
   hand: TrackedHand;
@@ -37,13 +40,14 @@ export function deriveGestureAnchorFrame(hands: TrackedHand[]): GestureAnchorFra
   const anchors = hands
     .filter((hand) => hand.confidence > MIN_TRACKING_CONFIDENCE)
     .map(toHandAnchorSample);
+  const uniqueAnchors = dedupeHandAnchorSamples(anchors);
 
-  if (anchors.length === 0) {
+  if (uniqueAnchors.length === 0) {
     return createHiddenFrame();
   }
 
-  if (anchors.length === 1) {
-    const primary = anchors[0];
+  if (uniqueAnchors.length === 1) {
+    const primary = uniqueAnchors[0];
 
     return {
       mode: 'one-hand',
@@ -55,9 +59,9 @@ export function deriveGestureAnchorFrame(hands: TrackedHand[]): GestureAnchorFra
     };
   }
 
-  anchors.sort((a, b) => a.anchor.point.x - b.anchor.point.x);
-  const left = anchors[0];
-  const right = anchors[anchors.length - 1];
+  uniqueAnchors.sort((a, b) => a.anchor.point.x - b.anchor.point.x);
+  const left = uniqueAnchors[0];
+  const right = uniqueAnchors[uniqueAnchors.length - 1];
   const dx = right.anchor.point.x - left.anchor.point.x;
   const dy = right.anchor.point.y - left.anchor.point.y;
 
@@ -70,6 +74,51 @@ export function deriveGestureAnchorFrame(hands: TrackedHand[]): GestureAnchorFra
     left: left.anchor,
     right: right.anchor,
   };
+}
+
+export function getGestureAnchorHandCount(frame: GestureAnchorFrame): number {
+  if (frame.mode === 'two-hand') {
+    return 2;
+  }
+
+  if (frame.mode === 'one-hand') {
+    return 1;
+  }
+
+  return 0;
+}
+
+function dedupeHandAnchorSamples(samples: HandAnchorSample[]): HandAnchorSample[] {
+  const rankedSamples = [...samples].sort((a, b) => b.hand.confidence - a.hand.confidence);
+  const uniqueSamples: HandAnchorSample[] = [];
+
+  for (const sample of rankedSamples) {
+    const duplicate = uniqueSamples.some((existing) => areDuplicateHands(existing, sample));
+
+    if (!duplicate) {
+      uniqueSamples.push(sample);
+    }
+  }
+
+  return uniqueSamples;
+}
+
+function areDuplicateHands(left: HandAnchorSample, right: HandAnchorSample): boolean {
+  const anchorDistance = Math.hypot(
+    left.anchor.point.x - right.anchor.point.x,
+    left.anchor.point.y - right.anchor.point.y,
+  );
+  const sameKnownHandedness =
+    left.hand.handedness !== 'unknown' &&
+    right.hand.handedness !== 'unknown' &&
+    left.hand.handedness === right.hand.handedness;
+  const boundsOverlap = getBoundsOverlapRatio(left.hand, right.hand);
+
+  return (
+    anchorDistance < DUPLICATE_ANCHOR_DISTANCE ||
+    boundsOverlap > DUPLICATE_BOUNDS_OVERLAP ||
+    (sameKnownHandedness && anchorDistance < DUPLICATE_SAME_HAND_DISTANCE)
+  );
 }
 
 function toHandAnchorSample(hand: TrackedHand): HandAnchorSample {
@@ -131,6 +180,50 @@ function averageOptional(left?: number, right?: number): number | undefined {
   }
 
   return ((left ?? 0) + (right ?? 0)) / 2;
+}
+
+function getBoundsOverlapRatio(left: TrackedHand, right: TrackedHand): number {
+  const leftBounds = getLandmarkBounds(left);
+  const rightBounds = getLandmarkBounds(right);
+  const intersectionWidth = Math.max(
+    0,
+    Math.min(leftBounds.maxX, rightBounds.maxX) - Math.max(leftBounds.minX, rightBounds.minX),
+  );
+  const intersectionHeight = Math.max(
+    0,
+    Math.min(leftBounds.maxY, rightBounds.maxY) - Math.max(leftBounds.minY, rightBounds.minY),
+  );
+  const intersectionArea = intersectionWidth * intersectionHeight;
+  const smallerArea = Math.min(leftBounds.area, rightBounds.area);
+
+  if (smallerArea === 0) {
+    return 0;
+  }
+
+  return intersectionArea / smallerArea;
+}
+
+function getLandmarkBounds(hand: TrackedHand): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+  area: number;
+} {
+  const xs = hand.landmarks.map((landmark) => landmark.x);
+  const ys = hand.landmarks.map((landmark) => landmark.y);
+  const minX = Math.min(...xs);
+  const maxX = Math.max(...xs);
+  const minY = Math.min(...ys);
+  const maxY = Math.max(...ys);
+
+  return {
+    minX,
+    maxX,
+    minY,
+    maxY,
+    area: Math.max((maxX - minX) * (maxY - minY), Number.EPSILON),
+  };
 }
 
 function clamp01(value: number): number {

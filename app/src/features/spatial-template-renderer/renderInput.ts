@@ -3,7 +3,7 @@ import type {
   SceneSamplingInput,
   TrackedHand,
 } from '../../shared/runtime/types';
-import { deriveGestureAnchorFrame } from '../gesture-anchor-frame/anchorFrame';
+import { deriveGestureAnchorFrame, type GestureAnchorFrame } from '../gesture-anchor-frame/anchorFrame';
 import { buildSpatialTemplateMesh } from '../spatial-template-model/templateMesh';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
 
@@ -16,6 +16,7 @@ export type SpatialTemplateRenderInput = {
 
 export type CreateSpatialTemplateRenderInputOptions = {
   displayHands: TrackedHand[];
+  anchorFrame?: GestureAnchorFrame;
   video: HTMLVideoElement;
   mirrored: boolean;
   style: LightSheetStylePreset;
@@ -25,7 +26,7 @@ export type CreateSpatialTemplateRenderInputOptions = {
 export function createSpatialTemplateRenderInput(
   options: CreateSpatialTemplateRenderInputOptions,
 ): SpatialTemplateRenderInput {
-  const anchorFrame = deriveGestureAnchorFrame(options.displayHands);
+  const anchorFrame = options.anchorFrame ?? deriveGestureAnchorFrame(options.displayHands);
   const mesh = buildSpatialTemplateMesh(anchorFrame);
 
   return {

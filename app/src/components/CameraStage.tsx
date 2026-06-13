@@ -1,6 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
 import { toDisplayHands } from '../features/coordinate-space/displaySpace';
+import { deriveGestureAnchorFrame, getGestureAnchorHandCount } from '../features/gesture-anchor-frame/anchorFrame';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
 import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-tracking/handTracker';
 import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features/light-sheet-styles/presets';
@@ -57,7 +58,8 @@ export function CameraStage() {
     const timestampMs = performance.now();
     const hands = detectHands(trackerRef.current, video, timestampMs);
     const displayHands = toDisplayHands(hands, mirroredRef.current);
-    setHandsCount(hands.length);
+    const anchorFrame = deriveGestureAnchorFrame(displayHands);
+    setHandsCount(getGestureAnchorHandCount(anchorFrame));
 
     const gestureState = deriveLightSheetGestureState({
       hands: displayHands,
@@ -71,6 +73,7 @@ export function CameraStage() {
 
     const nextRenderInput = createSpatialTemplateRenderInput({
       displayHands,
+      anchorFrame,
       video,
       mirrored: mirroredRef.current,
       style: activePreset,

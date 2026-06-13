@@ -915,3 +915,96 @@
 - Push result: success.
 - Remote branch: `origin/feat/spatial-template-mvp`.
 - PR creation URL: `https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/feat/spatial-template-mvp`.
+- Pull request: `https://github.com/Baldman-JYH/gesture-mask-studio/pull/1`.
+
+## 2026-06-13 20:10
+
+### Post-Deployment Validation Plan
+- User reported that PR #1 and the GitHub Pages workflow are complete.
+- Next validation must be real-device focused because local automated checks cannot validate camera tracking, hand depth, or perceived 3D motion.
+- Validation URL should be the deployed GitHub Pages URL from the workflow output, usually `https://baldman-jyh.github.io/gesture-mask-studio/`.
+- Use a cache-busting query string such as `?v=spatial-template-mvp-20260613-2010` before testing.
+
+### Required Evidence To Collect
+- Browser console screenshot after camera start.
+- Short real-device recording covering:
+  - no hand;
+  - one hand;
+  - two hands;
+  - left/right/up/down movement;
+  - near/far movement;
+  - Mirror on/off.
+- If a defect appears, save the recording under `测试记录/基于提交 <deployed-commit>测试/` and include console logs.
+
+## 2026-06-13 20:43
+
+### Real-Device Frame Analysis
+- Reviewed the validation recording for deployed commit `4dd3d98105b96f39726dcd1d0bace974fb540511` against the refreshed `参考视频.mp4`.
+- FFmpeg extraction evidence was generated under `测试记录/基于提交 4dd3d98105b96f39726dcd1d0bace974fb540511测试/ffmpeg逐帧分析/`.
+- Extracted inputs:
+  - real-device recording: 1912x932, 30fps, 191.34 seconds, 5736 frames;
+  - reference video: 1226x686, 30fps, 24.58 seconds, 736 frames.
+- Added bilingual analysis docs:
+  - `docs/analysis/4dd3d-real-device-3d-template-gap.md`
+  - `docs/analysis/4dd3d-real-device-3d-template-gap.zh-CN.md`
+
+### Decision
+- The stack remains viable: browser + MediaPipe Hands + Three.js + GitHub Pages can implement the reference-class realtime 3D template effect.
+- The current implementation is still too flat: it uses a thin prism/sheet and reads visually as a translucent overlay, not a folded 3D model.
+- The `2 hands` display with one physical hand is caused by using raw detector counts without duplicate-hand suppression and without deriving UI status from the filtered gesture anchor frame.
+
+### Next
+- Add failing tests for duplicate hand collapse and non-flat multi-face template meshes.
+- Update the gesture anchor frame, spatial template model, renderer material groups, and top status hand count source.
+
+### TDD RED Evidence
+- Added failing tests for duplicate physical-hand detections, usable anchor hand count, folded one-hand template shape, folded two-hand template shape, stable material slots, and duplicate filtering before render input creation.
+- Target test command:
+  - `npm test -- src/features/gesture-anchor-frame/anchorFrame.test.ts src/features/gesture-engine/gestureState.test.ts src/features/spatial-template-model/templateMesh.test.ts src/features/spatial-template-renderer/rendererCore.test.ts src/features/spatial-template-renderer/renderInput.test.ts`
+- RED result: 5 test files failed as expected, with 10 failed assertions covering the missing behavior.
+
+### GREEN Implementation
+- Added duplicate-hand suppression in `deriveGestureAnchorFrame`, preserving the highest-confidence detection for overlapping physical hands.
+- Added `getGestureAnchorHandCount` and changed `CameraStage` to derive the top status hand count from the filtered anchor frame instead of raw MediaPipe detections.
+- Updated legacy gesture-state style selection to reuse the filtered anchor frame, preventing duplicate detections from entering two-hand mode.
+- Replaced one-hand triangular/wedge geometry with a folded rectangular `one-hand-template`.
+- Replaced the flat two-hand ribbon prism with a folded multi-face `two-hand-template`.
+- Expanded spatial template material ids and renderer slots to `scene`, `panel`, `back`, `accent`, and `edge`.
+- Target GREEN result: 5 test files passed, 21 tests passed.
+
+### Verification Results
+- Full test suite: `npm test` passed, 14 test files and 47 tests.
+- Production build: `npm run build` passed.
+- Documentation pairing check: passed for `docs/**/*.md` and `docs/**/*.zh-CN.md`.
+- `git diff --check`: passed; only Windows line-ending warnings were reported.
+- Browser smoke:
+  - local Vite dev server returned HTTP 200 at `http://127.0.0.1:5174/gesture-mask-studio/`;
+  - Playwright built-in Chromium was unavailable, so the smoke ran through the installed Edge/Chromium channel;
+  - page title was `Gesture Mask Studio`;
+  - heading, `Start camera`, and `Mirror` controls were visible;
+  - first-load console errors: none.
+
+### Verification Plan Added
+- Added a dedicated 3D spatial template verification section to:
+  - `docs/verification/verification-plan.md`
+  - `docs/verification/verification-plan.zh-CN.md`
+- The real-device pass criteria now explicitly cover false `2 hands`, folded rectangular one-hand geometry, multi-face two-hand geometry, edge visibility, perspective/depth motion, and absence of WebGL shader errors.
+
+## 2026-06-13 21:49
+
+### Commit And Push
+- PR #1 was already merged, so the fix was moved to a new branch based on latest `origin/main` instead of pushing more work to the old merged feature branch.
+- New branch: `codex/fix-3d-template-dedupe`.
+- Included prior local progress-doc commit:
+  - `f560788 docs: record spatial template pull request`
+- Main fix commit:
+  - `89f9ef4 fix: improve spatial template hand anchoring`
+- Push result: success.
+- Draft PR:
+  - `https://github.com/Baldman-JYH/gesture-mask-studio/pull/2`
+
+### Pre-Push Verification
+- `npm test`: passed, 14 test files and 47 tests.
+- `npm run build`: passed.
+- Bilingual docs pairing check: passed.
+- `git diff --check`: passed.

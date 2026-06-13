@@ -1,8 +1,8 @@
 import type { NormalizedPoint } from '../../shared/runtime/types';
 
-export type SpatialTemplateMode = 'hidden' | 'one-hand-wedge' | 'two-hand-ribbon';
+export type SpatialTemplateMode = 'hidden' | 'one-hand-template' | 'two-hand-template';
 
-export type SpatialTemplateMaterialId = 'scene' | 'accent' | 'edge';
+export type SpatialTemplateMaterialId = 'scene' | 'panel' | 'back' | 'accent' | 'edge';
 
 export type SpatialTemplateVertex = {
   position: NormalizedPoint;

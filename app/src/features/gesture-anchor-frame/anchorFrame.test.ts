@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { TrackedHand } from '../../shared/runtime/types';
-import { deriveGestureAnchorFrame } from './anchorFrame';
+import { deriveGestureAnchorFrame, getGestureAnchorHandCount } from './anchorFrame';
 
 function hand(id: string, x: number, y: number, confidence = 0.9): TrackedHand {
   return {
@@ -42,5 +42,26 @@ describe('deriveGestureAnchorFrame', () => {
     expect(frame.mode).toBe('two-hand');
     expect(frame.left?.point.x).toBeLessThan(frame.right?.point.x ?? 0);
     expect(frame.rotation).toBeCloseTo(Math.atan2(0.05, 0.6), 2);
+  });
+
+  it('collapses duplicate detections from one physical hand into one usable anchor', () => {
+    const frame = deriveGestureAnchorFrame([
+      hand('primary', 0.42, 0.52, 0.94),
+      hand('duplicate', 0.445, 0.535, 0.72),
+    ]);
+
+    expect(frame.mode).toBe('one-hand');
+    expect(frame.primary?.id).toBe('primary');
+    expect(getGestureAnchorHandCount(frame)).toBe(1);
+  });
+
+  it('reports usable hand count from the filtered anchor frame mode', () => {
+    expect(getGestureAnchorHandCount(deriveGestureAnchorFrame([]))).toBe(0);
+    expect(getGestureAnchorHandCount(deriveGestureAnchorFrame([hand('single', 0.45, 0.5)]))).toBe(1);
+    expect(
+      getGestureAnchorHandCount(
+        deriveGestureAnchorFrame([hand('left', 0.2, 0.5), hand('right', 0.8, 0.5)]),
+      ),
+    ).toBe(2);
   });
 });

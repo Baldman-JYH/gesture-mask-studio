@@ -95,6 +95,45 @@ The core effect is a realtime live-sampling light sheet. It must not behave like
    - the bottom dock shows the active `Auto` style,
    - live camera sampling remains enabled for every style.
 
+## 3D Spatial Template Verification
+
+Use this section for changes that touch `gesture-anchor-frame`, `spatial-template-model`, or `spatial-template-renderer`.
+
+1. Start the camera on a real camera-enabled device.
+2. Show one physical hand only.
+3. Expected:
+   - top status shows `1 hand`, not `2 hands`;
+   - effect is a compact folded rectangular 3D template;
+   - effect is not a triangle and not a large flat screen-space sheet.
+4. Keep one hand visible and move it left/right/up/down.
+5. Expected:
+   - template moves in the same visible direction as the hand;
+   - no mirrored-direction regression appears.
+6. Show two physical hands with clear separation.
+7. Expected:
+   - top status shows `2 hands`;
+   - template becomes a larger folded multi-face 3D model;
+   - at least `scene`, secondary panel, back/accent side, and edge faces are visually distinguishable during motion.
+8. Rotate or tilt the hand pose.
+9. Expected:
+   - face visibility changes with perspective;
+   - side thickness or folded edges become visible;
+   - the effect does not collapse back into a single flat transparent quadrilateral.
+10. Move one or both hands closer/farther from the camera.
+11. Expected:
+   - perspective/depth changes are visible;
+   - the object does not only translate in 2D.
+12. Record 20-30 seconds covering one-hand, two-hand, rotation, and near/far movement.
+13. Compare the recording with `参考视频.mp4` frame sheets and check whether the current result is converging toward a multi-face 3D template, not just a tinted mask.
+
+For the deployed `4dd3d` follow-up fix, the minimum pass criteria are:
+
+- no false `2 hands` status when only one physical hand is visible;
+- one-hand geometry is folded and rectangular;
+- two-hand geometry has multiple faces and visible edges;
+- no first-load console errors;
+- no `THREE.WebGLProgram: Shader Error`.
+
 ## Control Verification
 
 1. Confirm the bottom dock shows `Auto` plus the current style name.
