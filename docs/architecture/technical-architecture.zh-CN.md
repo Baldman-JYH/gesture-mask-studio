@@ -100,7 +100,7 @@ flowchart LR
 职责：
 
 - 将 `TrackedHand[]` 转换成 `LightSheetGestureState`。
-- 构建一只手预览和双手光片几何。
+- 当前二维实现中，零只或一只手输出隐藏状态，两只手才构建光片几何。
 - 处理置信度、左右排序、手部张开程度和旋转角。
 - 在未提供调试/手动覆盖时，根据手势开合度输出当前 `stylePresetId`。
 
@@ -110,6 +110,7 @@ flowchart LR
 
 - 将屏幕归一化坐标映射到视频 UV。
 - 支持镜像和非镜像采样。
+- 按可见 `<video>` 的 `object-fit: cover` 裁剪映射反算视频 UV，避免光片内部采样内容与背景偏移。
 - 提供视频是否可渲染的纯 DOM 判断。
 
 ### `features/light-sheet-renderer`

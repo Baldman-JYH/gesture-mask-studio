@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  buildOneHandPreviewGeometry,
   buildTwoHandLightSheetGeometry,
   clampNormalizedPoint,
 } from './geometry';
@@ -33,20 +32,6 @@ describe('buildTwoHandLightSheetGeometry', () => {
       expect(vertex?.y).toBeGreaterThanOrEqual(0);
       expect(vertex?.y).toBeLessThanOrEqual(1);
     }
-  });
-});
-
-describe('buildOneHandPreviewGeometry', () => {
-  it('builds a compact triangular preview around one anchor', () => {
-    const geometry = buildOneHandPreviewGeometry({
-      anchor: { x: 0.5, y: 0.5 },
-      openness: 0.4,
-      confidence: 0.75,
-    });
-
-    expect(geometry.mode).toBe('one-hand-preview');
-    expect(geometry.vertices).toHaveLength(3);
-    expect(geometry.confidence).toBe(0.75);
   });
 });
 

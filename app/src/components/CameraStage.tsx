@@ -1,7 +1,7 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
 import { toDisplayHands } from '../features/coordinate-space/displaySpace';
-import { buildOneHandPreviewGeometry, buildTwoHandLightSheetGeometry } from '../features/gesture-engine/geometry';
+import { buildTwoHandLightSheetGeometry } from '../features/gesture-engine/geometry';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
 import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-tracking/handTracker';
 import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features/light-sheet-styles/presets';
@@ -245,14 +245,6 @@ function buildGeometryFromGestureState(
     return buildTwoHandLightSheetGeometry({
       left: gestureState.anchors.left,
       right: gestureState.anchors.right,
-      openness: gestureState.openness,
-      confidence: gestureState.confidence,
-    });
-  }
-
-  if (gestureState.mode === 'one-hand-preview') {
-    return buildOneHandPreviewGeometry({
-      anchor: gestureState.anchors.left,
       openness: gestureState.openness,
       confidence: gestureState.confidence,
     });

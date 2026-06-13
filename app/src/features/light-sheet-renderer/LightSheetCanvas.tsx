@@ -157,7 +157,14 @@ function updateRenderInput(refs: RendererRefs | null, renderInput: LightSheetRen
   );
   refs.geometry.setAttribute(
     'uv',
-    new BufferAttribute(geometryToVideoUvs(renderInput.geometry, renderInput.scene.mirrored), 2),
+    new BufferAttribute(geometryToVideoUvs(renderInput.geometry, {
+      mirrored: renderInput.scene.mirrored,
+      viewport: renderInput.scene.viewport,
+      video: {
+        width: renderInput.scene.video.videoWidth,
+        height: renderInput.scene.video.videoHeight,
+      },
+    }), 2),
   );
   refs.geometry.setIndex(new BufferAttribute(geometryToTriangleIndices(renderInput.geometry), 1));
   refs.geometry.attributes.position.needsUpdate = true;

@@ -81,6 +81,7 @@ https://baldman-jyh.github.io/gesture-mask-studio/
 - [视频效果分析](docs/analysis/video-effect-analysis.zh-CN.md)
 - [cad0446 真实设备视频对比分析](docs/analysis/cad0446-real-device-video-comparison.zh-CN.md)
 - [e79f74f 真实设备上下采样分析](docs/analysis/e79f74f-real-device-vertical-comparison.zh-CN.md)
+- [c9076f2 真实设备与参考视频对比分析](docs/analysis/c9076f2-real-device-reference-comparison.zh-CN.md)
 - [需求与业务逻辑](docs/product/requirements-and-business-logic.zh-CN.md)
 - [原型方向](docs/product/prototype-directions.zh-CN.md)
 - [技术架构](docs/architecture/technical-architecture.zh-CN.md)

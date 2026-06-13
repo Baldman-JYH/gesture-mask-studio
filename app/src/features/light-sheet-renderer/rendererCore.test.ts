@@ -29,11 +29,24 @@ describe('rendererCore', () => {
   });
 
   it('converts normalized vertices to mirrored video UVs in order', () => {
-    expect(Array.from(geometryToVideoUvs(geometry, true))).toEqual([
+    expect(Array.from(geometryToVideoUvs(geometry, { mirrored: true }))).toEqual([
       1, 1,
       0, 1,
       0, 0,
       1, 0,
+    ]);
+  });
+
+  it('converts vertices to video UVs with the visible cover crop applied', () => {
+    expect(Array.from(geometryToVideoUvs(geometry, {
+      mirrored: false,
+      viewport: { width: 3200, height: 900 },
+      video: { width: 1600, height: 900 },
+    }))).toEqual([
+      0, 0.75,
+      1, 0.75,
+      1, 0.25,
+      0, 0.25,
     ]);
   });
 

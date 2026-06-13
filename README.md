@@ -76,6 +76,8 @@ MediaPipe wasm files are copied from `node_modules/@mediapipe/tasks-vision/wasm`
 - `docs/analysis/cad0446-real-device-video-comparison.zh-CN.md`
 - `docs/analysis/e79f74f-real-device-vertical-comparison.md`
 - `docs/analysis/e79f74f-real-device-vertical-comparison.zh-CN.md`
+- `docs/analysis/c9076f2-real-device-reference-comparison.md`
+- `docs/analysis/c9076f2-real-device-reference-comparison.zh-CN.md`
 - `docs/product/requirements-and-business-logic.md`
 - `docs/product/requirements-and-business-logic.zh-CN.md`
 - `docs/product/prototype-directions.md`
