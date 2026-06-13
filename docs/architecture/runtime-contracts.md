@@ -107,6 +107,13 @@ export type LightSheetRenderInput = {
 };
 ```
 
+坐标映射约束：
+
+- 可见几何使用 `display-space`，其中 `y = 0` 表示画面顶部，`y = 1` 表示画面底部。
+- WebGL 顶点位置转换使用 `clipY = 1 - displayY * 2`。
+- Three.js 视频纹理采样使用 `videoV = 1 - displayY`。
+- 水平镜像只影响 `x` 方向；不得把水平镜像修复和垂直 UV 翻转混在同一职责里。
+
 ## 4. 样式扩展契约
 
 新增光片样式只允许通过 `LightSheetStylePreset` 接入。不能在 renderer 中写 `if style === 'newStyle'` 的分支来堆功能。

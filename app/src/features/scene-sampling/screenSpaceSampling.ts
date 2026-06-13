@@ -13,7 +13,7 @@ export function toVideoUv(point: NormalizedPoint, mirrored: boolean): VideoUv {
 
   return {
     u: mirrored ? 1 - x : x,
-    v: y,
+    v: 1 - y,
   };
 }
 
