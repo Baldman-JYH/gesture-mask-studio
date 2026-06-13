@@ -492,3 +492,10 @@ English version: [progress.md](progress.md)
 ### 三维效果状态
 - 当前运行时仍然是扁平的屏幕空间光片。
 - 指尖锚定三维模板行为已经作为 ADR-0002 记录，应该作为下一阶段架构能力实现，不应混入本次收敛的 UV bug 修复。
+
+### 提交与部署
+- Commit：`d6c8f95 fix: correct vertical video sampling`。
+- GitHub Actions run：`27463350449`。
+- build job：success。
+- deploy job：success。
+- GitHub 仍然报告第三方 action 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功完成。

@@ -733,3 +733,10 @@
 ### 3D Status
 - The current runtime is still a flat screen-space light sheet.
 - Fingertip-anchored 3D template behavior is intentionally tracked as ADR-0002 and should be implemented as the next architectural stage, not as part of this narrow UV bug fix.
+
+### Commit And Deployment
+- Commit: `d6c8f95 fix: correct vertical video sampling`.
+- GitHub Actions run: `27463350449`.
+- build job: success.
+- deploy job: success.
+- GitHub still reports the known Node.js 20 deprecation annotation for third-party actions, but the workflow forced Node.js 24 and completed successfully.
