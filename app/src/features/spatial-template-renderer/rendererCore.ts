@@ -59,12 +59,20 @@ export function spatialTemplateToBufferData(
 }
 
 export function materialIdToIndex(materialId: SpatialTemplateMaterialId): number {
-  if (materialId === 'accent') {
+  if (materialId === 'panel') {
     return 1;
   }
 
-  if (materialId === 'edge') {
+  if (materialId === 'back') {
     return 2;
+  }
+
+  if (materialId === 'accent') {
+    return 3;
+  }
+
+  if (materialId === 'edge') {
+    return 4;
   }
 
   return 0;

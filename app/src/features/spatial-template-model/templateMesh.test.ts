@@ -50,23 +50,28 @@ describe('buildSpatialTemplateMesh', () => {
     expect(mesh.faces).toHaveLength(0);
   });
 
-  it('builds a one-hand triangular prism with multiple material faces', () => {
+  it('builds a one-hand folded rectangular 3D template, not a triangle', () => {
     const mesh = buildSpatialTemplateMesh(oneHandFrame);
+    const materialIds = Array.from(new Set(mesh.faces.map((face) => face.materialId)));
+    const zLevels = uniqueZLevels(mesh);
 
-    expect(mesh.mode).toBe('one-hand-wedge');
-    expect(mesh.vertices).toHaveLength(6);
-    expect(mesh.faces.some((face) => face.materialId === 'scene')).toBe(true);
-    expect(mesh.faces.some((face) => face.materialId === 'edge')).toBe(true);
+    expect(mesh.mode).toBe('one-hand-template');
+    expect(mesh.vertices.length).toBeGreaterThanOrEqual(12);
+    expect(mesh.faces.every((face) => face.indices.length === 4)).toBe(true);
+    expect(materialIds).toEqual(expect.arrayContaining(['scene', 'panel', 'back', 'edge']));
+    expect(zLevels.length).toBeGreaterThanOrEqual(3);
   });
 
-  it('builds a two-hand ribbon prism with front, back, and edge faces', () => {
+  it('builds a two-hand folded multi-face 3D template with distinct material groups', () => {
     const mesh = buildSpatialTemplateMesh(twoHandFrame);
+    const materialIds = Array.from(new Set(mesh.faces.map((face) => face.materialId)));
+    const zLevels = uniqueZLevels(mesh);
 
-    expect(mesh.mode).toBe('two-hand-ribbon');
-    expect(mesh.vertices).toHaveLength(8);
-    expect(mesh.faces).toHaveLength(6);
-    expect(mesh.faces[0].materialId).toBe('scene');
-    expect(mesh.faces[1].materialId).toBe('accent');
+    expect(mesh.mode).toBe('two-hand-template');
+    expect(mesh.vertices.length).toBeGreaterThan(8);
+    expect(mesh.faces.length).toBeGreaterThan(8);
+    expect(materialIds).toEqual(expect.arrayContaining(['scene', 'panel', 'back', 'accent', 'edge']));
+    expect(zLevels.length).toBeGreaterThanOrEqual(3);
   });
 
   it('keeps generated display-space sample points inside normalized bounds', () => {
@@ -80,3 +85,9 @@ describe('buildSpatialTemplateMesh', () => {
     }
   });
 });
+
+function uniqueZLevels(mesh: ReturnType<typeof buildSpatialTemplateMesh>): number[] {
+  return Array.from(
+    new Set(mesh.vertices.map((vertex) => Math.round((vertex.position.z ?? 0) * 1000) / 1000)),
+  );
+}

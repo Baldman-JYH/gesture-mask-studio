@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
-import { spatialTemplateToBufferData } from './rendererCore';
+import { materialIdToIndex, spatialTemplateToBufferData } from './rendererCore';
 
 const triangleMesh: SpatialTemplateMesh = {
-  mode: 'one-hand-wedge',
+  mode: 'one-hand-template',
   opacity: 0.8,
   confidence: 0.9,
   vertices: [
@@ -15,7 +15,7 @@ const triangleMesh: SpatialTemplateMesh = {
 };
 
 const quadMesh: SpatialTemplateMesh = {
-  mode: 'two-hand-ribbon',
+  mode: 'two-hand-template',
   opacity: 0.8,
   confidence: 0.9,
   vertices: [
@@ -24,7 +24,7 @@ const quadMesh: SpatialTemplateMesh = {
     { position: { x: 0.75, y: 0.6, z: 0.03 }, samplePoint: { x: 0.75, y: 0.6 } },
     { position: { x: 0.25, y: 0.6, z: 0.03 }, samplePoint: { x: 0.25, y: 0.6 } },
   ],
-  faces: [{ indices: [0, 1, 2, 3], materialId: 'accent' }],
+  faces: [{ indices: [0, 1, 2, 3], materialId: 'panel' }],
 };
 
 describe('spatialTemplateToBufferData', () => {
@@ -51,5 +51,13 @@ describe('spatialTemplateToBufferData', () => {
 
     expect(Array.from(data.indices)).toEqual([0, 1, 2, 0, 2, 3]);
     expect(data.groups[0]).toEqual({ start: 0, count: 6, materialIndex: 1 });
+  });
+
+  it('maps spatial template material ids to stable renderer material slots', () => {
+    expect(materialIdToIndex('scene')).toBe(0);
+    expect(materialIdToIndex('panel')).toBe(1);
+    expect(materialIdToIndex('back')).toBe(2);
+    expect(materialIdToIndex('accent')).toBe(3);
+    expect(materialIdToIndex('edge')).toBe(4);
   });
 });

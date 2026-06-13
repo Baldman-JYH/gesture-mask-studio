@@ -62,7 +62,7 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 1200,
     });
 
-    expect(input.mesh.mode).toBe('one-hand-wedge');
+    expect(input.mesh.mode).toBe('one-hand-template');
     expect(input.scene.viewport).toEqual({ width: 640, height: 360 });
     expect(input.timestampMs).toBe(1200);
   });
@@ -76,7 +76,19 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 1600,
     });
 
-    expect(input.mesh.mode).toBe('two-hand-ribbon');
+    expect(input.mesh.mode).toBe('two-hand-template');
     expect(input.scene.mirrored).toBe(false);
+  });
+
+  it('collapses duplicate hand detections before building render input', () => {
+    const input = createSpatialTemplateRenderInput({
+      displayHands: [hand('primary', 0.42, 0.52), hand('duplicate', 0.445, 0.535)],
+      video: video(),
+      mirrored: true,
+      style,
+      timestampMs: 1800,
+    });
+
+    expect(input.mesh.mode).toBe('one-hand-template');
   });
 });

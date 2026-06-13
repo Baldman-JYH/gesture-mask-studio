@@ -73,6 +73,15 @@ describe('deriveLightSheetGestureState', () => {
     expect(state.anchors.right).toBeUndefined();
   });
 
+  it('does not enter two-hand mode for duplicate detections from one physical hand', () => {
+    const state = deriveLightSheetGestureState({
+      hands: [hand('primary', 0.42, 0.52), hand('duplicate', 0.445, 0.535, 0.7)],
+    });
+
+    expect(state.mode).toBe('hidden');
+    expect(state.anchors.right).toBeUndefined();
+  });
+
   it('hides the sheet when no hands are available', () => {
     const state = deriveLightSheetGestureState({
       hands: [],

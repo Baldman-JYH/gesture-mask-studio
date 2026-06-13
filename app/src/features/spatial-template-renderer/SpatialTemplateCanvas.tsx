@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import {
-  AdditiveBlending,
   BufferAttribute,
   BufferGeometry,
   DoubleSide,
@@ -25,7 +24,13 @@ type RendererRefs = {
   scene: Scene;
   camera: PerspectiveCamera;
   geometry: BufferGeometry;
-  materials: [MeshBasicMaterial, MeshBasicMaterial, MeshBasicMaterial];
+  materials: [
+    MeshBasicMaterial,
+    MeshBasicMaterial,
+    MeshBasicMaterial,
+    MeshBasicMaterial,
+    MeshBasicMaterial,
+  ];
   mesh: Mesh;
   texture: VideoTexture | null;
   video: HTMLVideoElement | null;
@@ -94,27 +99,36 @@ function createRendererRefs(): RendererRefs {
   camera.lookAt(0, 0, 0);
 
   const geometry = new BufferGeometry();
-  const materials: [MeshBasicMaterial, MeshBasicMaterial, MeshBasicMaterial] = [
+  const materials: RendererRefs['materials'] = [
     new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
       side: DoubleSide,
-      blending: AdditiveBlending,
     }),
     new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
       side: DoubleSide,
-      blending: AdditiveBlending,
     }),
     new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
       side: DoubleSide,
-      blending: AdditiveBlending,
+    }),
+    new MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
+    new MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: DoubleSide,
     }),
   ];
   const mesh = new Mesh(geometry, materials);
@@ -194,21 +208,31 @@ function updateMaterials(refs: RendererRefs, renderInput: SpatialTemplateRenderI
   const tint = hexToNumber(renderInput.style.sceneSample.tint);
   const edge = hexToNumber(renderInput.style.edgeColor);
   const opacity = renderInput.style.opacity * renderInput.mesh.opacity;
-  const [sceneMaterial, accentMaterial, edgeMaterial] = refs.materials;
+  const [sceneMaterial, panelMaterial, backMaterial, accentMaterial, edgeMaterial] = refs.materials;
 
   sceneMaterial.map = refs.texture;
   sceneMaterial.color.setHex(tint);
-  sceneMaterial.opacity = opacity * Math.max(0.35, renderInput.style.sceneSample.intensity);
+  sceneMaterial.opacity = opacity * Math.max(0.42, renderInput.style.sceneSample.intensity * 0.72);
   sceneMaterial.needsUpdate = true;
 
+  panelMaterial.map = null;
+  panelMaterial.color.setHex(tint);
+  panelMaterial.opacity = opacity * 0.34;
+  panelMaterial.needsUpdate = true;
+
+  backMaterial.map = null;
+  backMaterial.color.setHex(0x10242c);
+  backMaterial.opacity = opacity * 0.5;
+  backMaterial.needsUpdate = true;
+
   accentMaterial.map = null;
-  accentMaterial.color.setHex(edge);
-  accentMaterial.opacity = opacity * 0.32;
+  accentMaterial.color.setHex(mixRgb(tint, edge, 0.55));
+  accentMaterial.opacity = opacity * 0.48;
   accentMaterial.needsUpdate = true;
 
   edgeMaterial.map = null;
   edgeMaterial.color.setHex(edge);
-  edgeMaterial.opacity = opacity * 0.46;
+  edgeMaterial.opacity = opacity * 0.78;
   edgeMaterial.needsUpdate = true;
 }
 
@@ -234,4 +258,14 @@ function hexToNumber(hex: string): number {
   }
 
   return Number.parseInt(value, 16);
+}
+
+function mixRgb(left: number, right: number, amount: number): number {
+  const mixChannel = (shift: number) => {
+    const leftChannel = (left >> shift) & 0xff;
+    const rightChannel = (right >> shift) & 0xff;
+    return Math.round(leftChannel + (rightChannel - leftChannel) * amount);
+  };
+
+  return (mixChannel(16) << 16) + (mixChannel(8) << 8) + mixChannel(0);
 }

@@ -675,3 +675,76 @@ English version: [progress.md](progress.md)
 - 远程分支：`origin/feat/spatial-template-mvp`。
 - PR 创建地址：`https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/feat/spatial-template-mvp`。
 - Pull request：`https://github.com/Baldman-JYH/gesture-mask-studio/pull/1`。
+
+## 2026-06-13 20:10
+
+### 部署后验证方案
+- 用户反馈 PR #1 和 GitHub Pages workflow 已完成。
+- 下一步验证必须以真实设备为主，因为本地自动化无法验证摄像头追踪、手部深度和主观三维运动效果。
+- 验证地址应使用 workflow 输出的 GitHub Pages 部署地址，通常是 `https://baldman-jyh.github.io/gesture-mask-studio/`。
+- 测试前使用 cache-busting 参数，例如 `?v=spatial-template-mvp-20260613-2010`。
+
+### 需要采集的证据
+- 启动摄像头后的浏览器控制台截图。
+- 覆盖以下场景的真实设备短录屏：
+  - 无手；
+  - 单手；
+  - 双手；
+  - 左/右/上/下移动；
+  - 前后远近移动；
+  - Mirror 开/关。
+- 如果出现缺陷，将录屏保存到 `测试记录/基于提交 <deployed-commit>测试/`，并附带控制台日志。
+
+## 2026-06-13 20:43
+
+### 真实设备逐帧分析
+- 已对部署提交 `4dd3d98105b96f39726dcd1d0bace974fb540511` 的验证录屏与新版 `参考视频.mp4` 进行对比。
+- FFmpeg 抽帧证据已生成在 `测试记录/基于提交 4dd3d98105b96f39726dcd1d0bace974fb540511测试/ffmpeg逐帧分析/`。
+- 输入摘要：
+  - 真实设备录屏：1912x932，30fps，191.34 秒，5736 帧；
+  - 参考视频：1226x686，30fps，24.58 秒，736 帧。
+- 新增双语分析文档：
+  - `docs/analysis/4dd3d-real-device-3d-template-gap.md`
+  - `docs/analysis/4dd3d-real-device-3d-template-gap.zh-CN.md`
+
+### 决策
+- 当前技术栈仍然可行：browser + MediaPipe Hands + Three.js + GitHub Pages 可以实现参考视频这一类实时三维模板效果。
+- 当前实现仍然过于扁平：它主要是薄棱柱/薄片，视觉上更像半透明覆盖层，不像折叠的三维模型。
+- 一个物理手显示为 `2 hands` 的直接原因是 UI 使用了原始 detector 数量，没有先进行重复手过滤，也没有从过滤后的 gesture anchor frame 派生状态。
+
+### 下一步
+- 先补充失败测试，覆盖重复手收敛与非扁平多面体模板 mesh。
+- 然后更新 gesture anchor frame、spatial template model、renderer material groups 和顶部状态手数来源。
+
+### TDD RED 证据
+- 已新增失败测试，覆盖重复物理手检测、可用锚点手数、单手折叠模板形态、双手折叠模板形态、稳定材质槽，以及构建 render input 前的重复手过滤。
+- 目标测试命令：
+  - `npm test -- src/features/gesture-anchor-frame/anchorFrame.test.ts src/features/gesture-engine/gestureState.test.ts src/features/spatial-template-model/templateMesh.test.ts src/features/spatial-template-renderer/rendererCore.test.ts src/features/spatial-template-renderer/renderInput.test.ts`
+- RED 结果：5 个测试文件按预期失败，共 10 个断言失败，失败点均对应尚未实现的目标行为。
+
+### GREEN 实现
+- 在 `deriveGestureAnchorFrame` 中新增重复手过滤，针对同一物理手的重叠检测保留最高置信度结果。
+- 新增 `getGestureAnchorHandCount`，并将 `CameraStage` 顶部状态手数来源改为过滤后的 anchor frame，而不是原始 MediaPipe 检测数量。
+- 旧的 gesture-state 自动样式选择也复用过滤后的 anchor frame，避免重复检测进入双手模式。
+- 将单手三角形/楔形几何替换为折叠矩形 `one-hand-template`。
+- 将扁平双手 ribbon prism 替换为折叠多面 `two-hand-template`。
+- 将 spatial template 材质 id 和 renderer slot 扩展为 `scene`、`panel`、`back`、`accent`、`edge`。
+- 目标 GREEN 结果：5 个测试文件通过，21 个测试通过。
+
+### 验证结果
+- 完整测试：`npm test` 通过，共 14 个测试文件、47 个测试。
+- 生产构建：`npm run build` 通过。
+- 文档配对检查：`docs/**/*.md` 与 `docs/**/*.zh-CN.md` 配对通过。
+- `git diff --check`：通过；仅报告 Windows 换行提示。
+- 浏览器烟测：
+  - 本地 Vite dev server 在 `http://127.0.0.1:5174/gesture-mask-studio/` 返回 HTTP 200；
+  - Playwright 内置 Chromium 未安装，因此使用本机 Edge/Chromium 通道完成 smoke；
+  - 页面标题为 `Gesture Mask Studio`；
+  - 主标题、`Start camera`、`Mirror` 控件可见；
+  - 首次加载 console error：无。
+
+### 已补充验证方案
+- 已在以下文件新增三维空间模板专项验证：
+  - `docs/verification/verification-plan.md`
+  - `docs/verification/verification-plan.zh-CN.md`
+- 真实设备通过标准已明确覆盖：误显示 `2 hands`、单手折叠矩形几何、双手多面几何、边缘可见性、透视/深度运动，以及无 WebGL shader error。
