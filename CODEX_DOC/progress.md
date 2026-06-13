@@ -320,3 +320,24 @@
 ### Next
 - Commit Task 3.
 - Start Task 4 camera, hand tracking adapter, scene sampling, and renderer core.
+
+## 2026-06-13 14:25
+
+### Completed
+- Completed Task 4 camera, hand tracking adapter, scene sampling, and renderer core.
+- Verified TDD RED:
+  - camera test failed because `cameraController.ts` did not exist.
+  - scene sampling test failed because `screenSpaceSampling.ts` did not exist.
+  - renderer core test failed because `rendererCore.ts` did not exist.
+- Added camera permission/state controller with injectable `getUserMedia`.
+- Added MediaPipe HandLandmarker adapter that emits only canonical `TrackedHand` values.
+- Added screen-space to video UV sampling helpers, including mirrored sampling.
+- Added Three.js renderer core helpers and `LightSheetCanvas` for realtime video-texture sampling.
+- Verification:
+  - targeted Task 4 tests: 9 tests passed.
+  - `npm test`: 21 tests passed.
+  - `npm run build`: production build passed.
+
+### Next
+- Commit Task 4.
+- Start Task 5 camera stage UI, GitHub Pages workflow, browser verification, and final review.
