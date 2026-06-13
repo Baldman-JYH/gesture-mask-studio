@@ -51,7 +51,7 @@ export type TrackedHand = {
 - 视频纹理采样必须使用 `video-uv-space`。
 - `display-space` 的 `y = 0` 表示可见画面顶部，`y = 1` 表示可见画面底部。
 - WebGL 顶点位置使用 `clipY = 1 - displayY * 2`。
-- Three.js 视频纹理采样使用 `videoV = 1 - displayY`。
+- Three.js 视频纹理采样必须先按可见 `<video>` 的 `object-fit: cover` 尺寸反算源视频坐标，再使用 `videoV = 1 - sourceY`。
 - 水平镜像只影响 `x` 方向，不得把水平镜像规则和垂直视频 UV 翻转混入同一个隐式公式。
 - `features/coordinate-space` 不得依赖 DOM、React、Three.js 或 MediaPipe 类型。
 - 坐标转换不得修改输入的 tracking 结果。
@@ -61,7 +61,6 @@ export type TrackedHand = {
 ```ts
 export type LightSheetMode =
   | 'hidden'
-  | 'one-hand-preview'
   | 'two-hand-sheet'
   | 'fade-out';
 ```
@@ -69,9 +68,9 @@ export type LightSheetMode =
 说明：
 
 - `hidden`：不显示光片。
-- `one-hand-preview`：只有一只手时的预览状态。
 - `two-hand-sheet`：双手之间的完整光片。
 - `fade-out`：手势丢失后的淡出状态。
+- 当前二维实现中，零只或一只手都必须输出 `hidden`。
 
 ## 光片几何
 

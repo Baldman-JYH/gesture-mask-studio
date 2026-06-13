@@ -7,15 +7,8 @@ type TwoHandGeometryInput = {
   confidence: number;
 };
 
-type OneHandGeometryInput = {
-  anchor: NormalizedPoint;
-  openness: number;
-  confidence: number;
-};
-
 const MIN_TWO_HAND_THICKNESS = 0.055;
 const MAX_TWO_HAND_THICKNESS = 0.18;
-const ONE_HAND_PREVIEW_RADIUS = 0.11;
 
 export function clampNormalizedPoint(point: NormalizedPoint): NormalizedPoint {
   return {
@@ -49,22 +42,6 @@ export function buildTwoHandLightSheetGeometry(input: TwoHandGeometryInput): Lig
     mode: 'two-hand-sheet',
     vertices,
     opacity: lerp(0.74, 0.9, clamp01(input.confidence)),
-    confidence: clamp01(input.confidence),
-  };
-}
-
-export function buildOneHandPreviewGeometry(input: OneHandGeometryInput): LightSheetGeometry {
-  const anchor = clampNormalizedPoint(input.anchor);
-  const radius = lerp(ONE_HAND_PREVIEW_RADIUS * 0.6, ONE_HAND_PREVIEW_RADIUS, clamp01(input.openness));
-
-  return {
-    mode: 'one-hand-preview',
-    vertices: [
-      clampNormalizedPoint({ x: anchor.x, y: anchor.y - radius }),
-      clampNormalizedPoint({ x: anchor.x + radius * 1.2, y: anchor.y + radius * 0.8 }),
-      clampNormalizedPoint({ x: anchor.x - radius * 1.2, y: anchor.y + radius * 0.8 }),
-    ],
-    opacity: lerp(0.48, 0.72, clamp01(input.confidence)),
     confidence: clamp01(input.confidence),
   };
 }

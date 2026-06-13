@@ -131,7 +131,7 @@ interface TrackedHand {
 职责：
 
 - 将手部关键点转换为业务手势状态。
-- 判断一只手预览、双手面片、丢失淡出、自动切换纹理等状态。
+- 判断双手面片、单手隐藏、丢失淡出、自动切换纹理等状态。
 - 在未提供调试/手动覆盖时，根据手势开合度输出当前 `stylePresetId`。
 - 对关键点做平滑处理。
 
@@ -139,7 +139,7 @@ interface TrackedHand {
 
 ```ts
 interface LightSheetGestureState {
-  mode: 'hidden' | 'one-hand-preview' | 'two-hand-sheet' | 'fade-out';
+  mode: 'hidden' | 'two-hand-sheet' | 'fade-out';
   confidence: number;
   stylePresetId: 'blueprint' | 'cards' | 'organic';
   anchors: {
@@ -156,7 +156,7 @@ interface LightSheetGestureState {
 职责：
 
 - 将实时摄像头帧作为 WebGL video texture 输入。
-- 在光片 shader 中按屏幕坐标采样后方视频画面。
+- 在光片 shader 中按屏幕坐标采样后方视频画面，并按可见 `<video>` 的 `object-fit: cover` 裁剪映射反算视频 UV。
 - 让光片覆盖到脸、手、衣服、窗帘、植物等区域时，这些内容都能在光片内部被重新渲染。
 - 提供不同采样模式：原始采样、亮度映射、边缘线稿、色彩分级。
 
@@ -271,6 +271,6 @@ bottomLeft - bottomRight
 4. 手部识别层：接入 MediaPipe，显示调试关键点。
 5. 场景采样层：实现 WebGL 视频采样，让光片内部能重新渲染后方实时画面。
 6. 光片渲染层：实现 WebGL 动态几何、样式纹理和 shader 合成。
-7. 手势业务层：实现双手拉伸、单手预览、丢失淡出。
+7. 手势业务层：实现双手拉伸、单手隐藏、丢失淡出。
 8. 视觉打磨：边缘高光、透明度、三种纹理、蓝图线稿化。
 9. 部署验证：GitHub Pages HTTPS 摄像头访问测试。

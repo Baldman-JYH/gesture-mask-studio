@@ -69,7 +69,6 @@ export type TrackedHand = {
 
 export type LightSheetMode =
   | 'hidden'
-  | 'one-hand-preview'
   | 'two-hand-sheet'
   | 'fade-out';
 
@@ -111,8 +110,9 @@ export type LightSheetRenderInput = {
 
 - 可见几何使用 `display-space`，其中 `y = 0` 表示画面顶部，`y = 1` 表示画面底部。
 - WebGL 顶点位置转换使用 `clipY = 1 - displayY * 2`。
-- Three.js 视频纹理采样使用 `videoV = 1 - displayY`。
+- Three.js 视频纹理采样必须先按可见 `<video>` 的 `object-fit: cover` 尺寸反算源视频坐标，再使用 `videoV = 1 - sourceY`。
 - 水平镜像只影响 `x` 方向；不得把水平镜像修复和垂直 UV 翻转混在同一职责里。
+- 当前二维光片只在双手确认时渲染；零只或一只手必须输出 `hidden`。
 
 ## 4. 样式扩展契约
 

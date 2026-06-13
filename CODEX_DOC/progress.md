@@ -740,3 +740,66 @@
 - build job: success.
 - deploy job: success.
 - GitHub still reports the known Node.js 20 deprecation annotation for third-party actions, but the workflow forced Node.js 24 and completed successfully.
+
+## 2026-06-13 18:08
+
+### Completed
+- Started systematic debugging for the real-device validation based on commit `c9076f2f94c8c8117356d2ea8186bccc6f1c46f1`.
+- Confirmed input videos:
+  - latest real-device recording: 1896x762, 30fps, 116.31s, 3485 video frames;
+  - refreshed reference video: 1226x686, 30fps, 24.58s, 736 video frames.
+- Extracted FFmpeg evidence under `assets/analysis/c9076f2-real-device-offset-comparison/`:
+  - 117 continuous 1fps frames from the latest real-device recording;
+  - three 4fps real-device segment contact sheets;
+  - 50 continuous 2fps frames from the refreshed reference video;
+  - one 4fps reference-video contact sheet.
+
+### Next
+- Compare the extracted evidence to classify:
+  - whether one-hand rendering is a bug or an intended preview state;
+  - whether the remaining offset is a coordinate-space/layout mismatch;
+  - how the refreshed reference video differs from the current flat light-sheet implementation.
+
+### Findings
+- The refreshed reference video shows a hand-anchored 3D template with perspective, multi-face material changes, folding, and fingertip-driven movement.
+- The current implementation remains a flat 2D screen-space light sheet, so it can only approximate live sampling, not the full reference behavior.
+- In the latest real-device test, vertical inversion is fixed.
+- The remaining visible offset is consistent with `object-fit: cover`: the visible camera preview is cropped/scaled by CSS, while WebGL was sampling the full camera texture directly.
+- The one-hand preview was an early prototype behavior. For the current deployed 2D light sheet, one hand should not render a sheet.
+
+### TDD Evidence
+- RED:
+  - `toVideoUv` object-fit cover tests failed because UV mapping ignored viewport/video dimensions.
+  - renderer UV tests failed because renderer still passed only `mirrored`.
+  - one-hand gesture test failed because one hand still entered `one-hand-preview`.
+- GREEN:
+  - implemented cover-aware video UV mapping;
+  - passed viewport/video dimensions from `LightSheetCanvas` into renderer UV generation;
+  - changed one-hand gesture state to `hidden`;
+  - targeted tests passed: 3 test files, 14 tests.
+
+### Refactor After Green
+- Removed the unused current-runtime `one-hand-preview` mode and one-hand geometry builder from the 2D implementation.
+- Kept the current deployed behavior explicit: only two confirmed hands render a 2D light sheet; zero or one hand renders hidden geometry.
+- Related target tests passed: 4 test files, 17 tests.
+
+### Verification Results
+- Full test suite: 10 test files passed, 31 tests passed.
+- Production build: passed.
+- Bilingual documentation pairing check: passed.
+- Current runtime/code docs no longer reference `one-hand-preview`.
+- `git diff --check`: no whitespace errors; only Windows line-ending warnings.
+- Local browser smoke on `http://127.0.0.1:5174/gesture-mask-studio/`:
+  - page title: `Gesture Mask Studio`;
+  - heading text: `Gesture Mask Studio`;
+  - Start camera button visible;
+  - Mirror icon button present with `aria-pressed="true"`;
+  - console error logs: 0.
+
+### Real-Device Verification Plan
+- Hard refresh the deployed GitHub Pages URL after the next deployment.
+- With one visible hand only, confirm no camera-area light sheet renders.
+- With two visible hands, confirm the light sheet renders.
+- Use a recognizable background marker and check that sampled content inside the sheet overlaps the visible background more closely than commit `c9076f2`.
+- Repeat with Mirror enabled and disabled.
+- Confirm the console has no `THREE.WebGLProgram: Shader Error`.

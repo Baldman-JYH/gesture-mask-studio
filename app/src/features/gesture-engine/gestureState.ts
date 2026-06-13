@@ -21,17 +21,8 @@ export function deriveLightSheetGestureState(
 ): LightSheetGestureState {
   const trackedHands = input.hands.filter((hand) => hand.confidence > 0.2);
 
-  if (trackedHands.length === 0) {
-    const stylePresetId = getResolvedStylePresetId(input.requestedPresetId, []);
-
-    return {
-      mode: 'hidden',
-      confidence: 0,
-      stylePresetId,
-      anchors: { left: { x: 0.5, y: 0.5 } },
-      openness: 0,
-      rotation: 0,
-    };
+  if (trackedHands.length < 2) {
+    return createHiddenGestureState(input.requestedPresetId);
   }
 
   const anchors = trackedHands.map((hand) => ({
@@ -45,17 +36,6 @@ export function deriveLightSheetGestureState(
   );
 
   anchors.sort((a, b) => a.anchor.x - b.anchor.x);
-
-  if (anchors.length === 1) {
-    return {
-      mode: 'one-hand-preview',
-      confidence: anchors[0].hand.confidence,
-      stylePresetId,
-      anchors: { left: anchors[0].anchor },
-      openness: anchors[0].openness,
-      rotation: 0,
-    };
-  }
 
   const left = anchors[0];
   const right = anchors[anchors.length - 1];
@@ -94,6 +74,17 @@ function getHandOpenness(hand: TrackedHand): number {
 
   const distance = Math.hypot(index.x - thumb.x, index.y - thumb.y);
   return clamp01(distance / 0.18);
+}
+
+function createHiddenGestureState(requestedPresetId: string | undefined): LightSheetGestureState {
+  return {
+    mode: 'hidden',
+    confidence: 0,
+    stylePresetId: getResolvedStylePresetId(requestedPresetId, []),
+    anchors: { left: { x: 0.5, y: 0.5 } },
+    openness: 0,
+    rotation: 0,
+  };
 }
 
 function getResolvedStylePresetId(

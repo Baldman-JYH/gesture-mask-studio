@@ -1,5 +1,5 @@
 import type { LightSheetGeometry, NormalizedPoint } from '../../shared/runtime/types';
-import { toVideoUv } from '../scene-sampling/screenSpaceSampling';
+import { toVideoUv, type VideoUvMapping } from '../scene-sampling/screenSpaceSampling';
 
 export function geometryToPositions(geometry: LightSheetGeometry): Float32Array {
   const vertices = getRenderableVertices(geometry);
@@ -16,13 +16,13 @@ export function geometryToPositions(geometry: LightSheetGeometry): Float32Array 
 
 export function geometryToVideoUvs(
   geometry: LightSheetGeometry,
-  mirrored: boolean,
+  mapping: VideoUvMapping,
 ): Float32Array {
   const vertices = getRenderableVertices(geometry);
   const uvs = new Float32Array(vertices.length * 2);
 
   vertices.forEach((vertex, index) => {
-    const uv = toVideoUv(vertex, mirrored);
+    const uv = toVideoUv(vertex, mapping);
     uvs[index * 2] = uv.u;
     uvs[index * 2 + 1] = uv.v;
   });

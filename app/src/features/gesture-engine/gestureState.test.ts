@@ -62,13 +62,14 @@ describe('deriveLightSheetGestureState', () => {
     expect(state.anchors.left.x).toBeLessThan(state.anchors.right?.x ?? 0);
   });
 
-  it('uses one hand to enter one-hand-preview mode', () => {
+  it('hides the sheet when only one hand is available', () => {
     const state = deriveLightSheetGestureState({
       hands: [hand('single', 0.4, 0.5)],
       requestedPresetId: 'organic',
     });
 
-    expect(state.mode).toBe('one-hand-preview');
+    expect(state.mode).toBe('hidden');
+    expect(state.confidence).toBe(0);
     expect(state.anchors.right).toBeUndefined();
   });
 

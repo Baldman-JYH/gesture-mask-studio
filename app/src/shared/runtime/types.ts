@@ -11,7 +11,7 @@ export type TrackedHand = {
   landmarks: NormalizedPoint[];
 };
 
-export type LightSheetMode = 'hidden' | 'one-hand-preview' | 'two-hand-sheet' | 'fade-out';
+export type LightSheetMode = 'hidden' | 'two-hand-sheet' | 'fade-out';
 
 export type LightSheetGeometry = {
   mode: LightSheetMode;

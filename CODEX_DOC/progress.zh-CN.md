@@ -499,3 +499,66 @@ English version: [progress.md](progress.md)
 - build job：success。
 - deploy job：success。
 - GitHub 仍然报告第三方 action 的 Node.js 20 deprecation annotation，但 workflow 已强制使用 Node.js 24，并且本次运行成功完成。
+
+## 2026-06-13 18:08
+
+### 已完成
+- 开始对基于提交 `c9076f2f94c8c8117356d2ea8186bccc6f1c46f1` 的真实设备验证进行系统化调试。
+- 确认输入视频：
+  - 最新真实设备录屏：1896x762，30fps，116.31 秒，3485 个视频帧；
+  - 新参考视频：1226x686，30fps，24.58 秒，736 个视频帧。
+- 使用 FFmpeg 在 `assets/analysis/c9076f2-real-device-offset-comparison/` 下抽取证据：
+  - 最新真实设备录屏 117 张 1fps 连续帧；
+  - 3 张真实设备 4fps 分段拼图；
+  - 新参考视频 50 张 2fps 连续帧；
+  - 1 张参考视频 4fps 总览拼图。
+
+### 下一步
+- 对比抽帧证据并分类：
+  - 单手出现光片是 bug 还是预览态；
+  - 剩余偏移是否属于坐标空间/布局映射问题；
+  - 新参考视频与当前扁平光片实现的差异。
+
+### 发现
+- 新参考视频展示的是手指锚定三维模板，包含透视、多面材质变化、折叠和指尖驱动移动。
+- 当前实现仍然是扁平二维屏幕空间光片，只能近似实时采样，无法完整复现参考视频行为。
+- 最新真实设备测试中，上下颠倒问题已经修正。
+- 当前剩余的可见偏移符合 `object-fit: cover` 根因：可见摄像头预览被 CSS 裁剪/缩放，但 WebGL 仍按完整摄像头纹理直接采样。
+- 单手预览是早期原型行为。对于当前部署的二维光片，一只手不应渲染光片。
+
+### TDD 证据
+- RED：
+  - `toVideoUv` 的 object-fit cover 测试失败，因为 UV 映射没有使用 viewport/video 尺寸；
+  - renderer UV 测试失败，因为 renderer 仍然只传入 `mirrored`；
+  - 单手手势测试失败，因为一只手仍然进入 `one-hand-preview`。
+- GREEN：
+  - 实现 cover-aware 视频 UV 映射；
+  - 从 `LightSheetCanvas` 向 renderer UV 生成传入 viewport/video 尺寸；
+  - 将单手手势状态改为 `hidden`；
+  - 目标测试通过：3 个测试文件，14 个测试通过。
+
+### GREEN 后重构
+- 从当前二维运行时中移除未使用的 `one-hand-preview` 模式和单手几何构造器。
+- 明确当前部署行为：只有确认到两只手时才渲染二维光片；零只或一只手都渲染隐藏几何。
+- 相关目标测试通过：4 个测试文件，17 个测试通过。
+
+### 验证结果
+- 完整测试：10 个测试文件通过，31 个测试通过。
+- 生产构建：通过。
+- 中英文文档配对检查：通过。
+- 当前运行时代码/文档不再引用 `one-hand-preview`。
+- `git diff --check`：无空白错误；只有 Windows 换行提示。
+- 本地浏览器 smoke，地址 `http://127.0.0.1:5174/gesture-mask-studio/`：
+  - 页面标题：`Gesture Mask Studio`；
+  - 一级标题：`Gesture Mask Studio`；
+  - `Start camera` 按钮可见；
+  - Mirror 图标按钮存在，且 `aria-pressed="true"`；
+  - console error 日志：0。
+
+### 真实设备验证方案
+- 下一次部署完成后，强制刷新 GitHub Pages 页面。
+- 只有一只手可见时，确认摄像头区域不渲染光片。
+- 两只手可见时，确认光片渲染。
+- 使用易识别背景标记，检查光片内部采样内容比提交 `c9076f2` 更接近可见背景位置。
+- Mirror 开启和关闭都重复验证。
+- 确认控制台没有 `THREE.WebGLProgram: Shader Error`。
