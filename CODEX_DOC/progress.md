@@ -149,3 +149,28 @@
 ### Ready For Next Phase
 - User should choose a prototype direction before implementation.
 - Recommended direction: `prototype-01-immersive-stage.png`.
+
+## 2026-06-13 13:55
+
+### Completed
+- Re-reviewed representative video frames for the content inside the hand-driven sheet.
+- Corrected terminology:
+  - `mask` remains acceptable as the project name shorthand.
+  - The implementation target is more accurately a gesture-driven live-sampling light sheet.
+- Clarified the effect is not simple occlusion and not only face rendering:
+  - the light sheet must sample the live camera feed,
+  - all covered scene content should be re-rendered/stylized inside the sheet,
+  - face rendering is only one visible example.
+- Added `docs/architecture/adr-0001-realtime-scene-sampling-light-sheet.md`.
+- Updated `docs/analysis/video-effect-analysis.md`.
+- Updated `docs/architecture/technical-architecture.md` with `scene-sampling` and `light-sheet-renderer`.
+- Updated `docs/product/requirements-and-business-logic.md` with live scene sampling requirements.
+- Updated `README.md` with the new ADR.
+
+### Key Decision
+- Runtime implementation must continuously render a live composited camera view.
+- The light sheet material must combine dynamic geometry, live video sampling, style texture, edge extraction, tint, transparency, and highlights.
+- Future styles should be added through a `LightSheetStylePreset` contract instead of changing the core camera/tracking/rendering pipeline.
+
+### Next
+- Commit and push this corrected architecture decision.

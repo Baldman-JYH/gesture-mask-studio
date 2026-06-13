@@ -7,11 +7,14 @@
 - 前端框架：React + Vite + TypeScript。
 - 摄像头：浏览器 `navigator.mediaDevices.getUserMedia`。
 - 手部识别：MediaPipe Tasks Vision `HandLandmarker`。
+- 场景采样：将实时摄像头帧作为 WebGL video texture，在光片内部重新渲染被覆盖区域的实时画面。
 - 渲染：Three.js 或自定义 WebGL；首选 Three.js，降低开发复杂度。
 - 状态管理：React state + 小型 reducer；首版不引入大型状态库。
 - 部署：GitHub Pages，可行。
 
-这个方案不需要后端 GPU，也不需要 NVIDIA 推理服务。NVIDIA 相关能力可在后续做本地/云端高级视觉模型时再评估；当前目标用 MediaPipe WASM 更轻、更适合个人开发者部署。
+这个方案不需要后端 GPU，也不需要 NVIDIA 推理服务。NVIDIA 相关能力可在后续做本地/云端高级视觉模型时再评估；当前目标用 MediaPipe WASM 和 WebGL 视频采样更轻、更适合个人开发者部署。
+
+说明：`mask` 是项目名中的通俗叫法。更准确的技术对象是“手势驱动实时采样光片”，不是简单遮挡层。
 
 ## 2. 一页式应用结构
 
@@ -39,7 +42,8 @@ gesture-mask-studio/
       App.tsx
       features/camera/
       features/hand-tracking/
-      features/mask-renderer/
+      features/scene-sampling/
+      features/light-sheet-renderer/
       features/effects/
       components/
       styles/
@@ -55,9 +59,12 @@ flowchart LR
   A[Camera Stream] --> B[Video Element]
   B --> C[Frame Scheduler]
   C --> D[MediaPipe HandLandmarker]
+  C --> I[WebGL Video Texture Sampler]
   D --> E[Gesture State Reducer]
-  E --> F[Mask Geometry Builder]
+  E --> F[Light Sheet Geometry Builder]
+  I --> J[Style Shader Material]
   F --> G[Three.js/WebGL Renderer]
+  J --> G
   B --> G
   H[UI Controls] --> E
   H --> G
@@ -67,8 +74,9 @@ flowchart LR
 
 - 摄像头画面和手势识别都在本地浏览器执行。
 - 每一帧先更新视频，再按设定频率运行手部识别。
-- 手部关键点经过平滑滤波后再生成面片几何。
-- WebGL 负责把纹理映射到动态三角形/四边形。
+- 手部关键点经过平滑滤波后再生成光片几何。
+- WebGL 负责把实时摄像头采样、样式纹理、边缘线和高光映射到动态三角形/四边形。
+- 光片不是简单遮挡层；它覆盖到哪里，就应在内部实时重新渲染那一块后方摄像头画面。
 - UI 控制只改变渲染参数和业务状态，不阻塞识别线程。
 
 ## 4. 核心模块设计
@@ -139,20 +147,35 @@ interface MaskGestureState {
 }
 ```
 
-### `features/mask-renderer`
+### `features/scene-sampling`
+
+职责：
+
+- 将实时摄像头帧作为 WebGL video texture 输入。
+- 在光片 shader 中按屏幕坐标采样后方视频画面。
+- 让光片覆盖到脸、手、衣服、窗帘、植物等区域时，这些内容都能在光片内部被重新渲染。
+- 提供不同采样模式：原始采样、亮度映射、边缘线稿、色彩分级。
+
+首版策略：
+
+- 不先引入重型分割模型。
+- 使用屏幕空间视频采样，让光片区域天然显示后方实时画面。
+- 在 shader 中叠加边缘检测、色彩映射、图案纹理和高光。
+
+### `features/light-sheet-renderer`
 
 职责：
 
 - 初始化 Three.js renderer、scene、orthographic camera。
 - 生成动态 BufferGeometry。
-- 加载纹理。
-- 绘制半透明面片、边缘高光、扫描光或反光线。
+- 加载样式纹理和实时视频纹理。
+- 绘制半透明实时采样光片、边缘高光、扫描光或反光线。
 - 可选绘制调试关键点。
 
 渲染策略：
 
 - 背景层：实时视频。
-- 效果层：WebGL canvas 透明叠加。
+- 效果层：WebGL canvas 透明叠加；光片 shader 同时采样实时视频和样式纹理。
 - UI 层：React DOM 控制条。
 
 ## 5. 几何和视觉实现
@@ -174,7 +197,40 @@ bottomLeft - bottomRight
 - `opacity`: 0.72-0.9，按纹理不同调整。
 - `edge`: 白色外边线，1-3px 等效宽度。
 - `highlight`: 沿长轴或对角线移动的半透明白色光带。
+- `sceneSample`: 在光片内部采样实时摄像头画面，使被覆盖区域的后方内容被重新渲染出来。
+- `styleFilter`: 对采样画面做蓝图线稿、卡牌纸面或绿色有机纹理混合。
 - `blend`: 默认 `normal` 或轻微 `screen` 风格；WebGL 中通过 shader 控制。
+
+### 样式扩展契约
+
+光片样式应作为 preset 扩展，而不是写死在渲染逻辑里：
+
+```ts
+interface LightSheetStylePreset {
+  id: string;
+  label: string;
+  thumbnailUrl: string;
+  textureUrl?: string;
+  shader: 'blueprint' | 'cards' | 'organic' | 'custom';
+  opacity: number;
+  edgeColor: string;
+  edgeWidth: number;
+  sceneSample: {
+    enabled: boolean;
+    mode: 'raw' | 'edge-lines' | 'luma-map' | 'posterized';
+    intensity: number;
+    tint: string;
+  };
+  highlight: {
+    enabled: boolean;
+    intensity: number;
+    speed: number;
+  };
+  blendMode: 'normal' | 'screen' | 'additive';
+}
+```
+
+后期新增光片样式时，优先只新增纹理、缩略图和 preset 配置；只有样式确实需要特殊合成时才新增 shader variant。
 
 ## 6. 性能策略
 
@@ -191,6 +247,8 @@ bottomLeft - bottomRight
 - 手势状态机。
 - 顶点几何计算。
 - 纹理选择规则。
+- 光片材质是否启用实时场景采样。
+- 样式 preset 解析和默认值。
 - 摄像头错误状态映射。
 
 工具：Vitest。
@@ -200,6 +258,7 @@ bottomLeft - bottomRight
 - Chrome/Edge 桌面摄像头授权流程。
 - 摄像头拒绝流程。
 - 两只手识别后面片出现。
+- 光片经过人物和背景区域时，内部能显示被风格化处理的实时摄像头内容。
 - 镜像开关。
 - 纹理切换。
 - 移动端布局。
@@ -212,7 +271,7 @@ bottomLeft - bottomRight
 - GitHub Pages 的 HTTPS 支持满足摄像头权限要求。
 - MediaPipe 模型文件需要正确配置静态路径或 CDN 路径。
 - iOS Safari 对摄像头、WebGL、WASM 性能更敏感，首版优先保证桌面 Chrome/Edge。
-- 精确遮挡需要额外分割模型，会增加性能成本，首版只做轻量遮挡或不做。
+- 精确前后遮挡需要额外分割模型，会增加性能成本。首版重点不是简单遮挡，而是先保证光片内部能实时采样并风格化显示后方场景。
 
 ## 9. 推荐实施阶段
 
@@ -220,7 +279,8 @@ bottomLeft - bottomRight
 2. 工程初始化：创建 React + Vite + TypeScript 项目。
 3. 摄像头层：完成授权、预览、错误状态。
 4. 手部识别层：接入 MediaPipe，显示调试关键点。
-5. 面片渲染层：实现 WebGL 动态面片和纹理。
-6. 手势业务层：实现双手拉伸、单手预览、丢失淡出。
-7. 视觉打磨：边缘高光、透明度、三种纹理、基础遮挡。
-8. 部署验证：GitHub Pages HTTPS 摄像头访问测试。
+5. 场景采样层：实现 WebGL 视频采样，让光片内部能重新渲染后方实时画面。
+6. 光片渲染层：实现 WebGL 动态几何、样式纹理和 shader 合成。
+7. 手势业务层：实现双手拉伸、单手预览、丢失淡出。
+8. 视觉打磨：边缘高光、透明度、三种纹理、蓝图线稿化。
+9. 部署验证：GitHub Pages HTTPS 摄像头访问测试。

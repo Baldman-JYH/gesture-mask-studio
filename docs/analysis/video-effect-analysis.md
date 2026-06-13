@@ -17,14 +17,19 @@ Extracted evidence:
 
 ## Observed Visual Behavior
 
+### Terminology Update
+
+`Mask` is a convenient project name, but the observed effect is more accurately a gesture-driven live-sampling light sheet. It is not a simple occlusion mask and not only a face overlay. The sheet appears to re-render the live camera content behind it, then mix that sampled content with texture, edge lines, tint, transparency, and highlights.
+
 ### Primary Effect
 
-The effect renders a semi-transparent image sheet in front of the camera feed. The sheet is anchored by the user's hands and behaves like a thin flexible plane:
+The effect renders a semi-transparent live-sampling image sheet in front of the camera feed. The sheet is anchored by the user's hands and behaves like a thin flexible plane:
 
 - It stretches between the left and right hand.
 - It rotates and skews as hand positions change.
 - It can appear as a long quadrilateral strip, a trapezoid, or a triangular wedge.
 - It has a bright white edge line and glossy highlight, which make it feel like a physical sheet rather than a flat sticker.
+- The content inside the sheet appears to include live camera information from behind the sheet, not only a static texture. Faces, hands, clothing, and background structure can be stylized inside the sheet depending on the preset.
 
 ### Gesture/Shape Timeline
 
@@ -65,10 +70,10 @@ The likely control model is:
 - Detect both hands.
 - Use fingertips as anchors, especially index-finger tip and thumb tip.
 - Build a 2D polygon from these anchors.
-- Map a texture into that polygon with perspective distortion.
+- Map a live camera sample plus a style texture into that polygon with perspective distortion.
 - Smooth landmark motion frame-to-frame to avoid jitter.
 
-The strongest implementation cue is that the sheet endpoints closely follow hand/fingertip positions, while the interior is rendered as a textured plane. This suggests a hand-landmark plus WebGL compositing approach rather than frame-by-frame image generation.
+The strongest implementation cue is that the sheet endpoints closely follow hand/fingertip positions, while the interior is rendered as a stylized view of what sits behind the sheet. This suggests a hand-landmark plus WebGL video-sampling compositing approach rather than frame-by-frame image generation or a static overlay.
 
 ## Implementation Implications
 
@@ -101,14 +106,17 @@ Recommended renderer:
 - WebGL via Three.js or a lightweight custom WebGL layer.
 - Orthographic camera aligned to the video plane.
 - Dynamic `BufferGeometry` with 3 or 4 vertices.
-- Texture atlas for the three visual states.
+- Real-time video texture sampling for the sheet interior.
+- Texture atlas for style overlays in the three visual states.
 - Fragment shader or overlay pass for:
+  - screen-space camera sampling,
+  - edge/line extraction,
   - alpha/transparency,
   - white edge lines,
   - glossy diagonal highlights,
   - slight bloom/glow.
 
-Canvas 2D is possible for rough affine transforms but is not ideal for the perspective-warped quadrilateral/triangle effect. WebGL is the safer choice.
+Canvas 2D is possible for rough affine transforms but is not ideal for the perspective-warped quadrilateral/triangle effect or live video sampling with stylized shader passes. WebGL is the safer choice.
 
 ### Occlusion
 
