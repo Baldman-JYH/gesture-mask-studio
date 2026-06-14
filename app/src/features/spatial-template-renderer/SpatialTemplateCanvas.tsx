@@ -5,7 +5,7 @@ import {
   DoubleSide,
   Mesh,
   MeshBasicMaterial,
-  PerspectiveCamera,
+  OrthographicCamera,
   Scene,
   WebGLRenderer,
   type VideoTexture,
@@ -22,16 +22,9 @@ type SpatialTemplateCanvasProps = {
 type RendererRefs = {
   renderer: WebGLRenderer;
   scene: Scene;
-  camera: PerspectiveCamera;
+  camera: OrthographicCamera;
   geometry: BufferGeometry;
-  materials: [
-    MeshBasicMaterial,
-    MeshBasicMaterial,
-    MeshBasicMaterial,
-    MeshBasicMaterial,
-    MeshBasicMaterial,
-    MeshBasicMaterial,
-  ];
+  materials: MeshBasicMaterial[];
   mesh: Mesh;
   texture: VideoTexture | null;
   video: HTMLVideoElement | null;
@@ -95,49 +88,19 @@ function createRendererRefs(): RendererRefs {
   renderer.setClearColor(0x000000, 0);
 
   const scene = new Scene();
-  const camera = new PerspectiveCamera(42, 1, 0.01, 10);
+  const camera = new OrthographicCamera(-1, 1, 1, -1, 0.01, 10);
   camera.position.z = 2.7;
   camera.lookAt(0, 0, 0);
 
   const geometry = new BufferGeometry();
-  const materials: RendererRefs['materials'] = [
+  const materials = Array.from({ length: 11 }, () => (
     new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
       depthWrite: false,
       side: DoubleSide,
-    }),
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    }),
-  ];
+    })
+  ));
   const mesh = new Mesh(geometry, materials);
   mesh.visible = false;
   scene.add(mesh);
@@ -253,13 +216,25 @@ function updateMaterials(refs: RendererRefs, renderInput: SpatialTemplateRenderI
   edgeMaterial.color.setHex(edge);
   edgeMaterial.opacity = opacity * 0.78;
   edgeMaterial.needsUpdate = true;
+
+  const stripBaseColors = [0x28d6ff, 0x7cff74, 0xffd166, 0xff7ad9, 0x8f7cff];
+  refs.materials.slice(6).forEach((material, index) => {
+    material.map = refs.texture;
+    material.color.setHex(mixRgb(stripBaseColors[index] ?? tint, tint, 0.34));
+    material.opacity = opacity * (0.42 + index * 0.035);
+    material.needsUpdate = true;
+  });
 }
 
 function resizeRenderer(host: HTMLElement, refs: RendererRefs): void {
   const width = Math.max(1, host.clientWidth);
   const height = Math.max(1, host.clientHeight);
+  const aspect = width / height;
   refs.renderer.setSize(width, height, false);
-  refs.camera.aspect = width / height;
+  refs.camera.left = -aspect;
+  refs.camera.right = aspect;
+  refs.camera.top = 1;
+  refs.camera.bottom = -1;
   refs.camera.updateProjectionMatrix();
 }
 

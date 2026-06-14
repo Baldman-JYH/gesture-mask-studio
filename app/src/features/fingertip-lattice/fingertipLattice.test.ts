@@ -29,7 +29,16 @@ describe('buildFingertipLattice', () => {
     );
 
     expect(lattice.vertices.length).toBeGreaterThan(10);
-    expect(materialIds).toEqual(expect.arrayContaining(['scene', 'panel', 'back', 'accent', 'cap', 'edge']));
+    expect(materialIds).toEqual(expect.arrayContaining([
+      'strip-ab',
+      'strip-bc',
+      'strip-cd',
+      'strip-de',
+      'strip-ea',
+      'back',
+      'cap',
+      'edge',
+    ]));
     expect(zLevels.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -49,14 +58,15 @@ describe('buildFingertipLattice', () => {
     const lattice = buildFingertipLattice(extractHandTopologyFrame([hand('single', 'left', 0.45)]));
 
     expect(lattice.mode).toBe('one-hand-lattice');
+    expect(lattice.vertices).toHaveLength(5);
     expect(lattice.crossRails).toHaveLength(0);
     expect(lattice.strips).toHaveLength(0);
     expect(lattice.boundaryEdges.map((edge) => edge.id)).toEqual(['AB', 'BC', 'CD', 'DE', 'EA']);
     expect(lattice.caps.map((cap) => cap.id)).toEqual(['single-hand']);
     expect(lattice.caps[0]?.materialId).toBe('scene');
-    expect(Array.from(new Set(lattice.faces.map((face) => face.materialId)))).toEqual(
-      expect.arrayContaining(['scene', 'back', 'edge']),
-    );
+    expect(lattice.faces).toHaveLength(3);
+    expect(Array.from(new Set(lattice.faces.map((face) => face.materialId)))).toEqual(['scene']);
+    expect(Array.from(new Set(lattice.vertices.map((vertex) => vertex.position.z ?? 0)))).toEqual([0]);
   });
 
   it('hides collapsed one-hand loops instead of rendering remote slivers', () => {

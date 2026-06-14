@@ -1162,3 +1162,40 @@ English version: [progress.md](progress.md)
   - `npm run build` 通过。
   - 已跟踪和新增的中英文文档配对检查通过。
   - `git diff --check` 通过，仅有 Git 换行提示。
+
+## 2026-06-14 17:20
+
+### 454c4a4 真实摄像头逐帧分析与模型边界修正
+- 新验证输入：
+  - `测试记录/基于提交 454c4a43503c95dcdfc68a3fe7f6b9b767015c83测试/屏幕录制 2026-06-14 170311.mp4`
+  - 3834x1958，30fps，约 117.78 秒，3530 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已使用 FFmpeg 全量抽取测试视频和参考视频所有帧，生成 1fps 总览、4fps 分段接触表和带时间标签关键帧，目录为：
+  - `测试记录/基于提交 454c4a43503c95dcdfc68a3fe7f6b9b767015c83测试/ffmpeg逐帧对比_20260614_170311/`
+- 新增中英双语分析：
+  - `docs/analysis/454c4a4-real-camera-frame-analysis.md`
+  - `docs/analysis/454c4a4-real-camera-frame-analysis.zh-CN.md`
+- 发现：
+  - `454c4a4` 已减少部分长管和沙漏状 rail 交叉错误，但仍没有达到参考视频的受控立体模板效果；
+  - `test_t018.jpg` 和 `test_t030.jpg` 中状态栏显示 `1 hand`，但仍渲染了有厚度的体或三角残片；
+  - 无效 lattice 被 render input 回退到旧 anchor template，导致状态栏手数和画面显示不一致；
+  - 使用透视相机渲染屏幕空间指尖顶点会让非零 z 造成 x/y 投影偏移；
+  - 五个侧面缺少稳定独立材质槽位，不利于后续逐面贴图或模板样式扩展。
+- 本阶段实现：
+  - 单手 lattice 改为仅由五个指尖顶点组成的 `A-B-C-D-E-A` 平面；
+  - 无效 fingertip lattice 保持隐藏，不再回退旧 anchor template；
+  - 删除旧 anchor template 生产构建入口，spatial-template mesh 现在只有 fingertip topology 一个入口；
+  - spatial-template 渲染相机由透视相机改为正交相机；
+  - 为 `AB/BC/CD/DE/EA` 五个侧面新增 `strip-ab/strip-bc/strip-cd/strip-de/strip-ea` 独立材质槽。
+- 当前验证：
+  - 相关测试通过：3 个测试文件，15 个测试。
+  - `npm run lint` 通过。
+- 完整验证：
+  - `npm test` 通过：16 个测试文件，59 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+  - 本地浏览器冒烟验证通过：`http://127.0.0.1:4174/gesture-mask-studio/` 标题为 `Gesture Mask Studio`，核心控件可见，启动摄像头前 console error 为 0。
+  - 截图保存到 `output/browser-smoke-454c4a4-clean-template-20260614.png`。

@@ -79,6 +79,26 @@ export function materialIdToIndex(materialId: SpatialTemplateMaterialId): number
     return 5;
   }
 
+  if (materialId === 'strip-ab') {
+    return 6;
+  }
+
+  if (materialId === 'strip-bc') {
+    return 7;
+  }
+
+  if (materialId === 'strip-cd') {
+    return 8;
+  }
+
+  if (materialId === 'strip-de') {
+    return 9;
+  }
+
+  if (materialId === 'strip-ea') {
+    return 10;
+  }
+
   return 0;
 }
 

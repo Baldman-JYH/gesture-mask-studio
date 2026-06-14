@@ -95,7 +95,7 @@ describe('createSpatialTemplateRenderInput', () => {
     expect(input.mesh.mode).toBe('one-hand-lattice');
   });
 
-  it('falls back to the stable anchor template when fingertip rails cross', () => {
+  it('keeps rendering hidden when fingertip rails cross', () => {
     const input = createSpatialTemplateRenderInput({
       displayHands: [
         verticalHand('left', 0.24, ['A', 'B', 'C', 'D', 'E']),
@@ -107,8 +107,9 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 2200,
     });
 
-    expect(input.mesh.mode).toBe('two-hand-template');
-    expect(input.mesh.faces.every((face) => face.indices.length === 4)).toBe(true);
+    expect(input.mesh.mode).toBe('hidden');
+    expect(input.mesh.faces).toHaveLength(0);
+    expect(input.mesh.vertices).toHaveLength(0);
   });
 });
 

@@ -1403,3 +1403,40 @@
   - `npm run build` passed.
   - tracked plus new bilingual documentation pairing check passed.
   - `git diff --check` passed with only Git line-ending warnings.
+
+## 2026-06-14 17:20
+
+### 454c4a4 Real-Camera Frame Analysis And Model-Boundary Fixes
+- New validation input:
+  - `测试记录/基于提交 454c4a43503c95dcdfc68a3fe7f6b9b767015c83测试/屏幕录制 2026-06-14 170311.mp4`
+  - 3834x1958, 30fps, about 117.78 seconds, 3530 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted every frame from the test and reference videos with FFmpeg, then generated 1fps overview sheets, 4fps segment sheets, and labeled keyframe sheets under:
+  - `测试记录/基于提交 454c4a43503c95dcdfc68a3fe7f6b9b767015c83测试/ffmpeg逐帧对比_20260614_170311/`
+- Added bilingual analysis:
+  - `docs/analysis/454c4a4-real-camera-frame-analysis.md`
+  - `docs/analysis/454c4a4-real-camera-frame-analysis.zh-CN.md`
+- Findings:
+  - `454c4a4` reduced some long-tube and hourglass rail-crossing failures, but still does not match the reference's controlled 3D template behavior;
+  - in `test_t018.jpg` and `test_t030.jpg`, the status bar shows `1 hand` while a thick body or triangle fragment is still rendered;
+  - invalid lattice was falling back to the old anchor template in render input, causing the hand count and rendered output to diverge;
+  - using a perspective camera for screen-space fingertip vertices makes non-zero z create x/y projection drift;
+  - the five side faces did not have stable independent material slots, which would make later per-face textures or template style changes more expensive.
+- Implementation in this phase:
+  - one-hand lattice now renders only the `A-B-C-D-E-A` plane from five fingertip vertices;
+  - invalid fingertip lattice remains hidden instead of falling back to the old anchor template;
+  - removed the old anchor-template production builder, so spatial-template mesh creation now has a single fingertip-topology entry point;
+  - the spatial-template renderer now uses an orthographic camera instead of a perspective camera;
+  - the `AB/BC/CD/DE/EA` side faces now have independent `strip-ab/strip-bc/strip-cd/strip-de/strip-ea` material slots.
+- Current verification:
+  - targeted tests passed: 3 test files, 15 tests.
+  - `npm run lint` passed.
+- Full verification:
+  - `npm test` passed: 16 test files, 59 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+  - local browser smoke passed: `http://127.0.0.1:4174/gesture-mask-studio/` title is `Gesture Mask Studio`, core controls are visible, and console error count is 0 before camera start.
+  - screenshot saved to `output/browser-smoke-454c4a4-clean-template-20260614.png`.

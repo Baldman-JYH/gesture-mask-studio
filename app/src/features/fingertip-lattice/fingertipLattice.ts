@@ -53,7 +53,13 @@ export type FingertipLattice = {
 const FINGER_ORDER: FingertipId[] = ['A', 'B', 'C', 'D', 'E'];
 const EDGE_IDS: FingertipBoundaryEdgeId[] = ['AB', 'BC', 'CD', 'DE', 'EA'];
 const STRIP_IDS: FingertipStripId[] = EDGE_IDS;
-const FRONT_FACE_MATERIALS: SpatialTemplateMaterialId[] = ['scene', 'panel', 'accent', 'panel', 'scene'];
+const FRONT_FACE_MATERIALS: SpatialTemplateMaterialId[] = [
+  'strip-ab',
+  'strip-bc',
+  'strip-cd',
+  'strip-de',
+  'strip-ea',
+];
 const FRONT_DEPTH_PROFILE = [-0.008, 0.012, 0.034, 0.012, -0.008] as const;
 const TEMPLATE_THICKNESS = 0.032;
 const MIN_TRIANGLE_AREA = 0.00001;
@@ -110,8 +116,6 @@ function buildOneHandClosedFace(hand: HandTopology, confidence: number): Fingert
   const faces: FingertipLatticeFace[] = [];
 
   addLoopFaces(faces, vertices, caps[0].corners, caps[0].materialId);
-  addLoopFaces(faces, vertices, toBackLoopCorners(caps[0].corners, FINGER_ORDER.length), 'back');
-  addLoopEdgeFaces(faces, vertices, caps[0].corners, FINGER_ORDER.length);
 
   return {
     mode: 'one-hand-lattice',
@@ -179,18 +183,9 @@ function buildTwoHandClosedBody(
 }
 
 function createHandLoopVertices(hand: HandTopology): SpatialTemplateVertex[] {
-  const front = FINGER_ORDER.map((finger, index) => (
-    vertex(hand.fingertips[finger], FRONT_DEPTH_PROFILE[index])
+  return FINGER_ORDER.map((finger) => (
+    vertex(hand.fingertips[finger], 0)
   ));
-  const back = front.map((frontVertex) => ({
-    position: {
-      ...frontVertex.position,
-      z: (frontVertex.position.z ?? 0) - TEMPLATE_THICKNESS,
-    },
-    samplePoint: frontVertex.samplePoint,
-  }));
-
-  return [...front, ...back];
 }
 
 function createTwoHandVertices(left: HandTopology, right: HandTopology): SpatialTemplateVertex[] {

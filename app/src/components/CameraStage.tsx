@@ -84,7 +84,6 @@ export function CameraStage() {
 
     const nextRenderInput = createSpatialTemplateRenderInput({
       displayHands,
-      anchorFrame,
       video,
       mirrored: mirroredRef.current,
       style: activePreset,

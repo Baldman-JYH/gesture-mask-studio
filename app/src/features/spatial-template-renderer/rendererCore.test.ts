@@ -60,5 +60,10 @@ describe('spatialTemplateToBufferData', () => {
     expect(materialIdToIndex('accent')).toBe(3);
     expect(materialIdToIndex('cap')).toBe(4);
     expect(materialIdToIndex('edge')).toBe(5);
+    expect(materialIdToIndex('strip-ab')).toBe(6);
+    expect(materialIdToIndex('strip-bc')).toBe(7);
+    expect(materialIdToIndex('strip-cd')).toBe(8);
+    expect(materialIdToIndex('strip-de')).toBe(9);
+    expect(materialIdToIndex('strip-ea')).toBe(10);
   });
 });
