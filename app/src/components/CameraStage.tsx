@@ -7,6 +7,10 @@ import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-t
 import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features/light-sheet-styles/presets';
 import { isRenderableVideo } from '../features/scene-sampling/screenSpaceSampling';
 import { createSpatialTemplateRenderInput, type SpatialTemplateRenderInput } from '../features/spatial-template-renderer/renderInput';
+import {
+  stabilizeSpatialTemplateFrame,
+  type SpatialTemplateStabilizerState,
+} from '../features/spatial-template-renderer/renderStabilizer';
 import type { TrackedHand } from '../shared/runtime/types';
 import { ControlDock } from './ControlDock';
 import { PermissionOverlay } from './PermissionOverlay';
@@ -26,6 +30,7 @@ export function CameraStage() {
   const animationFrameRef = useRef<number | null>(null);
   const activePresetIdRef = useRef(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const mirroredRef = useRef(true);
+  const stabilizerStateRef = useRef<SpatialTemplateStabilizerState | null>(null);
 
   const [cameraState, setCameraState] = useState<CameraState>('idle');
   const [trackingState, setTrackingState] = useState<TrackingState>('idle');
@@ -50,6 +55,7 @@ export function CameraStage() {
     const video = videoRef.current;
 
     if (!video || !isRenderableVideo(video)) {
+      stabilizerStateRef.current = null;
       setRenderInput(null);
       animationFrameRef.current = requestAnimationFrame(runFrame);
       return;
@@ -89,15 +95,19 @@ export function CameraStage() {
       style: activePreset,
       timestampMs,
     });
-
-    setRenderInput(nextRenderInput.mesh.mode === 'hidden' ? null : {
-      ...nextRenderInput,
-      scene: {
-        video,
-        mirrored: mirroredRef.current,
-        viewport,
+    const stabilizedState = stabilizeSpatialTemplateFrame(
+      stabilizerStateRef.current,
+      {
+        ...nextRenderInput,
+        scene: {
+          video,
+          mirrored: mirroredRef.current,
+          viewport,
+        },
       },
-    });
+    );
+    stabilizerStateRef.current = stabilizedState;
+    setRenderInput(stabilizedState.renderInput);
 
     animationFrameRef.current = requestAnimationFrame(runFrame);
   }, []);
@@ -174,6 +184,7 @@ export function CameraStage() {
     setCameraState('idle');
     setTrackingState('idle');
     setHandsCount(0);
+    stabilizerStateRef.current = null;
     setRenderInput(null);
     setMessage(null);
   }, [stopRenderLoop]);

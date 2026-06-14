@@ -11,6 +11,8 @@ import {
   type VideoTexture,
 } from 'three';
 import { createVideoTexture, disposeTexture } from '../scene-sampling/videoTexture';
+import type { SpatialTemplateMaterialId } from '../spatial-template-model/types';
+import { resolveSpatialTemplateMaterialSettings } from './materialSettings';
 import { spatialTemplateToBufferData } from './rendererCore';
 import type { SpatialTemplateRenderInput } from './renderInput';
 
@@ -30,6 +32,20 @@ type RendererRefs = {
   video: HTMLVideoElement | null;
   animationFrame: number;
 };
+
+const MATERIAL_SLOT_IDS: SpatialTemplateMaterialId[] = [
+  'scene',
+  'panel',
+  'back',
+  'accent',
+  'cap',
+  'edge',
+  'strip-ab',
+  'strip-bc',
+  'strip-cd',
+  'strip-de',
+  'strip-ea',
+];
 
 export function SpatialTemplateCanvas({ renderInput, className }: SpatialTemplateCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -175,53 +191,15 @@ function updateGeometry(refs: RendererRefs, renderInput: SpatialTemplateRenderIn
 }
 
 function updateMaterials(refs: RendererRefs, renderInput: SpatialTemplateRenderInput): void {
-  const tint = hexToNumber(renderInput.style.sceneSample.tint);
-  const edge = hexToNumber(renderInput.style.edgeColor);
-  const opacity = renderInput.style.opacity * renderInput.mesh.opacity;
-  const [
-    sceneMaterial,
-    panelMaterial,
-    backMaterial,
-    accentMaterial,
-    capMaterial,
-    edgeMaterial,
-  ] = refs.materials;
-
-  sceneMaterial.map = refs.texture;
-  sceneMaterial.color.setHex(tint);
-  sceneMaterial.opacity = opacity * Math.max(0.42, renderInput.style.sceneSample.intensity * 0.72);
-  sceneMaterial.needsUpdate = true;
-
-  panelMaterial.map = refs.texture;
-  panelMaterial.color.setHex(tint);
-  panelMaterial.opacity = opacity * 0.34;
-  panelMaterial.needsUpdate = true;
-
-  backMaterial.map = refs.texture;
-  backMaterial.color.setHex(0x10242c);
-  backMaterial.opacity = opacity * 0.5;
-  backMaterial.needsUpdate = true;
-
-  accentMaterial.map = refs.texture;
-  accentMaterial.color.setHex(mixRgb(tint, edge, 0.55));
-  accentMaterial.opacity = opacity * 0.48;
-  accentMaterial.needsUpdate = true;
-
-  capMaterial.map = refs.texture;
-  capMaterial.color.setHex(mixRgb(0xffffff, tint, 0.28));
-  capMaterial.opacity = opacity * 0.58;
-  capMaterial.needsUpdate = true;
-
-  edgeMaterial.map = null;
-  edgeMaterial.color.setHex(edge);
-  edgeMaterial.opacity = opacity * 0.78;
-  edgeMaterial.needsUpdate = true;
-
-  const stripBaseColors = [0x28d6ff, 0x7cff74, 0xffd166, 0xff7ad9, 0x8f7cff];
-  refs.materials.slice(6).forEach((material, index) => {
-    material.map = refs.texture;
-    material.color.setHex(mixRgb(stripBaseColors[index] ?? tint, tint, 0.34));
-    material.opacity = opacity * (0.42 + index * 0.035);
+  refs.materials.forEach((material, index) => {
+    const settings = resolveSpatialTemplateMaterialSettings(
+      MATERIAL_SLOT_IDS[index] ?? 'scene',
+      renderInput.style,
+      renderInput.mesh.opacity,
+    );
+    material.map = settings.usesVideoTexture ? refs.texture : null;
+    material.color.setHex(settings.color);
+    material.opacity = settings.opacity;
     material.needsUpdate = true;
   });
 }
@@ -236,30 +214,4 @@ function resizeRenderer(host: HTMLElement, refs: RendererRefs): void {
   refs.camera.top = 1;
   refs.camera.bottom = -1;
   refs.camera.updateProjectionMatrix();
-}
-
-function hexToNumber(hex: string): number {
-  const normalized = hex.replace('#', '').trim();
-  const value = normalized.length === 3
-    ? normalized
-      .split('')
-      .map((character) => `${character}${character}`)
-      .join('')
-    : normalized;
-
-  if (!/^[0-9a-fA-F]{6}$/.test(value)) {
-    return 0xffffff;
-  }
-
-  return Number.parseInt(value, 16);
-}
-
-function mixRgb(left: number, right: number, amount: number): number {
-  const mixChannel = (shift: number) => {
-    const leftChannel = (left >> shift) & 0xff;
-    const rightChannel = (right >> shift) & 0xff;
-    return Math.round(leftChannel + (rightChannel - leftChannel) * amount);
-  };
-
-  return (mixChannel(16) << 16) + (mixChannel(8) << 8) + mixChannel(0);
 }

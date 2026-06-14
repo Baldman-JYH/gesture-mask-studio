@@ -1453,3 +1453,38 @@
   - run id: `27495013306`
   - workflow: `Deploy GitHub Pages`
 - The deployed version is ready for real-camera device validation.
+
+## 2026-06-14 18:15
+
+### ce0a171 Real-Camera Frame Analysis And Flicker Fix
+- New validation input:
+  - `测试记录/基于提交 ce0a171850d0d010332baa70880bae3744da503c测/屏幕录制 2026-06-14 175634.mp4`
+  - 3832x2028, 30fps, about 142.12 seconds, 4261 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted every frame from both videos with FFmpeg and generated 1fps overview sheets, 4fps segment sheets, and labeled keyframe sheets under:
+  - `测试记录/基于提交 ce0a171850d0d010332baa70880bae3744da503c测/ffmpeg逐帧对比_20260614_175634/`
+- Added bilingual analysis:
+  - `docs/analysis/ce0a171-real-camera-frame-analysis.md`
+  - `docs/analysis/ce0a171-real-camera-frame-analysis.zh-CN.md`
+- Findings:
+  - `ce0a171` fixed the previous single-hand extruded body problem and keeps invalid single-hand states mostly hidden;
+  - the latest test still shows two-hand geometry flicker when both hands move together;
+  - several two-hand frames still read as long dark boxes because back/cap faces visually stack too heavily;
+  - the reference remains a controlled hand-driven template state machine, not a raw direct fingertip mesh in every frame.
+- TDD evidence:
+  - added RED tests for a spatial-template stabilizer that keeps the last visible mesh through short hidden tracking gaps;
+  - added RED tests for a material settings layer that gives the five strip faces distinct colors and keeps back faces lighter than front faces;
+  - initial target test run failed for the expected missing modules.
+- Implementation in this phase:
+  - added `renderStabilizer` and routed `CameraStage` render input through it;
+  - short hidden tracking gaps now fade/hold the previous visible spatial template instead of immediately unmounting the render input;
+  - added `materialSettings` and changed `SpatialTemplateCanvas` to use it;
+  - `AB/BC/CD/DE/EA` side faces now receive simple distinguishable colors;
+  - back/cap visual weight is reduced and dark back faces no longer use video texture mapping.
+  - edge opacity now fades with held mesh opacity, preventing bright outline remnants during tracking-gap fade-outs.
+- Verification so far:
+  - targeted tests passed: 2 test files, 7 tests.
+  - `npm test` passed: 18 test files, 66 tests.
+  - `npm run build` passed.

@@ -1212,3 +1212,38 @@ English version: [progress.md](progress.md)
   - run id: `27495013306`
   - workflow: `Deploy GitHub Pages`
 - 当前部署版本已可进入真实摄像头设备验证。
+
+## 2026-06-14 18:15
+
+### ce0a171 真实摄像头逐帧分析与闪烁修正
+- 新验证输入：
+  - `测试记录/基于提交 ce0a171850d0d010332baa70880bae3744da503c测/屏幕录制 2026-06-14 175634.mp4`
+  - 3832x2028，30fps，约 142.12 秒，4261 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已用 FFmpeg 全量抽取测试视频和参考视频所有帧，并生成 1fps 总览图、4fps 分段图和带时间标注关键帧图，目录为：
+  - `测试记录/基于提交 ce0a171850d0d010332baa70880bae3744da503c测/ffmpeg逐帧对比_20260614_175634/`
+- 新增中英双语分析：
+  - `docs/analysis/ce0a171-real-camera-frame-analysis.md`
+  - `docs/analysis/ce0a171-real-camera-frame-analysis.zh-CN.md`
+- 分析结论：
+  - `ce0a171` 已修复上一轮单手厚体问题，无效单手状态大多能保持隐藏；
+  - 最新测试仍能看到双手一起运动时几何体闪烁；
+  - 多个双手帧仍会读成长暗盒，主要原因是背面和端面视觉叠加太重；
+  - 参考视频仍更像一个受控的手势模板状态机，而不是每一帧都直接使用原始指尖 mesh。
+- TDD 证据：
+  - 新增 RED 测试，要求 spatial-template 稳定层在短暂 hidden tracking gap 中保持上一帧可见 mesh；
+  - 新增 RED 测试，要求材质配置层让五个侧面颜色不同，并让背面显著轻于正面；
+  - 首次目标测试按预期因模块缺失而失败。
+- 本阶段实现：
+  - 新增 `renderStabilizer`，并让 `CameraStage` 的 render input 先经过该稳定层；
+  - 短暂 hidden tracking gap 现在会淡出/保持上一帧可见空间模板，而不是立刻卸载渲染输入；
+  - 新增 `materialSettings`，并让 `SpatialTemplateCanvas` 使用统一材质配置；
+  - `AB/BC/CD/DE/EA` 五个侧面现在先使用简单可区分颜色；
+  - 降低背面和端面视觉权重，并停止给深色背面贴视频纹理。
+  - 边缘透明度现在会跟随 held mesh opacity 衰减，避免 tracking gap 淡出期间残留高亮边线。
+- 当前验证：
+  - 目标测试通过：2 个测试文件，7 个测试。
+  - `npm test` 通过：18 个测试文件，66 个测试。
+  - `npm run build` 通过。
