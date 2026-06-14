@@ -8,16 +8,28 @@ describe('stabilizeSpatialTemplateFrame', () => {
   it('keeps the last visible template through a short hidden tracking gap', () => {
     const visible = renderInput(1000, visibleMesh());
     const visibleState = stabilizeSpatialTemplateFrame(null, visible);
-    const hiddenState = stabilizeSpatialTemplateFrame(visibleState, renderInput(1060, hiddenMesh()));
+    const hiddenState = stabilizeSpatialTemplateFrame(visibleState, renderInput(1320, hiddenMesh()));
 
     expect(hiddenState.renderInput?.mesh.mode).toBe('two-hand-lattice');
     expect(hiddenState.renderInput?.mesh.opacity).toBeGreaterThan(0);
     expect(hiddenState.lastVisibleTimestampMs).toBe(1000);
   });
 
+  it('keeps a recent two-hand template through a short one-hand tracking degradation', () => {
+    const twoHandState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh()));
+    const degradedState = stabilizeSpatialTemplateFrame(
+      twoHandState,
+      renderInput(1180, oneHandMesh()),
+    );
+
+    expect(degradedState.renderInput?.mesh.mode).toBe('two-hand-lattice');
+    expect(degradedState.renderInput?.mesh.opacity).toBeGreaterThan(0);
+    expect(degradedState.lastVisibleTimestampMs).toBe(1000);
+  });
+
   it('clears the held template after the hidden gap exceeds the hold window', () => {
     const visibleState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh()));
-    const hiddenState = stabilizeSpatialTemplateFrame(visibleState, renderInput(1400, hiddenMesh()));
+    const hiddenState = stabilizeSpatialTemplateFrame(visibleState, renderInput(1700, hiddenMesh()));
 
     expect(hiddenState.renderInput).toBeNull();
     expect(hiddenState.lastVisibleInput).toBeNull();
@@ -68,6 +80,20 @@ function hiddenMesh(): SpatialTemplateMesh {
     confidence: 0,
     vertices: [],
     faces: [],
+  };
+}
+
+function oneHandMesh(): SpatialTemplateMesh {
+  return {
+    mode: 'one-hand-lattice',
+    opacity: 0.5,
+    confidence: 0.45,
+    vertices: [
+      { position: { x: 0.1, y: 0.2, z: 0 }, samplePoint: { x: 0.1, y: 0.2 } },
+      { position: { x: 0.2, y: 0.3, z: 0 }, samplePoint: { x: 0.2, y: 0.3 } },
+      { position: { x: 0.1, y: 0.4, z: 0 }, samplePoint: { x: 0.1, y: 0.4 } },
+    ],
+    faces: [{ indices: [0, 1, 2], materialId: 'scene' }],
   };
 }
 

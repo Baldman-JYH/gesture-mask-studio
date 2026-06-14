@@ -11,10 +11,10 @@ import {
   stabilizeSpatialTemplateFrame,
   type SpatialTemplateStabilizerState,
 } from '../features/spatial-template-renderer/renderStabilizer';
-import type { TrackedHand } from '../shared/runtime/types';
+import type { TrackedHand, TrackingState } from '../shared/runtime/types';
 import { ControlDock } from './ControlDock';
 import { PermissionOverlay } from './PermissionOverlay';
-import { TopStatusBar, type TrackingState } from './TopStatusBar';
+import { TopStatusBar } from './TopStatusBar';
 
 const SpatialTemplateCanvas = lazy(() =>
   import('../features/spatial-template-renderer/SpatialTemplateCanvas').then((module) => ({
@@ -217,7 +217,11 @@ export function CameraStage() {
           <div className="light-sheet-canvas" aria-hidden="true" />
         )}
         <div className="stage-grid" aria-hidden="true" />
-        <PermissionOverlay cameraState={cameraState} message={message} />
+        <PermissionOverlay
+          cameraState={cameraState}
+          trackingState={trackingState}
+          message={message}
+        />
       </section>
 
       <ControlDock

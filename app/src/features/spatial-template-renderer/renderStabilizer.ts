@@ -11,7 +11,7 @@ export type SpatialTemplateStabilizerOptions = {
   holdMs?: number;
 };
 
-const DEFAULT_HOLD_MS = 180;
+const DEFAULT_HOLD_MS = 520;
 
 export function stabilizeSpatialTemplateFrame(
   previous: SpatialTemplateStabilizerState | null,
@@ -19,6 +19,10 @@ export function stabilizeSpatialTemplateFrame(
   options: SpatialTemplateStabilizerOptions = {},
 ): SpatialTemplateStabilizerState {
   const holdMs = options.holdMs ?? DEFAULT_HOLD_MS;
+
+  if (shouldHoldPreviousVisibleInput(previous, next, holdMs)) {
+    return holdPreviousVisibleInput(previous, next, holdMs);
+  }
 
   if (next.mesh.mode !== 'hidden') {
     return {
@@ -32,7 +36,7 @@ export function stabilizeSpatialTemplateFrame(
     return emptyState();
   }
 
-  const hiddenAgeMs = next.timestampMs - previous.lastVisibleTimestampMs;
+  const hiddenAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
 
   if (hiddenAgeMs > holdMs) {
     return emptyState();
@@ -51,6 +55,58 @@ export function stabilizeSpatialTemplateFrame(
     lastVisibleInput: previous.lastVisibleInput,
     lastVisibleTimestampMs: previous.lastVisibleTimestampMs,
   };
+}
+
+function shouldHoldPreviousVisibleInput(
+  previous: SpatialTemplateStabilizerState | null,
+  next: SpatialTemplateRenderInput,
+  holdMs: number,
+): previous is SpatialTemplateStabilizerState & {
+  lastVisibleInput: SpatialTemplateRenderInput;
+  lastVisibleTimestampMs: number;
+} {
+  if (!previous?.lastVisibleInput || previous.lastVisibleTimestampMs === null) {
+    return false;
+  }
+
+  if (previous.lastVisibleInput.mesh.mode !== 'two-hand-lattice') {
+    return false;
+  }
+
+  if (!isLowerFidelityDegradation(next.mesh.mode)) {
+    return false;
+  }
+
+  const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
+  return gapAgeMs <= holdMs;
+}
+
+function holdPreviousVisibleInput(
+  previous: SpatialTemplateStabilizerState & {
+    lastVisibleInput: SpatialTemplateRenderInput;
+    lastVisibleTimestampMs: number;
+  },
+  next: SpatialTemplateRenderInput,
+  holdMs: number,
+): SpatialTemplateStabilizerState {
+  const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
+  const opacityScale = Math.max(0.15, 1 - gapAgeMs / holdMs);
+  const heldInput = previous.lastVisibleInput;
+
+  return {
+    renderInput: {
+      ...heldInput,
+      timestampMs: next.timestampMs,
+      scene: next.scene,
+      mesh: fadeMesh(heldInput.mesh, opacityScale),
+    },
+    lastVisibleInput: previous.lastVisibleInput,
+    lastVisibleTimestampMs: previous.lastVisibleTimestampMs,
+  };
+}
+
+function isLowerFidelityDegradation(mode: SpatialTemplateMesh['mode']): boolean {
+  return mode === 'hidden' || mode === 'one-hand-lattice' || mode === 'one-hand-template';
 }
 
 function emptyState(): SpatialTemplateStabilizerState {

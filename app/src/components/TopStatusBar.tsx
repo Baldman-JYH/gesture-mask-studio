@@ -1,8 +1,7 @@
 import { Activity, Camera, Hand } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type { CameraState } from '../features/camera/cameraController';
-
-type TrackingState = 'idle' | 'loading' | 'ready' | 'unavailable';
+import type { TrackingState } from '../shared/runtime/types';
 
 type TopStatusBarProps = {
   cameraState: CameraState;
@@ -91,5 +90,3 @@ function trackingStateLabel(trackingState: TrackingState, handsCount: number): s
 
   return 'Tracking idle';
 }
-
-export type { TrackingState };

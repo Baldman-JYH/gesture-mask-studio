@@ -1506,3 +1506,85 @@
   - This is not blocking deployment, but `.github/workflows/pages.yml` should be upgraded later to newer action versions when available.
 - The deployed URL is ready for real-camera validation:
   - `https://baldman-jyh.github.io/gesture-mask-studio/`
+
+## 2026-06-14 18:55
+
+### fbe333e Loading And Flicker Analysis
+- New validation input:
+  - `测试记录/基于提交 fbe333e625203f4d610b9a1ce5a0be80651181cc 测试/屏幕录制 2026-06-14 184255.mp4`
+  - 3830x2068, 30fps, about 99.90 seconds, 2994 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted every frame from both videos with FFmpeg and generated 1fps overview sheets, 4fps segment sheets, and labeled keyframe sheets under:
+  - `测试记录/基于提交 fbe333e625203f4d610b9a1ce5a0be80651181cc 测试/ffmpeg逐帧对比_20260614_184255/`
+- Added bilingual analysis:
+  - `docs/analysis/fbe333e-loading-and-flicker-frame-analysis.md`
+  - `docs/analysis/fbe333e-loading-and-flicker-frame-analysis.zh-CN.md`
+- Findings:
+  - the app needs an explicit tracker-loading overlay after `Start camera`;
+  - two-hand movement still flickers because short hidden or one-hand degradation gaps can replace or clear the previous two-hand geometry;
+  - face color separation is now acceptable for this pass;
+  - the longer-term architecture still needs a `TemplateState` layer after this stability fix.
+
+## 2026-06-14 19:40
+
+### Loading Overlay And Degradation Hold TDD
+- Added RED coverage for:
+  - keeping a loading overlay visible while camera is ready but the hand tracker is still initializing;
+  - hiding the overlay after both camera and tracking are ready;
+  - holding the last two-hand lattice through a 320ms hidden tracking gap;
+  - holding the last two-hand lattice through a short one-hand degradation;
+  - clearing the held template after a long invalid gap.
+- RED evidence:
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx` failed because the overlay disappeared during tracker loading.
+  - `npm.cmd test -- src/features/spatial-template-renderer/renderStabilizer.test.ts` failed because the stabilizer cleared the 320ms hidden gap and replaced two-hand geometry with one-hand geometry.
+- GREEN implementation:
+  - `PermissionOverlay` now receives `trackingState` and shows `Loading hand tracking` while the tracker initializes.
+  - `CameraStage` passes `trackingState` into the overlay.
+  - `renderStabilizer` now uses a 520ms default hold window and preserves recent two-hand geometry through short hidden or one-hand degradation gaps.
+- GREEN evidence:
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx` passed: 1 test file, 2 tests.
+  - `npm.cmd test -- src/features/spatial-template-renderer/renderStabilizer.test.ts` passed: 1 test file, 4 tests.
+
+## 2026-06-14 19:45
+
+### Verification For Loading And Flicker Fix
+- Full automated verification passed:
+  - `npm.cmd test` passed: 19 test files, 69 tests.
+  - bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+  - `npm.cmd run build` passed.
+- Rendered smoke:
+  - local preview served `http://127.0.0.1:4175/gesture-mask-studio/` with HTTP 200;
+  - Browser plugin path failed because the Node REPL runtime was sandbox-blocked from reading `C:\Users\75968\AppData`;
+  - fallback headless Edge screenshot showed the first meaningful screen rendered correctly: brand, status pills, idle overlay, Auto/Blueprint dock, and `Start camera` button were visible with no framework error overlay.
+- Interaction coverage:
+  - loading overlay behavior is covered by `PermissionOverlay.test.tsx`;
+  - stabilization behavior is covered by `renderStabilizer.test.ts`.
+- Remaining real-device validation:
+  - camera permission and MediaPipe model loading need to be checked on the camera-enabled device;
+  - two-hand flicker reduction must be validated by another real-camera recording and FFmpeg frame comparison.
+
+## 2026-06-14 20:05
+
+### Self-Review Correction
+- Brooks-style self-review found one maintainability issue before commit:
+  - `PermissionOverlay` imported `TrackingState` from sibling UI component `TopStatusBar`, coupling two presentation components through a runtime state contract.
+- Correction:
+  - moved `TrackingState` to `app/src/shared/runtime/types.ts`;
+  - updated `TopStatusBar`, `CameraStage`, and `PermissionOverlay` to import the shared runtime type.
+- Verification after correction:
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx src/components/TopStatusBar.test.tsx src/features/spatial-template-renderer/renderStabilizer.test.ts` passed: 3 test files, 7 tests.
+  - `npm.cmd run build` passed.
+
+## 2026-06-14 20:07
+
+### Final Pre-Commit Verification
+- Final verification after self-review correction:
+  - `npm.cmd test` passed: 19 test files, 69 tests.
+  - `npm.cmd run build` passed.
+  - bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+- Cleaned the only whitespace issue found during final verification: an extra blank line at EOF in `app/src/components/TopStatusBar.tsx`.
+- Commit scope will exclude unrelated tracked deletions under `assets/analysis/`.

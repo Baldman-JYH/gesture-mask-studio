@@ -1265,3 +1265,85 @@ English version: [progress.md](progress.md)
   - 该警告不阻断部署，但后续可以在可用时升级 `.github/workflows/pages.yml` 中的 action 版本。
 - 当前部署地址已可进入真实摄像头验证：
   - `https://baldman-jyh.github.io/gesture-mask-studio/`
+
+## 2026-06-14 18:55
+
+### fbe333e Loading 与闪烁分析
+- 新验证输入：
+  - `测试记录/基于提交 fbe333e625203f4d610b9a1ce5a0be80651181cc 测试/屏幕录制 2026-06-14 184255.mp4`
+  - 3830x2068，30fps，约 99.90 秒，2994 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已使用 FFmpeg 全量抽取测试视频和参考视频每一帧，并生成 1fps 总览图、4fps 分段图和带时间标注关键帧图，目录为：
+  - `测试记录/基于提交 fbe333e625203f4d610b9a1ce5a0be80651181cc 测试/ffmpeg逐帧对比_20260614_184255/`
+- 新增中英双语分析：
+  - `docs/analysis/fbe333e-loading-and-flicker-frame-analysis.md`
+  - `docs/analysis/fbe333e-loading-and-flicker-frame-analysis.zh-CN.md`
+- 分析结论：
+  - 点击 `Start camera` 后需要明确的追踪器 loading overlay；
+  - 双手运动仍会闪烁，原因是短暂 hidden 或一手降级 gap 仍可能替换或清空上一帧双手几何体；
+  - 本轮颜色区分已经够用；
+  - 稳定性修复之后，长期架构仍需要补 `TemplateState` 层。
+
+## 2026-06-14 19:40
+
+### Loading Overlay 与降级保持 TDD
+- 新增 RED 覆盖：
+  - 摄像头 ready 但手部追踪器仍在初始化时，loading overlay 必须保持可见；
+  - 摄像头和追踪器都 ready 后，overlay 必须隐藏；
+  - 320ms hidden tracking gap 内必须保留上一帧双手 lattice；
+  - 短暂一手降级时必须保留上一帧双手 lattice；
+  - 长时间无效 gap 后必须清空 held template。
+- RED 证据：
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx` 失败，原因是 tracker loading 期间 overlay 已消失。
+  - `npm.cmd test -- src/features/spatial-template-renderer/renderStabilizer.test.ts` 失败，原因是稳定器清空 320ms hidden gap，并且会用一手几何体替换双手几何体。
+- GREEN 实现：
+  - `PermissionOverlay` 现在接收 `trackingState`，并在追踪器初始化时显示 `Loading hand tracking`。
+  - `CameraStage` 将 `trackingState` 传入 overlay。
+  - `renderStabilizer` 默认 hold 窗口调整为 520ms，并在短暂 hidden 或一手降级 gap 中保留最近的双手几何体。
+- GREEN 证据：
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx` 通过：1 个测试文件，2 个测试。
+  - `npm.cmd test -- src/features/spatial-template-renderer/renderStabilizer.test.ts` 通过：1 个测试文件，4 个测试。
+
+## 2026-06-14 19:45
+
+### Loading 与闪烁修复验证
+- 全量自动化验证通过：
+  - `npm.cmd test` 通过：19 个测试文件，69 个测试。
+  - 中英双语文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+  - `npm.cmd run build` 通过。
+- 渲染 smoke：
+  - 本地预览 `http://127.0.0.1:4175/gesture-mask-studio/` 返回 HTTP 200；
+  - Browser 插件路径失败，原因是 Node REPL runtime 被沙箱阻止读取 `C:\Users\75968\AppData`；
+  - 回退到无头 Edge 截图验证，首个有意义页面已正确渲染：品牌、状态 pills、idle overlay、Auto/Blueprint dock 和 `Start camera` 按钮均可见，未出现框架错误覆盖层。
+- 交互覆盖：
+  - loading overlay 行为由 `PermissionOverlay.test.tsx` 覆盖；
+  - 稳定器保持行为由 `renderStabilizer.test.ts` 覆盖。
+- 剩余真实设备验证：
+  - 摄像头授权和 MediaPipe 模型加载仍需在有摄像头设备上验证；
+  - 双手闪烁改善需要通过新一轮真实摄像头录屏和 FFmpeg 逐帧对比确认。
+
+## 2026-06-14 20:05
+
+### 自审修正
+- Brooks 风格自审在提交前发现一个可维护性问题：
+  - `PermissionOverlay` 从同级 UI 组件 `TopStatusBar` 导入 `TrackingState`，导致两个展示组件通过运行时状态契约发生耦合。
+- 修正：
+  - 将 `TrackingState` 移到 `app/src/shared/runtime/types.ts`；
+  - 更新 `TopStatusBar`、`CameraStage` 和 `PermissionOverlay`，统一从 shared runtime 类型导入。
+- 修正后验证：
+  - `npm.cmd test -- src/components/PermissionOverlay.test.tsx src/components/TopStatusBar.test.tsx src/features/spatial-template-renderer/renderStabilizer.test.ts` 通过：3 个测试文件，7 个测试。
+  - `npm.cmd run build` 通过。
+
+## 2026-06-14 20:07
+
+### 提交前最终验证
+- 自审修正后的最终验证：
+  - `npm.cmd test` 通过：19 个测试文件，69 个测试。
+  - `npm.cmd run build` 通过。
+  - 中英双语文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+- 已清理最终验证发现的唯一空白问题：`app/src/components/TopStatusBar.tsx` 文件末尾多余空白行。
+- 本次提交范围会排除 `assets/analysis/` 下与本轮无关的已跟踪删除项。

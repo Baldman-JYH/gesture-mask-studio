@@ -13,6 +13,8 @@ export type TrackedHand = {
 
 export type LightSheetMode = 'hidden' | 'two-hand-sheet' | 'fade-out';
 
+export type TrackingState = 'idle' | 'loading' | 'ready' | 'unavailable';
+
 export type LightSheetGeometry = {
   mode: LightSheetMode;
   vertices: [NormalizedPoint, NormalizedPoint, NormalizedPoint, NormalizedPoint?];
