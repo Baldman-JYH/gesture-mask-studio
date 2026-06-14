@@ -1112,3 +1112,53 @@ English version: [progress.md](progress.md)
   - `npm test` 通过：16 个测试文件，58 个测试。
   - `npm run build` 通过。
   - 已跟踪和新增的中英文文档配对检查通过。
+
+## 2026-06-14 16:50
+
+### 0e000ae 真实摄像头逐帧分析
+- 新验证输入：
+  - `测试记录/基于提交 0e000ae09ef1de7178c53d78f01fc6446125129c 测试/屏幕录制 2026-06-14 163150.mp4`
+  - 3808x1954，30fps，约 116.33 秒，3487 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已使用 FFmpeg 抽取全部帧，并生成 1fps 总览、4fps 分段联系表和带标签关键帧联系表，目录为：
+  - `测试记录/基于提交 0e000ae09ef1de7178c53d78f01fc6446125129c 测试/ffmpeg逐帧对比_20260614_163150/`
+- 新增中英文分析：
+  - `docs/analysis/0e000ae-real-camera-frame-analysis.md`
+  - `docs/analysis/0e000ae-real-camera-frame-analysis.zh-CN.md`
+- 发现：
+  - `0e000ae` 已降低 raw depth 爆炸，也减少了单手残留；
+  - 当前主要失败变为双手拓扑扭成管状、竖直厚板或沙漏体；
+  - 渲染体没有稳定依附在可见指尖控制点上；
+  - 局部/低质量手部检测时仍会出现小型单手残留三角；
+  - 当前拓扑模型缺少稳定手身份、loop winding 归一化、cross-rail 有效性检查和时间状态稳定。
+- 建议下一步实现范围：
+  - 增加相反 winding、rail 交叉、相邻帧 hand role 切换测试；
+  - 增加带 hysteresis 的手对稳定层；
+  - 建面前归一化 mesh loop winding；
+  - 增加 rail 交叉、strip 长宽比、控制区域 centroid、端面朝向等 lattice 质量门控。
+- 本阶段只修改文档，没有修改业务代码。
+
+## 2026-06-14 16:50
+
+### Rail 交叉和局部手门控 TDD
+- 已根据 `0e000ae` 真实摄像头分析开始实现。
+- 新增 RED 测试覆盖：
+  - 双手模式中任一手闭环塌缩时必须隐藏；
+  - 语义指尖 `A-A/B-B/C-C/D-D/E-E` rail 交叉时必须隐藏。
+- RED 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 2 个预期失败：两个无效输入仍返回 `two-hand-lattice`。
+- GREEN 实现：
+  - 双手闭合体构建前复用单手闭环有效性门控；
+  - 增加严格的屏幕空间 rail 交叉检测；
+  - 无效双手 lattice 现在返回 `hidden`，使 `createSpatialTemplateRenderInput` 回退到既有稳定 anchor template。
+- GREEN 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts` 通过：1 个测试文件，8 个测试。
+  - `npm test -- src/features/spatial-template-renderer/renderInput.test.ts` 通过：1 个测试文件，4 个测试。
+- 完整验证：
+  - `npm test` 通过：16 个测试文件，61 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。

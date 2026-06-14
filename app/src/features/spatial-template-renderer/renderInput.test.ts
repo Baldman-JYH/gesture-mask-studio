@@ -94,4 +94,48 @@ describe('createSpatialTemplateRenderInput', () => {
 
     expect(input.mesh.mode).toBe('one-hand-lattice');
   });
+
+  it('falls back to the stable anchor template when fingertip rails cross', () => {
+    const input = createSpatialTemplateRenderInput({
+      displayHands: [
+        verticalHand('left', 0.24, ['A', 'B', 'C', 'D', 'E']),
+        verticalHand('right', 0.76, ['E', 'D', 'C', 'B', 'A']),
+      ],
+      video: video(),
+      mirrored: false,
+      style,
+      timestampMs: 2200,
+    });
+
+    expect(input.mesh.mode).toBe('two-hand-template');
+    expect(input.mesh.faces.every((face) => face.indices.length === 4)).toBe(true);
+  });
 });
+
+function verticalHand(
+  id: string,
+  x: number,
+  order: Array<'A' | 'B' | 'C' | 'D' | 'E'>,
+): TrackedHand {
+  const landmarks = Array.from({ length: 21 }, () => ({ x, y: 0.5, z: -0.02 }));
+  const yByOrder = [0.24, 0.32, 0.4, 0.48, 0.56];
+  const indexByFinger = {
+    A: 4,
+    B: 8,
+    C: 12,
+    D: 16,
+    E: 20,
+  } as const;
+
+  landmarks[0] = { x, y: 0.72, z: 0 };
+  for (const [index, finger] of order.entries()) {
+    landmarks[indexByFinger[finger]] = { x, y: yByOrder[index], z: -0.04 };
+  }
+
+  return {
+    id,
+    handedness: 'unknown',
+    confidence: 0.9,
+    landmarks,
+  };
+}

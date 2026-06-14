@@ -80,6 +80,28 @@ describe('buildFingertipLattice', () => {
     expect(Math.max(...zValues)).toBeLessThanOrEqual(0.045);
     expect(Math.min(...zValues)).toBeGreaterThanOrEqual(-0.08);
   });
+
+  it('hides two-hand lattices when one hand loop has collapsed', () => {
+    const lattice = buildFingertipLattice(extractHandTopologyFrame([
+      collapsedOneHand('partial-left', 'left', 0.22),
+      hand('right', 'right', 0.78),
+    ]));
+
+    expect(lattice.mode).toBe('hidden');
+    expect(lattice.crossRails).toHaveLength(0);
+    expect(lattice.faces).toHaveLength(0);
+  });
+
+  it('hides two-hand lattices with crossing fingertip rails', () => {
+    const lattice = buildFingertipLattice(extractHandTopologyFrame([
+      verticalHand('left', 'left', 0.24, ['A', 'B', 'C', 'D', 'E']),
+      verticalHand('right', 'right', 0.76, ['E', 'D', 'C', 'B', 'A']),
+    ]));
+
+    expect(lattice.mode).toBe('hidden');
+    expect(lattice.crossRails).toHaveLength(0);
+    expect(lattice.faces).toHaveLength(0);
+  });
 });
 
 function hand(id: string, handedness: TrackedHand['handedness'], centerX: number): TrackedHand {
@@ -132,6 +154,23 @@ function handWithDepthSpikes(
     D: { x: centerX + 0.06, y: 0.36, z: 0.9 },
     E: { x: centerX + 0.12, y: 0.46, z: -0.8 },
   });
+}
+
+function verticalHand(
+  id: string,
+  handedness: TrackedHand['handedness'],
+  centerX: number,
+  order: Array<'A' | 'B' | 'C' | 'D' | 'E'>,
+): TrackedHand {
+  const yByOrder = [0.24, 0.32, 0.4, 0.48, 0.56];
+  const tips = Object.fromEntries(
+    order.map((finger, index) => [
+      finger,
+      { x: centerX, y: yByOrder[index], z: -0.04 },
+    ]),
+  ) as Record<'A' | 'B' | 'C' | 'D' | 'E', NormalizedPoint>;
+
+  return handFromTips(id, handedness, tips);
 }
 
 function handFromTips(

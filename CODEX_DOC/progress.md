@@ -1353,3 +1353,53 @@
   - `npm test` passed: 16 test files, 58 tests.
   - `npm run build` passed.
   - tracked plus new bilingual documentation pairing check passed.
+
+## 2026-06-14 16:50
+
+### 0e000ae Real-Camera Frame Analysis
+- New validation input:
+  - `测试记录/基于提交 0e000ae09ef1de7178c53d78f01fc6446125129c 测试/屏幕录制 2026-06-14 163150.mp4`
+  - 3808x1954, 30fps, about 116.33 seconds, 3487 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted all frames with FFmpeg and generated 1fps overview, 4fps segment sheets, and labeled keyframe sheets under:
+  - `测试记录/基于提交 0e000ae09ef1de7178c53d78f01fc6446125129c 测试/ffmpeg逐帧对比_20260614_163150/`
+- Added bilingual analysis:
+  - `docs/analysis/0e000ae-real-camera-frame-analysis.md`
+  - `docs/analysis/0e000ae-real-camera-frame-analysis.zh-CN.md`
+- Findings:
+  - `0e000ae` reduced raw-depth explosion and reduced single-hand leftovers;
+  - remaining primary failure is two-hand topology twisting into tubes, vertical slabs, or hourglass bodies;
+  - rendered bodies are not reliably attached to visible fingertip control points;
+  - small one-hand residual triangles still occur in partial/low-quality detections;
+  - current topology model lacks persistent hand identity, loop-winding normalization, cross-rail validity checks, and temporal state stabilization.
+- Recommended next implementation scope:
+  - add tests for opposite winding, rail crossing, and adjacent-frame role switching;
+  - add a hand-pair stabilization layer with hysteresis;
+  - normalize mesh loop winding before building faces;
+  - add lattice quality gates for rail intersections, strip aspect ratio, control-envelope centroid, and cap orientation.
+- This phase changed documentation only; no source code was modified.
+
+## 2026-06-14 16:50
+
+### Rail-Crossing And Partial-Hand Gate TDD
+- Started implementation from the `0e000ae` real-camera analysis.
+- Added RED tests for:
+  - two-hand mode must hide when either hand loop is collapsed;
+  - two-hand mode must hide when semantic fingertip rails cross.
+- RED evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 2 expected failures: both invalid inputs still returned `two-hand-lattice`.
+- GREEN implementation:
+  - reused the one-hand loop validity gate before building any two-hand closed body;
+  - added strict screen-space rail intersection detection for semantic `A-A/B-B/C-C/D-D/E-E` rails;
+  - invalid two-hand lattices now return `hidden`, allowing `createSpatialTemplateRenderInput` to fall back to the existing stable anchor template.
+- GREEN evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts` passed: 1 test file, 8 tests.
+  - `npm test -- src/features/spatial-template-renderer/renderInput.test.ts` passed: 1 test file, 4 tests.
+- Full verification:
+  - `npm test` passed: 16 test files, 61 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.

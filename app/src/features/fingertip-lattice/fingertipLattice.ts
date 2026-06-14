@@ -130,6 +130,10 @@ function buildTwoHandClosedBody(
   right: HandTopology,
   confidence: number,
 ): FingertipLattice {
+  if (!isRenderableHandLoop(left) || !isRenderableHandLoop(right) || hasCrossingRails(left, right)) {
+    return hiddenLattice();
+  }
+
   const vertices = createTwoHandVertices(left, right);
   const crossRails = createCrossRails(left, right);
   const boundaryEdges = [
@@ -408,6 +412,41 @@ function isRenderableHandLoop(hand: HandTopology): boolean {
     Math.hypot(width, height) >= MIN_HAND_LOOP_SPREAD &&
     longSide / shortSide <= MAX_HAND_LOOP_ASPECT_RATIO
   );
+}
+
+function hasCrossingRails(left: HandTopology, right: HandTopology): boolean {
+  const rails = FINGER_ORDER.map((finger) => ({
+    start: left.fingertips[finger],
+    end: right.fingertips[finger],
+  }));
+
+  for (let firstIndex = 0; firstIndex < rails.length; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < rails.length; secondIndex += 1) {
+      if (segmentsIntersect(rails[firstIndex].start, rails[firstIndex].end, rails[secondIndex].start, rails[secondIndex].end)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+function segmentsIntersect(
+  a: NormalizedPoint,
+  b: NormalizedPoint,
+  c: NormalizedPoint,
+  d: NormalizedPoint,
+): boolean {
+  const abC = orientation(a, b, c);
+  const abD = orientation(a, b, d);
+  const cdA = orientation(c, d, a);
+  const cdB = orientation(c, d, b);
+
+  return abC * abD < 0 && cdA * cdB < 0;
+}
+
+function orientation(a: NormalizedPoint, b: NormalizedPoint, c: NormalizedPoint): number {
+  return (b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x);
 }
 
 function polygonArea(points: NormalizedPoint[]): number {
