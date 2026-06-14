@@ -57,7 +57,18 @@ export function CameraStage() {
 
     const timestampMs = performance.now();
     const hands = detectHands(trackerRef.current, video, timestampMs);
-    const displayHands = toDisplayHands(hands, mirroredRef.current);
+    const viewport = {
+      width: video.clientWidth || video.videoWidth,
+      height: video.clientHeight || video.videoHeight,
+    };
+    const videoSize = {
+      width: video.videoWidth,
+      height: video.videoHeight,
+    };
+    const displayHands = toDisplayHands(hands, mirroredRef.current, {
+      viewport,
+      video: videoSize,
+    });
     const anchorFrame = deriveGestureAnchorFrame(displayHands);
     setHandsCount(getGestureAnchorHandCount(anchorFrame));
 
@@ -85,10 +96,7 @@ export function CameraStage() {
       scene: {
         video,
         mirrored: mirroredRef.current,
-        viewport: {
-          width: video.clientWidth || video.videoWidth,
-          height: video.clientHeight || video.videoHeight,
-        },
+        viewport,
       },
     });
 

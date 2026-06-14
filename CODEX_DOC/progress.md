@@ -1233,3 +1233,55 @@
   - tracked plus new bilingual documentation pairing check passed.
   - `git diff --check` passed with only Git line-ending warnings.
 - GitHub CLI is installed and authenticated as `Baldman-JYH`.
+
+## 2026-06-14 13:24
+
+### 3136e09 Offset Frame Analysis And Coordinate Fix
+- New validation input:
+  - `测试记录/基于提交 3136e094b0210928d2eb01f8f06d8541535e6ca2测试/屏幕录制 2026-06-14 130340.mp4`
+  - 1904x878, 30fps, about 206.5 seconds, 6191 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted all frames and generated contact sheets under:
+  - `测试记录/基于提交 3136e094b0210928d2eb01f8f06d8541535e6ca2测试/ffmpeg逐帧对比_20260614_130340/`
+- Added bilingual analysis:
+  - `docs/analysis/3136e09-offset-frame-analysis.md`
+  - `docs/analysis/3136e09-offset-frame-analysis.zh-CN.md`
+- Root cause found:
+  - hand landmarks were still source-video normalized coordinates;
+  - the visible camera preview uses CSS `object-fit: cover`;
+  - spatial-template geometry used source coordinates as display coordinates, causing pose-dependent visible offset on wide viewports.
+- RED test added:
+  - `npm test -- src/features/coordinate-space/displaySpace.test.ts`
+  - failed because source `y=0.3` stayed `0.3` instead of mapping to visible `y≈0.256`.
+- GREEN implementation:
+  - `toDisplayHands` now maps source-video landmarks through the same centered cover transform before mirror conversion;
+  - `CameraStage` passes current video and viewport sizes into the coordinate-space mapping.
+- GREEN evidence:
+  - `npm test -- src/features/coordinate-space/displaySpace.test.ts`
+  - 1 test file passed, 4 tests passed.
+- Full verification:
+  - `npm test` passed: 16 test files, 56 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+  - local browser smoke at `http://127.0.0.1:5174/gesture-mask-studio/` passed with no initial console errors.
+  - screenshot saved to `output/browser-smoke-coordinate-fix-20260614.png`.
+- Remaining issue to validate separately:
+  - direct MediaPipe `z` usage still contributes to thick capsule/slab appearance during one-hand and diagonal poses.
+
+## 2026-06-14 13:34
+
+### Commit And Deployment Trigger For Coordinate Fix
+- User requested committing and pushing the coordinate-space offset fix for real-device validation.
+- Scope confirmed on `main`:
+  - source-video to visible-display coordinate mapping for hand landmarks;
+  - viewport/video size propagation from `CameraStage`;
+  - regression test for wide-stage `object-fit: cover` mapping;
+  - bilingual `3136e09` offset analysis and progress docs.
+- Fresh pre-commit verification:
+  - `npm test` passed: 16 test files, 56 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.

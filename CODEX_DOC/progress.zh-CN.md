@@ -992,3 +992,55 @@ English version: [progress.md](progress.md)
   - 已跟踪和新增的中英文文档配对检查通过。
   - `git diff --check` 通过，仅有 Git 换行提示。
 - GitHub CLI 已安装，并已通过 `Baldman-JYH` 账号认证。
+
+## 2026-06-14 13:24
+
+### 3136e09 偏移逐帧分析和坐标修复
+- 新验证输入：
+  - `测试记录/基于提交 3136e094b0210928d2eb01f8f06d8541535e6ca2测试/屏幕录制 2026-06-14 130340.mp4`
+  - 1904x878，30fps，约 206.5 秒，6191 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已抽取全部帧并生成拼图到：
+  - `测试记录/基于提交 3136e094b0210928d2eb01f8f06d8541535e6ca2测试/ffmpeg逐帧对比_20260614_130340/`
+- 新增中英文分析：
+  - `docs/analysis/3136e09-offset-frame-analysis.md`
+  - `docs/analysis/3136e09-offset-frame-analysis.zh-CN.md`
+- 已定位根因：
+  - 手部 landmarks 仍是源视频归一化坐标；
+  - 可见摄像头预览使用 CSS `object-fit: cover`；
+  - spatial-template 几何把源视频坐标直接当作显示坐标使用，因此在宽视口上产生随姿态变化的可见偏移。
+- 新增 RED 测试：
+  - `npm test -- src/features/coordinate-space/displaySpace.test.ts`
+  - 失败原因是源视频 `y=0.3` 仍保持为 `0.3`，没有映射到可见 `y≈0.256`。
+- GREEN 实现：
+  - `toDisplayHands` 现在先按居中 cover 规则把源视频 landmarks 映射到可见显示坐标，再做镜像转换；
+  - `CameraStage` 会把当前 video 和 viewport 尺寸传入坐标映射。
+- GREEN 证据：
+  - `npm test -- src/features/coordinate-space/displaySpace.test.ts`
+  - 1 个测试文件通过，4 个测试通过。
+- 完整验证：
+  - `npm test` 通过：16 个测试文件，56 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+  - 本地浏览器冒烟验证 `http://127.0.0.1:5174/gesture-mask-studio/` 通过，初始无 console error。
+  - 截图保存到 `output/browser-smoke-coordinate-fix-20260614.png`。
+- 后续仍需单独验证的问题：
+  - MediaPipe `z` 仍直接参与空间模板深度，单手和斜向姿态下仍可能造成厚胶囊/厚板感。
+
+## 2026-06-14 13:34
+
+### 坐标修复提交和部署触发
+- 用户要求提交并推送坐标空间偏移修复，用于真实设备验证。
+- 已确认当前在 `main` 分支，提交范围为：
+  - 手部 landmarks 从源视频坐标到可见显示坐标的映射；
+  - `CameraStage` 传递 viewport/video 尺寸；
+  - 宽屏 `object-fit: cover` 映射回归测试；
+  - 中英文 `3136e09` 偏移分析和进展文档。
+- 新鲜提交前验证：
+  - `npm test` 通过：16 个测试文件，56 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。

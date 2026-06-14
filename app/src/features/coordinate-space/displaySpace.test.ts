@@ -31,6 +31,18 @@ describe('toDisplayHands', () => {
     expect(hand.landmarks[1].z).toBe(0.02);
   });
 
+  it('maps source video landmarks through object-fit cover before mirroring', () => {
+    const [hand] = toDisplayHands([trackedHand()], true, {
+      viewport: { width: 1904, height: 878 },
+      video: { width: 1280, height: 720 },
+    });
+
+    expect(hand.landmarks[0].x).toBeCloseTo(0.8, 6);
+    expect(hand.landmarks[0].y).toBeCloseTo(0.256036, 6);
+    expect(hand.landmarks[1].x).toBeCloseTo(0.3, 6);
+    expect(hand.landmarks[1].y).toBeCloseTo(0.865945, 6);
+  });
+
   it('does not mutate the camera-space tracking result', () => {
     const hand = trackedHand();
     toDisplayHands([hand], true);
