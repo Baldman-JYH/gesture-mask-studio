@@ -54,8 +54,12 @@ const FINGER_ORDER: FingertipId[] = ['A', 'B', 'C', 'D', 'E'];
 const EDGE_IDS: FingertipBoundaryEdgeId[] = ['AB', 'BC', 'CD', 'DE', 'EA'];
 const STRIP_IDS: FingertipStripId[] = EDGE_IDS;
 const FRONT_FACE_MATERIALS: SpatialTemplateMaterialId[] = ['scene', 'panel', 'accent', 'panel', 'scene'];
-const TEMPLATE_THICKNESS = 0.055;
+const FRONT_DEPTH_PROFILE = [-0.008, 0.012, 0.034, 0.012, -0.008] as const;
+const TEMPLATE_THICKNESS = 0.032;
 const MIN_TRIANGLE_AREA = 0.00001;
+const MIN_HAND_LOOP_AREA = 0.0025;
+const MIN_HAND_LOOP_SPREAD = 0.08;
+const MAX_HAND_LOOP_ASPECT_RATIO = 10;
 
 export function buildFingertipLattice(frame: HandTopologyFrame): FingertipLattice {
   if (frame.mode === 'hidden') {
@@ -92,6 +96,10 @@ export function buildFingertipLattice(frame: HandTopologyFrame): FingertipLattic
 }
 
 function buildOneHandClosedFace(hand: HandTopology, confidence: number): FingertipLattice {
+  if (!isRenderableHandLoop(hand)) {
+    return hiddenLattice();
+  }
+
   const vertices = createHandLoopVertices(hand);
   const boundaryEdges = createBoundaryEdges(hand, 'single');
   const caps: FingertipCap[] = [{
@@ -167,7 +175,9 @@ function buildTwoHandClosedBody(
 }
 
 function createHandLoopVertices(hand: HandTopology): SpatialTemplateVertex[] {
-  const front = FINGER_ORDER.map((finger) => vertex(hand.fingertips[finger]));
+  const front = FINGER_ORDER.map((finger, index) => (
+    vertex(hand.fingertips[finger], FRONT_DEPTH_PROFILE[index])
+  ));
   const back = front.map((frontVertex) => ({
     position: {
       ...frontVertex.position,
@@ -181,8 +191,8 @@ function createHandLoopVertices(hand: HandTopology): SpatialTemplateVertex[] {
 
 function createTwoHandVertices(left: HandTopology, right: HandTopology): SpatialTemplateVertex[] {
   const front = [
-    ...FINGER_ORDER.map((finger) => vertex(left.fingertips[finger])),
-    ...FINGER_ORDER.map((finger) => vertex(right.fingertips[finger])),
+    ...FINGER_ORDER.map((finger, index) => vertex(left.fingertips[finger], FRONT_DEPTH_PROFILE[index])),
+    ...FINGER_ORDER.map((finger, index) => vertex(right.fingertips[finger], FRONT_DEPTH_PROFILE[index])),
   ];
   const back = front.map((frontVertex) => ({
     position: {
@@ -302,8 +312,8 @@ function hasValidQuad(
   corners: [number, number, number, number],
 ): boolean {
   return (
-    triangleArea(vertices, [corners[0], corners[1], corners[2]]) > MIN_TRIANGLE_AREA &&
-    triangleArea(vertices, [corners[0], corners[2], corners[3]]) > MIN_TRIANGLE_AREA
+    screenTriangleArea(vertices, [corners[0], corners[1], corners[2]]) > MIN_TRIANGLE_AREA &&
+    screenTriangleArea(vertices, [corners[0], corners[2], corners[3]]) > MIN_TRIANGLE_AREA
   );
 }
 
@@ -348,12 +358,84 @@ function triangleArea(
   return Math.hypot(cross.x, cross.y, cross.z) / 2;
 }
 
-function vertex(point: NormalizedPoint): SpatialTemplateVertex {
+function screenTriangleArea(
+  vertices: SpatialTemplateVertex[],
+  indices: [number, number, number],
+): number {
+  const [a, b, c] = indices.map((index) => vertices[index].position);
+
+  return Math.abs(
+    (a.x * (b.y - c.y) + b.x * (c.y - a.y) + c.x * (a.y - b.y)) / 2,
+  );
+}
+
+function vertex(point: NormalizedPoint, depth = 0): SpatialTemplateVertex {
   const samplePoint = clampNormalizedPoint(point);
 
   return {
-    position: samplePoint,
+    position: {
+      x: samplePoint.x,
+      y: samplePoint.y,
+      z: depth,
+    },
     samplePoint,
+  };
+}
+
+function hiddenLattice(): FingertipLattice {
+  return {
+    mode: 'hidden',
+    vertices: [],
+    crossRails: [],
+    boundaryEdges: [],
+    strips: [],
+    caps: [],
+    faces: [],
+    confidence: 0,
+  };
+}
+
+function isRenderableHandLoop(hand: HandTopology): boolean {
+  const points = FINGER_ORDER.map((finger) => hand.fingertips[finger]);
+  const bounds = getPointBounds(points);
+  const width = bounds.maxX - bounds.minX;
+  const height = bounds.maxY - bounds.minY;
+  const shortSide = Math.max(Math.min(width, height), Number.EPSILON);
+  const longSide = Math.max(width, height);
+
+  return (
+    polygonArea(points) >= MIN_HAND_LOOP_AREA &&
+    Math.hypot(width, height) >= MIN_HAND_LOOP_SPREAD &&
+    longSide / shortSide <= MAX_HAND_LOOP_ASPECT_RATIO
+  );
+}
+
+function polygonArea(points: NormalizedPoint[]): number {
+  let doubledArea = 0;
+
+  for (let index = 0; index < points.length; index += 1) {
+    const current = points[index];
+    const next = points[(index + 1) % points.length];
+    doubledArea += current.x * next.y - next.x * current.y;
+  }
+
+  return Math.abs(doubledArea) / 2;
+}
+
+function getPointBounds(points: NormalizedPoint[]): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
   };
 }
 

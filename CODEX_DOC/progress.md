@@ -1285,3 +1285,71 @@
   - `npm run build` passed.
   - tracked plus new bilingual documentation pairing check passed.
   - `git diff --check` passed with only Git line-ending warnings.
+
+## 2026-06-14 14:10
+
+### 918465d Real-Device Frame Analysis
+- New validation input:
+  - `测试记录/基于提交 918465d6bc73a750691917c262f9b9c7c438a0df测试/屏幕录制 2026-06-14 134907.mp4`
+  - 1894x884, 30fps, about 152.04 seconds, 4557 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted all frames with FFmpeg and generated 1fps overview, 4fps segment sheets, and labeled keyframe sheets under:
+  - `测试记录/基于提交 918465d6bc73a750691917c262f9b9c7c438a0df测试/ffmpeg逐帧对比_20260614_134907/`
+- Added bilingual analysis:
+  - `docs/analysis/918465d-post-coordinate-fix-frame-analysis.md`
+  - `docs/analysis/918465d-post-coordinate-fix-frame-analysis.zh-CN.md`
+- Findings:
+  - previous left-right and top-bottom coordinate-space errors did not reproduce;
+  - stable two-hand geometry now follows the visible hand region much more closely;
+  - one-hand mode can still render degenerate slivers or isolated triangles;
+  - two-hand topology is closed, but the rendered result still looks like a thick box/capsule instead of the reference folded template;
+  - raw MediaPipe landmark `z` still creates excessive depth in crossed-hand or diagonal poses;
+  - face materials remain too visually uniform compared with the reference's per-face template styling.
+- Recommended next implementation scope:
+  - add topology validity gates for one-hand area, aspect ratio, fingertip spread, stale/duplicate hand state, and fade-out hysteresis;
+  - replace raw landmark `z` depth with a clamped and smoothed template-depth model;
+  - add explicit white edge geometry and stronger per-face material identities.
+- This phase changed documentation only; no source code was modified.
+
+## 2026-06-14 14:20
+
+### Topology Gate And Depth Model TDD
+- Started the next implementation step from the `918465d` frame analysis.
+- Added RED tests for:
+  - collapsed one-hand fingertip loops must render as hidden instead of remote slivers or isolated triangles;
+  - extreme raw MediaPipe landmark `z` values must not become unbounded render depth.
+- RED evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 2 expected failures:
+    - collapsed one-hand input still returned `one-hand-lattice`;
+    - raw `z=0.9` reached the rendered vertex depth.
+- GREEN implementation:
+  - added one-hand loop validity gates for polygon area, fingertip spread, and aspect ratio;
+  - changed fingertip lattice vertex depth to a bounded template depth profile instead of raw landmark `z`;
+  - reduced lattice thickness so crossed/diagonal poses should no longer form thick boxes from depth spikes;
+  - changed strip validity checks to use screen-space area, so depth differences cannot revive visually degenerate strips.
+- GREEN evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts` passed: 1 test file, 6 tests.
+  - Related spatial-template tests passed: 3 test files, 11 tests.
+- Full verification:
+  - `npm test` passed: 16 test files, 58 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+  - local HTTP smoke at `http://127.0.0.1:5174/gesture-mask-studio/` returned HTTP 200 and contained the expected page title.
+- Real camera validation is still required on the camera-enabled device.
+
+## 2026-06-14 14:28
+
+### Commit And Deployment Trigger Preparation
+- User confirmed the local machine has no camera and asked whether the changes had been committed and pushed.
+- The changes had not yet been committed or pushed, so the next step is direct `main` push to trigger the existing GitHub Pages workflow for camera-device validation.
+- Confirmed GitHub CLI availability and authentication:
+  - `gh --version` reports `2.91.0`.
+  - `gh auth status` is authenticated as `Baldman-JYH`.
+- Fresh pre-commit verification:
+  - `npm test` passed: 16 test files, 58 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.

@@ -58,6 +58,28 @@ describe('buildFingertipLattice', () => {
       expect.arrayContaining(['scene', 'back', 'edge']),
     );
   });
+
+  it('hides collapsed one-hand loops instead of rendering remote slivers', () => {
+    const lattice = buildFingertipLattice(extractHandTopologyFrame([
+      collapsedOneHand('single', 'left', 0.62),
+    ]));
+
+    expect(lattice.mode).toBe('hidden');
+    expect(lattice.vertices).toHaveLength(0);
+    expect(lattice.faces).toHaveLength(0);
+  });
+
+  it('uses bounded template depth instead of raw landmark z spikes', () => {
+    const lattice = buildFingertipLattice(extractHandTopologyFrame([
+      handWithDepthSpikes('left', 'left', 0.2),
+      handWithDepthSpikes('right', 'right', 0.8),
+    ]));
+    const zValues = lattice.vertices.map((vertex) => vertex.position.z ?? 0);
+
+    expect(lattice.mode).toBe('two-hand-lattice');
+    expect(Math.max(...zValues)).toBeLessThanOrEqual(0.045);
+    expect(Math.min(...zValues)).toBeGreaterThanOrEqual(-0.08);
+  });
 });
 
 function hand(id: string, handedness: TrackedHand['handedness'], centerX: number): TrackedHand {
@@ -81,6 +103,34 @@ function degenerateHand(
     C: { x: centerX, y: 0.3, z: -0.1 },
     D: { x: centerX + 0.06, y: 0.36, z: -0.07 },
     E: { x: centerX + 0.12, y: 0.46, z: -0.05 },
+  });
+}
+
+function collapsedOneHand(
+  id: string,
+  handedness: TrackedHand['handedness'],
+  centerX: number,
+): TrackedHand {
+  return handFromTips(id, handedness, {
+    A: { x: centerX - 0.005, y: 0.42, z: -0.4 },
+    B: { x: centerX - 0.002, y: 0.421, z: 0.6 },
+    C: { x: centerX, y: 0.422, z: -0.8 },
+    D: { x: centerX + 0.002, y: 0.423, z: 0.4 },
+    E: { x: centerX + 0.005, y: 0.424, z: -0.7 },
+  });
+}
+
+function handWithDepthSpikes(
+  id: string,
+  handedness: TrackedHand['handedness'],
+  centerX: number,
+): TrackedHand {
+  return handFromTips(id, handedness, {
+    A: { x: centerX - 0.12, y: 0.52, z: -0.9 },
+    B: { x: centerX - 0.06, y: 0.36, z: 0.8 },
+    C: { x: centerX, y: 0.3, z: -0.7 },
+    D: { x: centerX + 0.06, y: 0.36, z: 0.9 },
+    E: { x: centerX + 0.12, y: 0.46, z: -0.8 },
   });
 }
 

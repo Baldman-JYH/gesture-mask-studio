@@ -1044,3 +1044,71 @@ English version: [progress.md](progress.md)
   - `npm run build` 通过。
   - 已跟踪和新增的中英文文档配对检查通过。
   - `git diff --check` 通过，仅有 Git 换行提示。
+
+## 2026-06-14 14:10
+
+### 918465d 真实设备逐帧分析
+- 新验证输入：
+  - `测试记录/基于提交 918465d6bc73a750691917c262f9b9c7c438a0df测试/屏幕录制 2026-06-14 134907.mp4`
+  - 1894x884，30fps，约 152.04 秒，4557 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已使用 FFmpeg 抽取全部帧，并生成 1fps 总览、4fps 分段联系表和带标签关键帧联系表，目录为：
+  - `测试记录/基于提交 918465d6bc73a750691917c262f9b9c7c438a0df测试/ffmpeg逐帧对比_20260614_134907/`
+- 新增中英文分析：
+  - `docs/analysis/918465d-post-coordinate-fix-frame-analysis.md`
+  - `docs/analysis/918465d-post-coordinate-fix-frame-analysis.zh-CN.md`
+- 发现：
+  - 之前的左右、上下坐标空间错误没有复现；
+  - 稳定双手几何现在已经更贴近可见手部区域；
+  - 单手模式仍可能渲染退化细片或孤立三角；
+  - 双手拓扑已经闭合，但视觉上仍更像厚盒子/胶囊体，而不是参考视频中的折叠模板；
+  - 原始 MediaPipe landmark `z` 在交叉手或斜向姿态下仍会产生过度深度；
+  - 面材质相对参考视频仍过于统一，缺少更强的分面模板身份。
+- 建议下一步实现范围：
+  - 增加单手面积、长宽比、指尖展开、过期/重复手状态和渐隐 hysteresis 的拓扑有效性门控；
+  - 用受限且平滑的模板深度模型替代原始 landmark `z`；
+  - 增加显式白色边缘几何和更强的逐面材质身份。
+- 本阶段只修改文档，没有修改业务代码。
+
+## 2026-06-14 14:20
+
+### 拓扑门控和深度模型 TDD
+- 已根据 `918465d` 逐帧分析开始下一步实现。
+- 新增 RED 测试覆盖：
+  - 单手指尖闭环塌缩时必须隐藏，而不是渲染远端细片或孤立三角；
+  - 极端 raw MediaPipe landmark `z` 不能直接成为不受控的渲染深度。
+- RED 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 2 个预期失败：
+    - 塌缩单手输入仍返回 `one-hand-lattice`；
+    - raw `z=0.9` 直接进入渲染顶点深度。
+- GREEN 实现：
+  - 新增单手闭环多边形面积、指尖展开度和长宽比门控；
+  - 指尖拓扑顶点深度改为受控模板 depth profile，不再使用原始 landmark `z`；
+  - 减小拓扑体厚度，降低交叉/斜向姿态形成厚盒子的概率；
+  - 条带有效性改为屏幕空间面积判断，避免深度差把视觉上退化的条带重新判定为有效。
+- GREEN 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts` 通过：1 个测试文件，6 个测试。
+  - 相关 spatial-template 测试通过：3 个测试文件，11 个测试。
+- 完整验证：
+  - `npm test` 通过：16 个测试文件，58 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+  - 本地 HTTP 冒烟验证 `http://127.0.0.1:5174/gesture-mask-studio/` 返回 HTTP 200，并包含预期页面标题。
+- 仍需在有摄像头设备上做真实摄像头验证。
+
+## 2026-06-14 14:28
+
+### 提交和部署触发准备
+- 用户确认本机没有摄像头，并询问是否已经提交和推送。
+- 当前变更此前尚未提交和推送，因此下一步直接推送 `main`，触发既有 GitHub Pages workflow，便于在有摄像头设备上验证。
+- 已确认 GitHub CLI 可用且已认证：
+  - `gh --version` 返回 `2.91.0`。
+  - `gh auth status` 已通过 `Baldman-JYH` 账号认证。
+- 新鲜提交前验证：
+  - `npm test` 通过：16 个测试文件，58 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
