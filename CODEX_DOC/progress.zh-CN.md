@@ -1247,3 +1247,21 @@ English version: [progress.md](progress.md)
   - 目标测试通过：2 个测试文件，7 个测试。
   - `npm test` 通过：18 个测试文件，66 个测试。
   - `npm run build` 通过。
+
+## 2026-06-14 18:30
+
+### 稳定层修正提交、推送和部署
+- 已提交代码和文档更新：
+  - `f204e10c7ae372bf3710438f69472db8683f8c2f`
+  - commit message: `fix: stabilize spatial template rendering`
+- 已通过 SSH remote 成功推送 `main`：
+  - `git@github.com:Baldman-JYH/gesture-mask-studio.git`
+- GitHub Pages workflow 已成功完成：
+  - run id: `27495970866`
+  - build job 25 秒通过；
+  - deploy job 8 秒通过。
+- workflow 警告：
+  - GitHub Actions 报告多个上游 action 的 Node.js 20 弃用警告，并被强制切到 Node.js 24。
+  - 该警告不阻断部署，但后续可以在可用时升级 `.github/workflows/pages.yml` 中的 action 版本。
+- 当前部署地址已可进入真实摄像头验证：
+  - `https://baldman-jyh.github.io/gesture-mask-studio/`
