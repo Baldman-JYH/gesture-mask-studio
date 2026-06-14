@@ -7,7 +7,7 @@ export type SpatialTemplateMode =
   | 'one-hand-lattice'
   | 'two-hand-lattice';
 
-export type SpatialTemplateMaterialId = 'scene' | 'panel' | 'back' | 'accent' | 'edge';
+export type SpatialTemplateMaterialId = 'scene' | 'panel' | 'back' | 'accent' | 'cap' | 'edge';
 
 export type SpatialTemplateVertex = {
   position: NormalizedPoint;

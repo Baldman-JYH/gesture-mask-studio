@@ -11,11 +11,26 @@ export type FingertipCrossRail = {
   virtualEnd: boolean;
 };
 
-export type FingertipStripId = 'AB' | 'BC' | 'CD' | 'DE';
+export type FingertipBoundaryEdgeId = 'AB' | 'BC' | 'CD' | 'DE' | 'EA';
+
+export type FingertipBoundaryEdge = {
+  id: FingertipBoundaryEdgeId;
+  hand: 'single' | 'left' | 'right';
+  start: NormalizedPoint;
+  end: NormalizedPoint;
+};
+
+export type FingertipStripId = FingertipBoundaryEdgeId;
 
 export type FingertipStrip = {
   id: FingertipStripId;
   corners: [number, number, number, number];
+  materialId: SpatialTemplateMaterialId;
+};
+
+export type FingertipCap = {
+  id: 'single-hand' | 'left-hand' | 'right-hand';
+  corners: [number, number, number, number, number];
   materialId: SpatialTemplateMaterialId;
 };
 
@@ -28,41 +43,96 @@ export type FingertipLattice = {
   mode: FingertipLatticeMode;
   vertices: SpatialTemplateVertex[];
   crossRails: FingertipCrossRail[];
+  boundaryEdges: FingertipBoundaryEdge[];
   strips: FingertipStrip[];
+  caps: FingertipCap[];
   faces: FingertipLatticeFace[];
   confidence: number;
 };
 
-type LatticeHandPair = {
-  left: HandTopology;
-  right: HandTopology;
-  virtualEnd: boolean;
-};
-
 const FINGER_ORDER: FingertipId[] = ['A', 'B', 'C', 'D', 'E'];
-const STRIP_IDS: FingertipStripId[] = ['AB', 'BC', 'CD', 'DE'];
-const FRONT_FACE_MATERIALS: SpatialTemplateMaterialId[] = ['scene', 'panel', 'accent', 'panel'];
+const EDGE_IDS: FingertipBoundaryEdgeId[] = ['AB', 'BC', 'CD', 'DE', 'EA'];
+const STRIP_IDS: FingertipStripId[] = EDGE_IDS;
+const FRONT_FACE_MATERIALS: SpatialTemplateMaterialId[] = ['scene', 'panel', 'accent', 'panel', 'scene'];
 const TEMPLATE_THICKNESS = 0.055;
-const ONE_HAND_VIRTUAL_RAIL_SPAN = 0.28;
 const MIN_TRIANGLE_AREA = 0.00001;
 
 export function buildFingertipLattice(frame: HandTopologyFrame): FingertipLattice {
-  const pair = toLatticeHandPair(frame);
-
-  if (pair === null) {
+  if (frame.mode === 'hidden') {
     return {
       mode: 'hidden',
       vertices: [],
       crossRails: [],
+      boundaryEdges: [],
       strips: [],
+      caps: [],
       faces: [],
       confidence: 0,
     };
   }
 
-  const vertices = createVertices(pair);
-  const crossRails = createCrossRails(pair);
+  if (frame.mode === 'one-hand' && frame.primary) {
+    return buildOneHandClosedFace(frame.primary, frame.confidence);
+  }
+
+  if (frame.mode === 'two-hand' && frame.left && frame.right) {
+    return buildTwoHandClosedBody(frame.left, frame.right, frame.confidence);
+  }
+
+  return {
+    mode: 'hidden',
+    vertices: [],
+    crossRails: [],
+    boundaryEdges: [],
+    strips: [],
+    caps: [],
+    faces: [],
+    confidence: 0,
+  };
+}
+
+function buildOneHandClosedFace(hand: HandTopology, confidence: number): FingertipLattice {
+  const vertices = createHandLoopVertices(hand);
+  const boundaryEdges = createBoundaryEdges(hand, 'single');
+  const caps: FingertipCap[] = [{
+    id: 'single-hand',
+    corners: [0, 1, 2, 3, 4],
+    materialId: 'scene',
+  }];
+  const faces: FingertipLatticeFace[] = [];
+
+  addLoopFaces(faces, vertices, caps[0].corners, caps[0].materialId);
+  addLoopFaces(faces, vertices, toBackLoopCorners(caps[0].corners, FINGER_ORDER.length), 'back');
+  addLoopEdgeFaces(faces, vertices, caps[0].corners, FINGER_ORDER.length);
+
+  return {
+    mode: 'one-hand-lattice',
+    vertices,
+    crossRails: [],
+    boundaryEdges,
+    strips: [],
+    caps,
+    faces,
+    confidence,
+  };
+}
+
+function buildTwoHandClosedBody(
+  left: HandTopology,
+  right: HandTopology,
+  confidence: number,
+): FingertipLattice {
+  const vertices = createTwoHandVertices(left, right);
+  const crossRails = createCrossRails(left, right);
+  const boundaryEdges = [
+    ...createBoundaryEdges(left, 'left'),
+    ...createBoundaryEdges(right, 'right'),
+  ];
   const strips: FingertipStrip[] = [];
+  const caps: FingertipCap[] = [
+    { id: 'left-hand', corners: [0, 1, 2, 3, 4], materialId: 'cap' },
+    { id: 'right-hand', corners: [5, 6, 7, 8, 9], materialId: 'cap' },
+  ];
   const faces: FingertipLatticeFace[] = [];
 
   for (let index = 0; index < STRIP_IDS.length; index += 1) {
@@ -78,71 +148,41 @@ export function buildFingertipLattice(frame: HandTopologyFrame): FingertipLattic
     addEdgeFaces(faces, vertices, strip.corners);
   }
 
+  for (const cap of caps) {
+    addLoopFaces(faces, vertices, cap.corners, cap.materialId);
+    addLoopFaces(faces, vertices, toBackLoopCorners(cap.corners, FINGER_ORDER.length * 2), 'back');
+    addLoopEdgeFaces(faces, vertices, cap.corners, FINGER_ORDER.length * 2);
+  }
+
   return {
-    mode: frame.mode === 'two-hand' ? 'two-hand-lattice' : 'one-hand-lattice',
+    mode: 'two-hand-lattice',
     vertices,
     crossRails,
+    boundaryEdges,
     strips,
+    caps,
     faces,
-    confidence: frame.confidence,
+    confidence,
   };
 }
 
-function toLatticeHandPair(frame: HandTopologyFrame): LatticeHandPair | null {
-  if (frame.mode === 'two-hand' && frame.left && frame.right) {
-    return {
-      left: frame.left,
-      right: frame.right,
-      virtualEnd: false,
-    };
-  }
+function createHandLoopVertices(hand: HandTopology): SpatialTemplateVertex[] {
+  const front = FINGER_ORDER.map((finger) => vertex(hand.fingertips[finger]));
+  const back = front.map((frontVertex) => ({
+    position: {
+      ...frontVertex.position,
+      z: (frontVertex.position.z ?? 0) - TEMPLATE_THICKNESS,
+    },
+    samplePoint: frontVertex.samplePoint,
+  }));
 
-  if (frame.mode === 'one-hand' && frame.primary) {
-    const virtualHand = createVirtualHand(frame.primary);
-    const [left, right] = [frame.primary, virtualHand].sort(
-      (a, b) => a.palmCenter.x - b.palmCenter.x,
-    );
-
-    return {
-      left,
-      right,
-      virtualEnd: true,
-    };
-  }
-
-  return null;
+  return [...front, ...back];
 }
 
-function createVirtualHand(hand: HandTopology): HandTopology {
-  const direction = hand.palmCenter.x < 0.5 ? 1 : -1;
-  const fingertips = Object.fromEntries(
-    FINGER_ORDER.map((finger) => [
-      finger,
-      offsetPoint(hand.fingertips[finger], {
-        x: direction * ONE_HAND_VIRTUAL_RAIL_SPAN,
-        y: 0.025,
-        z: -TEMPLATE_THICKNESS,
-      }),
-    ]),
-  ) as HandTopology['fingertips'];
-
-  return {
-    ...hand,
-    id: `${hand.id}:virtual`,
-    confidence: hand.confidence * 0.72,
-    fingertips,
-    palmCenter: offsetPoint(hand.palmCenter, {
-      x: direction * ONE_HAND_VIRTUAL_RAIL_SPAN,
-      y: 0.025,
-      z: -TEMPLATE_THICKNESS,
-    }),
-  };
-}
-
-function createVertices(pair: LatticeHandPair): SpatialTemplateVertex[] {
+function createTwoHandVertices(left: HandTopology, right: HandTopology): SpatialTemplateVertex[] {
   const front = [
-    ...FINGER_ORDER.map((finger) => vertex(pair.left.fingertips[finger])),
-    ...FINGER_ORDER.map((finger) => vertex(pair.right.fingertips[finger])),
+    ...FINGER_ORDER.map((finger) => vertex(left.fingertips[finger])),
+    ...FINGER_ORDER.map((finger) => vertex(right.fingertips[finger])),
   ];
   const back = front.map((frontVertex) => ({
     position: {
@@ -155,20 +195,37 @@ function createVertices(pair: LatticeHandPair): SpatialTemplateVertex[] {
   return [...front, ...back];
 }
 
-function createCrossRails(pair: LatticeHandPair): FingertipCrossRail[] {
+function createCrossRails(left: HandTopology, right: HandTopology): FingertipCrossRail[] {
   return FINGER_ORDER.map((finger) => ({
     finger,
-    start: pair.left.fingertips[finger],
-    end: pair.right.fingertips[finger],
-    virtualEnd: pair.virtualEnd,
+    start: left.fingertips[finger],
+    end: right.fingertips[finger],
+    virtualEnd: false,
   }));
+}
+
+function createBoundaryEdges(
+  hand: HandTopology,
+  handId: FingertipBoundaryEdge['hand'],
+): FingertipBoundaryEdge[] {
+  return EDGE_IDS.map((id, index) => {
+    const start = FINGER_ORDER[index];
+    const end = FINGER_ORDER[(index + 1) % FINGER_ORDER.length];
+
+    return {
+      id,
+      hand: handId,
+      start: hand.fingertips[start],
+      end: hand.fingertips[end],
+    };
+  });
 }
 
 function createStrip(index: number, materialId: SpatialTemplateMaterialId): FingertipStrip {
   const leftCurrent = index;
-  const leftNext = index + 1;
+  const leftNext = (index + 1) % FINGER_ORDER.length;
   const rightCurrent = FINGER_ORDER.length + index;
-  const rightNext = FINGER_ORDER.length + index + 1;
+  const rightNext = FINGER_ORDER.length + ((index + 1) % FINGER_ORDER.length);
 
   return {
     id: STRIP_IDS[index],
@@ -187,12 +244,38 @@ function addSurfaceFaces(
   addFaceIfValid(faces, vertices, [corners[0], corners[2], corners[3]], materialId);
 }
 
+function addLoopFaces(
+  faces: FingertipLatticeFace[],
+  vertices: SpatialTemplateVertex[],
+  corners: [number, number, number, number, number],
+  materialId: SpatialTemplateMaterialId,
+): void {
+  addFaceIfValid(faces, vertices, [corners[0], corners[1], corners[2]], materialId);
+  addFaceIfValid(faces, vertices, [corners[0], corners[2], corners[3]], materialId);
+  addFaceIfValid(faces, vertices, [corners[0], corners[3], corners[4]], materialId);
+}
+
 function addEdgeFaces(
   faces: FingertipLatticeFace[],
   vertices: SpatialTemplateVertex[],
   corners: [number, number, number, number],
 ): void {
   const backCorners = toBackCorners(corners);
+
+  for (let index = 0; index < corners.length; index += 1) {
+    const next = (index + 1) % corners.length;
+    addFaceIfValid(faces, vertices, [corners[index], corners[next], backCorners[next]], 'edge');
+    addFaceIfValid(faces, vertices, [corners[index], backCorners[next], backCorners[index]], 'edge');
+  }
+}
+
+function addLoopEdgeFaces(
+  faces: FingertipLatticeFace[],
+  vertices: SpatialTemplateVertex[],
+  corners: [number, number, number, number, number],
+  backOffset: number,
+): void {
+  const backCorners = toBackLoopCorners(corners, backOffset);
 
   for (let index = 0; index < corners.length; index += 1) {
     const next = (index + 1) % corners.length;
@@ -228,6 +311,19 @@ function toBackCorners(corners: [number, number, number, number]): [number, numb
   return corners.map((index) => index + FINGER_ORDER.length * 2) as [number, number, number, number];
 }
 
+function toBackLoopCorners(
+  corners: [number, number, number, number, number],
+  backOffset: number,
+): [number, number, number, number, number] {
+  return corners.map((index) => index + backOffset) as [
+    number,
+    number,
+    number,
+    number,
+    number,
+  ];
+}
+
 function triangleArea(
   vertices: SpatialTemplateVertex[],
   indices: [number, number, number],
@@ -259,17 +355,6 @@ function vertex(point: NormalizedPoint): SpatialTemplateVertex {
     position: samplePoint,
     samplePoint,
   };
-}
-
-function offsetPoint(
-  point: NormalizedPoint,
-  offset: { x: number; y: number; z: number },
-): NormalizedPoint {
-  return clampNormalizedPoint({
-    x: point.x + offset.x,
-    y: point.y + offset.y,
-    z: (point.z ?? 0) + offset.z,
-  });
 }
 
 function clampNormalizedPoint(point: NormalizedPoint): NormalizedPoint {

@@ -71,8 +71,12 @@ export function materialIdToIndex(materialId: SpatialTemplateMaterialId): number
     return 3;
   }
 
-  if (materialId === 'edge') {
+  if (materialId === 'cap') {
     return 4;
+  }
+
+  if (materialId === 'edge') {
+    return 5;
   }
 
   return 0;

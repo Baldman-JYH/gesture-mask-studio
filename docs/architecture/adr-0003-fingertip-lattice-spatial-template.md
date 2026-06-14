@@ -37,9 +37,16 @@ For two valid hands, the topology starts from:
 
 - five cross rails between matching fingertips;
 - two side rails along the left and right finger order;
-- four validated strip faces between adjacent fingers;
-- optional closure/cap faces only after geometry validation;
+- five validated strip faces between adjacent fingers, including the closing `EA` strip;
+- left and right cap faces from each hand's `A-B-C-D-E-A` loop;
 - generated thickness, back faces, side faces, edge material groups, and material ids.
+
+For one valid hand, the topology starts from:
+
+- five boundary edges: `AB`, `BC`, `CD`, `DE`, and `EA`;
+- one cap/front face from the hand's `A-B-C-D-E-A` loop;
+- generated thickness, back faces, and edge material groups;
+- no virtual second hand.
 
 Rendering uses triangulated faces, not raw arbitrary polygons. Every generated face must pass minimum area, winding, and degeneracy checks before it reaches the renderer.
 
@@ -78,18 +85,20 @@ Positive:
 - Later template style changes can be implemented by changing topology/material rules instead of rewriting the camera or tracking stack.
 - Face-level material assignment becomes stable and extensible.
 - Degenerate hand poses can be handled explicitly instead of producing accidental geometry.
+- Single-hand and two-hand behavior now share the same point-edge-face-volume model.
 
 Cost:
 
 - More geometry tests are required.
 - The model layer needs stricter validation before renderer handoff.
-- One-hand behavior must be defined as a controlled fallback, not an accidental partial two-hand model.
+- One-hand behavior must be a closed hand-loop face, not a virtual two-hand strip.
 
 ## Verification Requirements
 
 Before implementation is accepted:
 
 - Unit tests must cover fingertip extraction, handedness/mirror normalization, rail construction, face validation, triangulation, thickness, material assignment, duplicate-hand suppression, and fallback behavior.
+- Tests must assert `EA` closure and hand cap faces.
 - `npm test` and `npm run build` must pass.
 - Bilingual documentation pairing must pass.
 - A real-device validation video must be recorded and compared against `参考视频.mp4` with FFmpeg contact sheets.

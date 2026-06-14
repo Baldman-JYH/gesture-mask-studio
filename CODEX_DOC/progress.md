@@ -1137,3 +1137,99 @@
 - Branch before commit: `main`.
 - Remote before commit: `origin/main`.
 - Pre-push verification is being rerun before commit.
+
+## 2026-06-14 12:05
+
+### 4159dbe Real-Device Frame Analysis
+- New validation input:
+  - `测试记录/基于提交 4159dbe0bf5ada0fc3a51f94079e6489f89ac536测试/屏幕录制 2026-06-14 115010.mp4`
+  - 1898x880, 30fps, about 113.7 seconds, 3407 frames.
+- Reference input:
+  - `参考视频.mp4`
+  - 1226x686, 30fps, about 24.58 seconds, 736 frames.
+- Extracted every frame to:
+  - `测试记录/基于提交 4159dbe0bf5ada0fc3a51f94079e6489f89ac536测试/ffmpeg逐帧对比_20260614_115010/`
+- Generated contact sheets:
+  - `test_contact_1fps.jpg`
+  - `reference_contact_1fps.jpg`
+  - `test_segment_000_030_4fps.jpg`
+  - `test_segment_030_060_4fps.jpg`
+  - `test_segment_060_090_4fps.jpg`
+  - `test_segment_090_114_4fps.jpg`
+  - `reference_segment_000_025_4fps.jpg`
+
+### Findings
+- The 4159dbe implementation is more stable than the previous fixed-anchor template, but it still does not match the requested point-edge-face-volume topology.
+- Root cause 1: one-hand mode still creates a virtual second hand, so a single hand renders as a strip/ribbon instead of the user's requested `A-B-C-D-E-A` hand face.
+- Root cause 2: two-hand mode only emits `AB/BC/CD/DE` strip faces; it misses the `EA` closing strip and the left/right `A-B-C-D-E-A` cap faces, so the body remains open.
+- Root cause 3: face materials are grouped too broadly and tinted by one active preset, so the visible result often changes color as one whole sheet instead of showing stable per-face color differences.
+- Additional visible issue: near/crossing hand poses collapse into long open boards because the closed topology is missing.
+
+### Next
+- Replace one-hand virtual-rail fallback with a real single-hand `A-B-C-D-E-A` face.
+- Add the `EA` closing strip for two-hand mode.
+- Add left/right cap faces for two-hand mode.
+- Make face material assignment visibly distinct by topology role, not only by global preset tint.
+
+## 2026-06-14 12:13
+
+### Closed Lattice TDD
+- Added RED tests for the requested point-edge-face-volume behavior:
+  - one-hand mode must not create virtual rails;
+  - one-hand mode must expose `AB/BC/CD/DE/EA` boundary edges and a `single-hand` cap;
+  - two-hand mode must include five strips: `AB/BC/CD/DE/EA`;
+  - two-hand mode must include `left-hand` and `right-hand` cap faces;
+  - material ids must include `cap` in addition to `scene/panel/back/accent/edge`;
+  - all generated renderer faces remain non-zero-area triangles.
+- RED evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 4 tests failed for missing `EA`, missing caps, missing `cap` material, and virtual one-hand rail behavior.
+- GREEN implementation:
+  - removed one-hand virtual-hand fallback;
+  - added one-hand `A-B-C-D-E-A` closed face with back and edge faces;
+  - added two-hand `EA` closing strip;
+  - added left/right hand cap faces;
+  - added `cap` material id and renderer material slot.
+- GREEN evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 1 test file passed, 4 tests passed.
+  - Related stage check passed: 4 test files, 15 tests.
+
+## 2026-06-14 12:23
+
+### Closed Lattice Verification And Docs
+- Updated bilingual verification criteria for the closed fingertip lattice:
+  - one-hand expected result is a compact `A-B-C-D-E-A` closed hand face;
+  - two-hand expected result is a closed body with `AB/BC/CD/DE/EA` strips and left/right cap faces;
+  - adjacent faces must be visually distinct instead of changing as one global color sheet.
+- Self-review correction:
+  - the single-hand front face now uses the realtime `scene` material instead of the non-sampling `cap` material;
+  - all non-edge spatial-template materials now bind the live video texture and rely on distinct tint/opacity for face differentiation.
+- Updated ADR-0003 in English and Chinese so the architecture matches the current point-edge-face-volume model.
+- Added bilingual analysis for the `4159dbe` real-device recording and reference-video comparison.
+- Verification evidence:
+  - `npm test` passed: 16 test files, 55 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+  - local browser smoke at `http://127.0.0.1:5174/gesture-mask-studio/` passed: title `Gesture Mask Studio`, core controls visible, no console errors before camera start.
+  - screenshot saved to `output/browser-smoke-closed-lattice-20260614.png`.
+- Remaining required manual validation:
+  - run the deployed or local build on a camera-enabled device;
+  - record one-hand and two-hand movement;
+  - confirm the visible result now follows the closed fingertip topology and compare again with `参考视频.mp4` frame sheets.
+
+## 2026-06-14 12:47
+
+### Commit And Deployment Trigger
+- User requested committing and pushing the closed fingertip lattice fix so GitHub Pages can build the deployment.
+- Scope confirmed on `main`:
+  - closed fingertip lattice topology implementation;
+  - renderer material sampling update;
+  - bilingual analysis, ADR, verification plan, and progress docs.
+- Fresh pre-commit verification:
+  - `npm test` passed: 16 test files, 55 tests.
+  - `npm run build` passed.
+  - tracked plus new bilingual documentation pairing check passed.
+  - `git diff --check` passed with only Git line-ending warnings.
+- GitHub CLI is installed and authenticated as `Baldman-JYH`.

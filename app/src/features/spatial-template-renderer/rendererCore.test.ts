@@ -58,6 +58,7 @@ describe('spatialTemplateToBufferData', () => {
     expect(materialIdToIndex('panel')).toBe(1);
     expect(materialIdToIndex('back')).toBe(2);
     expect(materialIdToIndex('accent')).toBe(3);
-    expect(materialIdToIndex('edge')).toBe(4);
+    expect(materialIdToIndex('cap')).toBe(4);
+    expect(materialIdToIndex('edge')).toBe(5);
   });
 });

@@ -4,7 +4,7 @@ import { extractHandTopologyFrame } from '../hand-topology/handTopology';
 import { buildFingertipLattice } from './fingertipLattice';
 
 describe('buildFingertipLattice', () => {
-  it('builds five fingertip cross rails and four primary strip faces for two hands', () => {
+  it('builds five fingertip cross rails and five closed strip faces for two hands', () => {
     const lattice = buildFingertipLattice(extractHandTopologyFrame([
       hand('right', 'right', 0.78),
       hand('left', 'left', 0.22),
@@ -12,9 +12,10 @@ describe('buildFingertipLattice', () => {
 
     expect(lattice.mode).toBe('two-hand-lattice');
     expect(lattice.crossRails.map((rail) => rail.finger)).toEqual(['A', 'B', 'C', 'D', 'E']);
-    expect(lattice.strips.map((strip) => strip.id)).toEqual(['AB', 'BC', 'CD', 'DE']);
+    expect(lattice.strips.map((strip) => strip.id)).toEqual(['AB', 'BC', 'CD', 'DE', 'EA']);
+    expect(lattice.caps.map((cap) => cap.id)).toEqual(['left-hand', 'right-hand']);
     expect(lattice.faces.every((face) => face.indices.length === 3)).toBe(true);
-    expect(lattice.faces.length).toBeGreaterThanOrEqual(16);
+    expect(lattice.faces.length).toBeGreaterThanOrEqual(24);
   });
 
   it('adds thickness, back faces, and stable material groups', () => {
@@ -28,7 +29,7 @@ describe('buildFingertipLattice', () => {
     );
 
     expect(lattice.vertices.length).toBeGreaterThan(10);
-    expect(materialIds).toEqual(expect.arrayContaining(['scene', 'panel', 'back', 'accent', 'edge']));
+    expect(materialIds).toEqual(expect.arrayContaining(['scene', 'panel', 'back', 'accent', 'cap', 'edge']));
     expect(zLevels.length).toBeGreaterThanOrEqual(2);
   });
 
@@ -38,19 +39,24 @@ describe('buildFingertipLattice', () => {
       degenerateHand('right', 'right', 0.8),
     ]));
 
-    expect(lattice.strips.map((strip) => strip.id)).toEqual(['BC', 'CD', 'DE']);
+    expect(lattice.strips.map((strip) => strip.id)).toEqual(['BC', 'CD', 'DE', 'EA']);
     for (const face of lattice.faces) {
       expect(faceArea(lattice, face.indices)).toBeGreaterThan(0.00001);
     }
   });
 
-  it('builds a controlled one-hand fallback lattice with a virtual rail', () => {
+  it('builds one-hand mode as a closed A-B-C-D-E-A face without virtual rails', () => {
     const lattice = buildFingertipLattice(extractHandTopologyFrame([hand('single', 'left', 0.45)]));
 
     expect(lattice.mode).toBe('one-hand-lattice');
-    expect(lattice.crossRails).toHaveLength(5);
-    expect(lattice.crossRails.every((rail) => rail.virtualEnd)).toBe(true);
-    expect(lattice.strips.map((strip) => strip.id)).toEqual(['AB', 'BC', 'CD', 'DE']);
+    expect(lattice.crossRails).toHaveLength(0);
+    expect(lattice.strips).toHaveLength(0);
+    expect(lattice.boundaryEdges.map((edge) => edge.id)).toEqual(['AB', 'BC', 'CD', 'DE', 'EA']);
+    expect(lattice.caps.map((cap) => cap.id)).toEqual(['single-hand']);
+    expect(lattice.caps[0]?.materialId).toBe('scene');
+    expect(Array.from(new Set(lattice.faces.map((face) => face.materialId)))).toEqual(
+      expect.arrayContaining(['scene', 'back', 'edge']),
+    );
   });
 });
 

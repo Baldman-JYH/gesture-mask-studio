@@ -103,8 +103,8 @@ Use this section for changes that touch `gesture-anchor-frame`, `spatial-templat
 2. Show one physical hand only.
 3. Expected:
    - top status shows `1 hand`, not `2 hands`;
-   - effect is a compact folded rectangular 3D template;
-   - effect is not a triangle and not a large flat screen-space sheet.
+   - closed-lattice builds render a compact `A-B-C-D-E-A` hand face;
+   - effect is not a triangle, not a virtual two-hand strip, and not a large flat screen-space sheet.
 4. Keep one hand visible and move it left/right/up/down.
 5. Expected:
    - template moves in the same visible direction as the hand;
@@ -125,6 +125,15 @@ Use this section for changes that touch `gesture-anchor-frame`, `spatial-templat
    - the object does not only translate in 2D.
 12. Record 20-30 seconds covering one-hand, two-hand, rotation, and near/far movement.
 13. Compare the recording with `参考视频.mp4` frame sheets and check whether the current result is converging toward a multi-face 3D template, not just a tinted mask.
+
+For closed fingertip lattice changes after `4159dbe`, the minimum pass criteria are:
+
+- one physical hand renders a compact `A-B-C-D-E-A` closed hand face, not a long virtual strip;
+- two physical hands render a closed body with `AB/BC/CD/DE/EA` strips;
+- left and right hand cap faces are visible during two-hand movement;
+- adjacent faces show distinct material/color treatments instead of one global color changing everywhere;
+- hand crossing or near-camera movement does not collapse the object into one open board;
+- console contains no uncaught errors and no WebGL shader errors.
 
 For the deployed `4dd3d` follow-up fix, the minimum pass criteria are:
 

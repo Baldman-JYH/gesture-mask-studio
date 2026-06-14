@@ -896,3 +896,99 @@ English version: [progress.md](progress.md)
 - 提交前分支：`main`。
 - 提交前远程：`origin/main`。
 - 提交前正在重新执行 pre-push 验证。
+
+## 2026-06-14 12:05
+
+### 4159dbe 真实设备逐帧分析
+- 新验证输入：
+  - `测试记录/基于提交 4159dbe0bf5ada0fc3a51f94079e6489f89ac536测试/屏幕录制 2026-06-14 115010.mp4`
+  - 1898x880，30fps，约 113.7 秒，3407 帧。
+- 参考输入：
+  - `参考视频.mp4`
+  - 1226x686，30fps，约 24.58 秒，736 帧。
+- 已逐帧抽取到：
+  - `测试记录/基于提交 4159dbe0bf5ada0fc3a51f94079e6489f89ac536测试/ffmpeg逐帧对比_20260614_115010/`
+- 已生成对比拼图：
+  - `test_contact_1fps.jpg`
+  - `reference_contact_1fps.jpg`
+  - `test_segment_000_030_4fps.jpg`
+  - `test_segment_030_060_4fps.jpg`
+  - `test_segment_060_090_4fps.jpg`
+  - `test_segment_090_114_4fps.jpg`
+  - `reference_segment_000_025_4fps.jpg`
+
+### 发现
+- `4159dbe` 比前一版固定锚点模板更稳定，但仍未完全符合用户要求的点-线-面-体拓扑。
+- 根因 1：单手模式仍创建虚拟第二只手，所以一只手渲染为条带/ribbon，而不是用户要求的 `A-B-C-D-E-A` 单手面。
+- 根因 2：双手模式只输出 `AB/BC/CD/DE` 条带面，缺少 `EA` 闭合条带，也缺少左右手各自的 `A-B-C-D-E-A` 端面，因此几何体不是闭合体。
+- 根因 3：面材质分组过粗，并且主要受同一个 active preset tint 影响，所以视觉上经常是整体同时变色，而不是稳定的不同面不同颜色。
+- 额外可见问题：双手靠近或交叉时，由于闭合拓扑缺失，模型容易退化成长的开放板。
+
+### 下一步
+- 将单手虚拟 rail fallback 替换为真实单手 `A-B-C-D-E-A` 面。
+- 为双手模式增加 `EA` 闭合条带。
+- 为双手模式增加左/右端面。
+- 按拓扑角色分配更明显的面级材质，而不是主要依赖全局 preset tint。
+
+## 2026-06-14 12:13
+
+### 闭合拓扑 TDD
+- 新增用户要求的点-线-面-体行为 RED 测试：
+  - 单手模式不能创建虚拟 rail；
+  - 单手模式必须暴露 `AB/BC/CD/DE/EA` 边界边和 `single-hand` 端面；
+  - 双手模式必须包含五个条带：`AB/BC/CD/DE/EA`；
+  - 双手模式必须包含 `left-hand` 和 `right-hand` 端面；
+  - material id 必须在 `scene/panel/back/accent/edge` 外包含 `cap`；
+  - 所有生成的 renderer faces 仍然是非零面积三角形。
+- RED 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 4 个测试失败，失败点分别对应缺少 `EA`、缺少端面、缺少 `cap` 材质和单手虚拟 rail 行为。
+- GREEN 实现：
+  - 移除单手虚拟手 fallback；
+  - 新增单手 `A-B-C-D-E-A` 闭合面，并带背面和边缘面；
+  - 新增双手 `EA` 闭合条带；
+  - 新增左右手端面；
+  - 新增 `cap` material id 和 renderer 材质槽。
+- GREEN 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 1 个测试文件通过，4 个测试通过。
+  - 相关阶段检查通过：4 个测试文件，15 个测试。
+
+## 2026-06-14 12:23
+
+### 闭合拓扑验证和文档
+- 已更新中英文验证标准：
+  - 单手预期结果是紧凑的 `A-B-C-D-E-A` 闭合手部面；
+  - 双手预期结果是包含 `AB/BC/CD/DE/EA` 条带和左右端面的闭合体；
+  - 相邻面必须有明显不同的视觉处理，不能整体作为一张全局变色光片。
+- 自审修正：
+  - 单手正面已使用实时 `scene` 材质，而不是不采样视频的 `cap` 材质；
+  - 所有非边缘空间模板材质现在都绑定实时视频纹理，并通过不同 tint/opacity 区分面。
+- 已更新中英文 ADR-0003，使架构描述与当前点-线-面-体模型一致。
+- 已新增 `4159dbe` 真实设备录屏和参考视频对比的中英文分析文档。
+- 验证证据：
+  - `npm test` 通过：16 个测试文件，55 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+  - 本地浏览器冒烟验证 `http://127.0.0.1:5174/gesture-mask-studio/` 通过：标题为 `Gesture Mask Studio`，核心控件可见，启动摄像头前无 console error。
+  - 截图保存到 `output/browser-smoke-closed-lattice-20260614.png`。
+- 仍需真实设备手动验证：
+  - 在有摄像头的设备上运行部署版或本地构建；
+  - 录制单手和双手移动；
+  - 确认可见效果已经遵循闭合指尖拓扑，并再次与 `参考视频.mp4` 抽帧拼图对比。
+
+## 2026-06-14 12:47
+
+### 提交和部署触发
+- 用户要求提交并推送闭合指尖拓扑修复，以触发 GitHub Pages 部署构建。
+- 已确认当前在 `main` 分支，提交范围为：
+  - 闭合指尖拓扑实现；
+  - renderer 材质实时采样更新；
+  - 中英文分析、ADR、验证方案和进展文档。
+- 新鲜提交前验证：
+  - `npm test` 通过：16 个测试文件，55 个测试。
+  - `npm run build` 通过。
+  - 已跟踪和新增的中英文文档配对检查通过。
+  - `git diff --check` 通过，仅有 Git 换行提示。
+- GitHub CLI 已安装，并已通过 `Baldman-JYH` 账号认证。

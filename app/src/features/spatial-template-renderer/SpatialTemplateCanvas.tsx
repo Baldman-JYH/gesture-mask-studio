@@ -30,6 +30,7 @@ type RendererRefs = {
     MeshBasicMaterial,
     MeshBasicMaterial,
     MeshBasicMaterial,
+    MeshBasicMaterial,
   ];
   mesh: Mesh;
   texture: VideoTexture | null;
@@ -100,6 +101,12 @@ function createRendererRefs(): RendererRefs {
 
   const geometry = new BufferGeometry();
   const materials: RendererRefs['materials'] = [
+    new MeshBasicMaterial({
+      transparent: true,
+      opacity: 0,
+      depthWrite: false,
+      side: DoubleSide,
+    }),
     new MeshBasicMaterial({
       transparent: true,
       opacity: 0,
@@ -208,27 +215,39 @@ function updateMaterials(refs: RendererRefs, renderInput: SpatialTemplateRenderI
   const tint = hexToNumber(renderInput.style.sceneSample.tint);
   const edge = hexToNumber(renderInput.style.edgeColor);
   const opacity = renderInput.style.opacity * renderInput.mesh.opacity;
-  const [sceneMaterial, panelMaterial, backMaterial, accentMaterial, edgeMaterial] = refs.materials;
+  const [
+    sceneMaterial,
+    panelMaterial,
+    backMaterial,
+    accentMaterial,
+    capMaterial,
+    edgeMaterial,
+  ] = refs.materials;
 
   sceneMaterial.map = refs.texture;
   sceneMaterial.color.setHex(tint);
   sceneMaterial.opacity = opacity * Math.max(0.42, renderInput.style.sceneSample.intensity * 0.72);
   sceneMaterial.needsUpdate = true;
 
-  panelMaterial.map = null;
+  panelMaterial.map = refs.texture;
   panelMaterial.color.setHex(tint);
   panelMaterial.opacity = opacity * 0.34;
   panelMaterial.needsUpdate = true;
 
-  backMaterial.map = null;
+  backMaterial.map = refs.texture;
   backMaterial.color.setHex(0x10242c);
   backMaterial.opacity = opacity * 0.5;
   backMaterial.needsUpdate = true;
 
-  accentMaterial.map = null;
+  accentMaterial.map = refs.texture;
   accentMaterial.color.setHex(mixRgb(tint, edge, 0.55));
   accentMaterial.opacity = opacity * 0.48;
   accentMaterial.needsUpdate = true;
+
+  capMaterial.map = refs.texture;
+  capMaterial.color.setHex(mixRgb(0xffffff, tint, 0.28));
+  capMaterial.opacity = opacity * 0.58;
+  capMaterial.needsUpdate = true;
 
   edgeMaterial.map = null;
   edgeMaterial.color.setHex(edge);
