@@ -1,6 +1,11 @@
 import type { NormalizedPoint } from '../../shared/runtime/types';
 
-export type SpatialTemplateMode = 'hidden' | 'one-hand-template' | 'two-hand-template';
+export type SpatialTemplateMode =
+  | 'hidden'
+  | 'one-hand-template'
+  | 'two-hand-template'
+  | 'one-hand-lattice'
+  | 'two-hand-lattice';
 
 export type SpatialTemplateMaterialId = 'scene' | 'panel' | 'back' | 'accent' | 'edge';
 

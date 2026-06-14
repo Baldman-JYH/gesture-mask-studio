@@ -4,7 +4,10 @@ import type {
   TrackedHand,
 } from '../../shared/runtime/types';
 import { deriveGestureAnchorFrame, type GestureAnchorFrame } from '../gesture-anchor-frame/anchorFrame';
-import { buildSpatialTemplateMesh } from '../spatial-template-model/templateMesh';
+import {
+  buildSpatialTemplateMesh,
+  buildSpatialTemplateMeshFromHands,
+} from '../spatial-template-model/templateMesh';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
 
 export type SpatialTemplateRenderInput = {
@@ -27,7 +30,8 @@ export function createSpatialTemplateRenderInput(
   options: CreateSpatialTemplateRenderInputOptions,
 ): SpatialTemplateRenderInput {
   const anchorFrame = options.anchorFrame ?? deriveGestureAnchorFrame(options.displayHands);
-  const mesh = buildSpatialTemplateMesh(anchorFrame);
+  const latticeMesh = buildSpatialTemplateMeshFromHands(options.displayHands);
+  const mesh = latticeMesh.mode === 'hidden' ? buildSpatialTemplateMesh(anchorFrame) : latticeMesh;
 
   return {
     mesh,

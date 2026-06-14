@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
+import type { NormalizedPoint, TrackedHand } from '../../shared/runtime/types';
 import type { GestureAnchorFrame } from '../gesture-anchor-frame/anchorFrame';
-import { buildSpatialTemplateMesh } from './templateMesh';
+import { buildSpatialTemplateMesh, buildSpatialTemplateMeshFromHands } from './templateMesh';
 
 const hiddenFrame: GestureAnchorFrame = {
   mode: 'hidden',
@@ -84,10 +85,54 @@ describe('buildSpatialTemplateMesh', () => {
       expect(vertex.samplePoint.y).toBeLessThanOrEqual(1);
     }
   });
+
+  it('builds the primary two-hand mesh from fingertip topology instead of anchor templates', () => {
+    const mesh = buildSpatialTemplateMeshFromHands([
+      topologyHand('right', 'right', 0.78),
+      topologyHand('left', 'left', 0.22),
+    ]);
+
+    expect(mesh.mode).toBe('two-hand-lattice');
+    expect(mesh.vertices.length).toBeGreaterThanOrEqual(20);
+    expect(mesh.faces.every((face) => face.indices.length === 3)).toBe(true);
+    expect(mesh.faces.length).toBeGreaterThan(20);
+  });
 });
 
 function uniqueZLevels(mesh: ReturnType<typeof buildSpatialTemplateMesh>): number[] {
   return Array.from(
     new Set(mesh.vertices.map((vertex) => Math.round((vertex.position.z ?? 0) * 1000) / 1000)),
   );
+}
+
+function topologyHand(
+  id: string,
+  handedness: TrackedHand['handedness'],
+  centerX: number,
+): TrackedHand {
+  const tips = {
+    A: { x: centerX - 0.12, y: 0.52, z: -0.04 },
+    B: { x: centerX - 0.06, y: 0.36, z: -0.08 },
+    C: { x: centerX, y: 0.3, z: -0.1 },
+    D: { x: centerX + 0.06, y: 0.36, z: -0.07 },
+    E: { x: centerX + 0.12, y: 0.46, z: -0.05 },
+  } satisfies Record<'A' | 'B' | 'C' | 'D' | 'E', NormalizedPoint>;
+  const landmarks = Array.from({ length: 21 }, () => ({ x: 0.5, y: 0.58, z: -0.02 }));
+  landmarks[0] = { x: tips.C.x, y: 0.72, z: 0 };
+  landmarks[4] = tips.A;
+  landmarks[5] = { x: tips.B.x, y: 0.58, z: -0.03 };
+  landmarks[8] = tips.B;
+  landmarks[9] = { x: tips.C.x, y: 0.58, z: -0.03 };
+  landmarks[12] = tips.C;
+  landmarks[13] = { x: tips.D.x, y: 0.58, z: -0.03 };
+  landmarks[16] = tips.D;
+  landmarks[17] = { x: tips.E.x, y: 0.58, z: -0.03 };
+  landmarks[20] = tips.E;
+
+  return {
+    id,
+    handedness,
+    confidence: 0.9,
+    landmarks,
+  };
 }

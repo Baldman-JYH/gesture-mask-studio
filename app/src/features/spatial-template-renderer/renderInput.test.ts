@@ -25,21 +25,23 @@ const style: LightSheetStylePreset = {
 };
 
 function hand(id: string, x: number, y: number): TrackedHand {
+  const landmarks = Array.from({ length: 21 }, () => ({ x, y, z: -0.02 }));
+  landmarks[0] = { x, y: y + 0.22, z: 0 };
+  landmarks[4] = { x: x - 0.12, y: y + 0.02, z: -0.04 };
+  landmarks[5] = { x: x - 0.06, y: y + 0.12, z: -0.03 };
+  landmarks[8] = { x: x - 0.06, y: y - 0.14, z: -0.08 };
+  landmarks[9] = { x, y: y + 0.12, z: -0.03 };
+  landmarks[12] = { x, y: y - 0.2, z: -0.1 };
+  landmarks[13] = { x: x + 0.06, y: y + 0.12, z: -0.03 };
+  landmarks[16] = { x: x + 0.06, y: y - 0.14, z: -0.07 };
+  landmarks[17] = { x: x + 0.12, y: y + 0.12, z: -0.03 };
+  landmarks[20] = { x: x + 0.12, y: y - 0.04, z: -0.05 };
+
   return {
     id,
     handedness: 'unknown',
     confidence: 0.9,
-    landmarks: [
-      { x, y, z: -0.02 },
-      { x, y, z: -0.02 },
-      { x, y, z: -0.02 },
-      { x, y, z: -0.02 },
-      { x: x - 0.04, y, z: -0.03 },
-      { x, y, z: -0.02 },
-      { x, y, z: -0.02 },
-      { x, y, z: -0.02 },
-      { x: x + 0.04, y: y + 0.02, z: -0.01 },
-    ],
+    landmarks,
   };
 }
 
@@ -62,7 +64,7 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 1200,
     });
 
-    expect(input.mesh.mode).toBe('one-hand-template');
+    expect(input.mesh.mode).toBe('one-hand-lattice');
     expect(input.scene.viewport).toEqual({ width: 640, height: 360 });
     expect(input.timestampMs).toBe(1200);
   });
@@ -76,7 +78,8 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 1600,
     });
 
-    expect(input.mesh.mode).toBe('two-hand-template');
+    expect(input.mesh.mode).toBe('two-hand-lattice');
+    expect(input.mesh.faces.every((face) => face.indices.length === 3)).toBe(true);
     expect(input.scene.mirrored).toBe(false);
   });
 
@@ -89,6 +92,6 @@ describe('createSpatialTemplateRenderInput', () => {
       timestampMs: 1800,
     });
 
-    expect(input.mesh.mode).toBe('one-hand-template');
+    expect(input.mesh.mode).toBe('one-hand-lattice');
   });
 });

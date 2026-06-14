@@ -1,5 +1,7 @@
-import type { NormalizedPoint } from '../../shared/runtime/types';
+import type { NormalizedPoint, TrackedHand } from '../../shared/runtime/types';
+import { buildFingertipLattice } from '../fingertip-lattice/fingertipLattice';
 import type { GestureAnchor, GestureAnchorFrame } from '../gesture-anchor-frame/anchorFrame';
+import { extractHandTopologyFrame } from '../hand-topology/handTopology';
 import type { SpatialTemplateFace, SpatialTemplateMesh, SpatialTemplateVertex } from './types';
 
 const ONE_HAND_MIN_LENGTH = 0.22;
@@ -29,6 +31,28 @@ export function buildSpatialTemplateMesh(frame: GestureAnchorFrame): SpatialTemp
     faces: [],
     opacity: 0,
     confidence: 0,
+  };
+}
+
+export function buildSpatialTemplateMeshFromHands(hands: TrackedHand[]): SpatialTemplateMesh {
+  const lattice = buildFingertipLattice(extractHandTopologyFrame(hands));
+
+  if (lattice.mode === 'hidden') {
+    return {
+      mode: 'hidden',
+      vertices: [],
+      faces: [],
+      opacity: 0,
+      confidence: 0,
+    };
+  }
+
+  return {
+    mode: lattice.mode,
+    vertices: lattice.vertices,
+    faces: lattice.faces,
+    opacity: lerp(0.62, 0.9, clamp01(lattice.confidence)),
+    confidence: clamp01(lattice.confidence),
   };
 }
 

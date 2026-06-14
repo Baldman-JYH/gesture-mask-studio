@@ -767,3 +767,132 @@ English version: [progress.md](progress.md)
 - `npm run build`：通过。
 - 中英文文档配对检查：通过。
 - `git diff --check`：通过。
+
+## 2026-06-14 11:35
+
+### 逐帧模型复核
+- 已对提交 `6f5dc25a3c5721988c33cebf78adabef4abdd326` 的真实设备验证视频逐帧抽取。
+- 测试录屏证据：
+  - 1910x890，30fps，约 84.80 秒，2541 帧。
+  - 抽帧目录：`测试记录/基于提交 6f5dc25a3c5721988c33cebf78adabef4abdd326测试/ffmpeg逐帧对比_20260614/`。
+- 参考视频证据：
+  - `参考视频.mp4`，1226x686，30fps，约 24.58 秒，736 帧。
+  - 已抽取到同一对比目录。
+- 已生成 1fps 总览拼图和 4fps 动态分段拼图，用于人工对比。
+
+### 发现
+- 参考视频更准确的描述是“手部驱动的折叠空间模板”或“指尖拓扑网格”，不是简单蒙版，也不是固定半透明薄片。
+- 当前应用仍然把每只手压缩为一个锚点，并基于这些锚点生成固定空间模板。
+- 用户提出的“点-线-面-体”方向可行，但原始 `A-B-C-D-E-A` 指尖闭环在变成面之前，必须处理共面、自相交、退化、左右手、深度和置信度问题。
+
+### 文档
+- 新增中英文模型分析：
+  - `docs/analysis/6f5dc25-fingertip-lattice-model.md`
+  - `docs/analysis/6f5dc25-fingertip-lattice-model.zh-CN.md`
+- 新增中英文架构决策：
+  - `docs/architecture/adr-0003-fingertip-lattice-spatial-template.md`
+  - `docs/architecture/adr-0003-fingertip-lattice-spatial-template.zh-CN.md`
+
+### 下一步
+- 用 TDD 实现指尖拓扑网格模型：
+  - 语义指尖提取；
+  - 连线和条带面构建；
+  - 带校验的三角化；
+  - 厚度和材质组；
+  - 重复手过滤和单手 fallback 行为。
+
+## 2026-06-14 11:27
+
+### 指尖拓扑网格 TDD 第一阶段
+- 新增语义手部拓扑提取 RED 测试：
+  - MediaPipe 指尖 landmarks 映射到 `A/B/C/D/E`；
+  - 两只手按 display-space 从左到右排序；
+  - 不完整手部会被忽略。
+- RED 证据：
+  - `npm test -- src/features/hand-topology/handTopology.test.ts`
+  - 因 `./handTopology` 不存在而失败。
+- GREEN 实现：
+  - 新增 `features/hand-topology/handTopology.ts`；
+  - 引入 `HandTopologyFrame`、`HandTopology` 和语义 `FingertipSet`；
+  - 提取 4、8、12、16、20 号指尖 landmarks；
+  - 从手腕/掌指关节稳定点推导掌心中心。
+- GREEN 证据：
+  - `npm test -- src/features/hand-topology/handTopology.test.ts`
+  - 1 个测试文件通过，3 个测试通过。
+
+## 2026-06-14 11:30
+
+### 指尖拓扑网格 TDD 第二阶段
+- 新增指尖拓扑网格领域模型 RED 测试：
+  - `A/B/C/D/E` 五条横向 rail；
+  - `AB`、`BC`、`CD`、`DE` 四个主条带；
+  - 面必须全部是三角形；
+  - 厚度、背面、边缘材质组；
+  - 退化条带剔除；
+  - 单手 fallback 使用虚拟 rail。
+- RED 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 因 `./fingertipLattice` 不存在而失败。
+- GREEN 实现：
+  - 新增 `features/fingertip-lattice/fingertipLattice.ts`；
+  - 引入 `FingertipLattice`、`FingertipCrossRail` 和 `FingertipStrip`；
+  - 基于语义指尖直接生成双手拓扑网格；
+  - 用虚拟 rail 生成受控单手 fallback 网格；
+  - 在交给 renderer 前剔除零面积三角形。
+- GREEN 证据：
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 1 个测试文件通过，4 个测试通过。
+
+## 2026-06-14 11:34
+
+### 指尖拓扑网格 TDD 第三阶段
+- 新增 `spatial-template-model` 接入 RED 覆盖：
+  - `buildSpatialTemplateMeshFromHands` 必须生成 `two-hand-lattice`；
+  - 生成 mesh 的 faces 必须已经是三角面。
+- RED 证据：
+  - `npm test -- src/features/spatial-template-model/templateMesh.test.ts`
+  - 因 `buildSpatialTemplateMeshFromHands` 尚未实现而失败。
+- GREEN 实现：
+  - 扩展 `SpatialTemplateMode`，新增 `one-hand-lattice` 和 `two-hand-lattice`；
+  - 新增 `buildSpatialTemplateMeshFromHands`；
+  - 修改 `createSpatialTemplateRenderInput`，优先使用指尖拓扑 mesh，仅在无法构建 topology 时回退到旧 anchor template；
+  - 在 `hand-topology` 中新增重复手过滤。
+- GREEN 证据：
+  - `npm test -- src/features/spatial-template-model/templateMesh.test.ts`
+  - 1 个测试文件通过，5 个测试通过。
+  - `npm test -- src/features/spatial-template-renderer/renderInput.test.ts`
+  - 1 个测试文件通过，3 个测试通过。
+  - 阶段组合检查通过：4 个测试文件，15 个测试。
+
+## 2026-06-14 11:39
+
+### 验证
+- 完整测试：
+  - `npm test`
+  - 16 个测试文件通过，55 个测试通过。
+- 生产构建：
+  - `npm run build`
+  - `tsc -b` 和 Vite 生产构建通过。
+- 浏览器 smoke：
+  - 本地地址：`http://127.0.0.1:5174/gesture-mask-studio/`；
+  - 页面标题：`Gesture Mask Studio`；
+  - 主标题、`Start camera`、`Mirror` 和 canvas 容器可见；
+  - 浏览器控制台 error 数量：0；
+  - 截图保存到 `output/browser-smoke-fingertip-lattice-20260614.png`。
+- 文档配对：
+  - 中英文文档配对检查通过。
+- diff 空白检查：
+  - `git diff --check` 通过，仅有 Windows 换行提示。
+
+## 2026-06-14 11:45
+
+### 提交和推送准备
+- 用户要求提交并推送指尖拓扑网格实现。
+- 本次预期范围：
+  - 新增 `hand-topology` 语义指尖提取；
+  - 新增 `fingertip-lattice` 连线/条带/三角化 mesh 构建；
+  - 接入 spatial template model/render input；
+  - 补充中英文分析、ADR 和进展文档。
+- 提交前分支：`main`。
+- 提交前远程：`origin/main`。
+- 提交前正在重新执行 pre-push 验证。

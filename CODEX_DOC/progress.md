@@ -1008,3 +1008,132 @@
 - `npm run build`: passed.
 - Bilingual docs pairing check: passed.
 - `git diff --check`: passed.
+
+## 2026-06-14 11:35
+
+### Frame-By-Frame Model Review
+- Extracted every frame from the real-device validation video for commit `6f5dc25a3c5721988c33cebf78adabef4abdd326`.
+- Test recording evidence:
+  - 1910x890, 30fps, about 84.80 seconds, 2541 frames.
+  - Extracted under `测试记录/基于提交 6f5dc25a3c5721988c33cebf78adabef4abdd326测试/ffmpeg逐帧对比_20260614/`.
+- Reference evidence:
+  - `参考视频.mp4`, 1226x686, 30fps, about 24.58 seconds, 736 frames.
+  - Extracted into the same comparison folder.
+- Generated 1fps contact sheets and 4fps dynamic segment sheets for manual comparison.
+
+### Findings
+- The reference video is better described as a hand-driven folded spatial template or fingertip lattice, not as a simple mask or fixed translucent sheet.
+- The current app still reduces each hand to one anchor and builds a fixed spatial template from those anchors.
+- The user's point-edge-face-volume direction is feasible, but raw `A-B-C-D-E-A` fingertip loops need planarity, intersection, degeneracy, handedness, depth, and confidence checks before they can become faces.
+
+### Documentation
+- Added bilingual model analysis:
+  - `docs/analysis/6f5dc25-fingertip-lattice-model.md`
+  - `docs/analysis/6f5dc25-fingertip-lattice-model.zh-CN.md`
+- Added bilingual architecture decision:
+  - `docs/architecture/adr-0003-fingertip-lattice-spatial-template.md`
+  - `docs/architecture/adr-0003-fingertip-lattice-spatial-template.zh-CN.md`
+
+### Next
+- Implement the fingertip lattice model with TDD:
+  - semantic fingertip extraction;
+  - rail and strip construction;
+  - validated triangulation;
+  - thickness and material groups;
+  - duplicate-hand and one-hand fallback behavior.
+
+## 2026-06-14 11:27
+
+### Fingertip Lattice TDD Phase 1
+- Added RED tests for semantic hand topology extraction:
+  - MediaPipe fingertip landmarks map to `A/B/C/D/E`;
+  - two hands sort left-to-right in display space;
+  - incomplete hands are ignored.
+- RED evidence:
+  - `npm test -- src/features/hand-topology/handTopology.test.ts`
+  - failed because `./handTopology` did not exist.
+- GREEN implementation:
+  - added `features/hand-topology/handTopology.ts`;
+  - introduced `HandTopologyFrame`, `HandTopology`, and semantic `FingertipSet`;
+  - extracted fingertip landmarks 4, 8, 12, 16, and 20;
+  - derived palm center from wrist/MCP stabilizers.
+- GREEN evidence:
+  - `npm test -- src/features/hand-topology/handTopology.test.ts`
+  - 1 test file passed, 3 tests passed.
+
+## 2026-06-14 11:30
+
+### Fingertip Lattice TDD Phase 2
+- Added RED tests for the fingertip lattice domain model:
+  - five cross rails for `A/B/C/D/E`;
+  - four primary strips: `AB`, `BC`, `CD`, `DE`;
+  - triangle-only faces;
+  - thickness/back/edge material groups;
+  - degenerate strip rejection;
+  - one-hand fallback with virtual rails.
+- RED evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - failed because `./fingertipLattice` did not exist.
+- GREEN implementation:
+  - added `features/fingertip-lattice/fingertipLattice.ts`;
+  - introduced `FingertipLattice`, `FingertipCrossRail`, and `FingertipStrip`;
+  - generated two-hand lattices directly from semantic fingertips;
+  - generated controlled one-hand fallback lattices with virtual rails;
+  - rejected zero-area triangles before renderer handoff.
+- GREEN evidence:
+  - `npm test -- src/features/fingertip-lattice/fingertipLattice.test.ts`
+  - 1 test file passed, 4 tests passed.
+
+## 2026-06-14 11:34
+
+### Fingertip Lattice TDD Phase 3
+- Added RED integration coverage for `spatial-template-model`:
+  - `buildSpatialTemplateMeshFromHands` must build `two-hand-lattice`;
+  - generated mesh faces must already be triangles.
+- RED evidence:
+  - `npm test -- src/features/spatial-template-model/templateMesh.test.ts`
+  - failed because `buildSpatialTemplateMeshFromHands` was not implemented.
+- GREEN implementation:
+  - extended `SpatialTemplateMode` with `one-hand-lattice` and `two-hand-lattice`;
+  - added `buildSpatialTemplateMeshFromHands`;
+  - changed `createSpatialTemplateRenderInput` to prefer fingertip topology meshes and fall back to anchor templates only when topology cannot be built;
+  - added duplicate-hand suppression to `hand-topology`.
+- GREEN evidence:
+  - `npm test -- src/features/spatial-template-model/templateMesh.test.ts`
+  - 1 test file passed, 5 tests passed.
+  - `npm test -- src/features/spatial-template-renderer/renderInput.test.ts`
+  - 1 test file passed, 3 tests passed.
+  - Combined stage check passed: 4 test files, 15 tests.
+
+## 2026-06-14 11:39
+
+### Verification
+- Full test suite:
+  - `npm test`
+  - 16 test files passed, 55 tests passed.
+- Production build:
+  - `npm run build`
+  - `tsc -b` and Vite production build passed.
+- Browser smoke:
+  - local URL: `http://127.0.0.1:5174/gesture-mask-studio/`;
+  - page title: `Gesture Mask Studio`;
+  - heading, `Start camera`, `Mirror`, and canvas container were visible;
+  - browser console error count: 0;
+  - screenshot saved to `output/browser-smoke-fingertip-lattice-20260614.png`.
+- Documentation pairing:
+  - bilingual docs pairing check passed.
+- Diff whitespace check:
+  - `git diff --check` passed with Windows line-ending warnings only.
+
+## 2026-06-14 11:45
+
+### Commit And Push Preparation
+- User requested committing and pushing the fingertip lattice implementation.
+- Intended scope:
+  - new `hand-topology` semantic fingertip extraction;
+  - new `fingertip-lattice` rails/strips/triangulated mesh builder;
+  - spatial template model/render input integration;
+  - bilingual analysis, ADR, and progress documentation.
+- Branch before commit: `main`.
+- Remote before commit: `origin/main`.
+- Pre-push verification is being rerun before commit.
