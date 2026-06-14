@@ -1199,3 +1199,16 @@ English version: [progress.md](progress.md)
   - `git diff --check` 通过，仅有 Git 换行提示。
   - 本地浏览器冒烟验证通过：`http://127.0.0.1:4174/gesture-mask-studio/` 标题为 `Gesture Mask Studio`，核心控件可见，启动摄像头前 console error 为 0。
   - 截图保存到 `output/browser-smoke-454c4a4-clean-template-20260614.png`。
+
+## 2026-06-14 17:45
+
+### 提交、推送和部署
+- 已提交代码修正：
+  - `b686836357ca82d7153d7fd129ceb3661cc9857f`
+  - commit message: `fix: enforce fingertip topology render path`
+- HTTPS git push 连续出现 GitHub 443 连接失败；已改用已认证的 SSH URL 推送成功。
+- 远端 `main` 已确认指向 `b686836357ca82d7153d7fd129ceb3661cc9857f`。
+- GitHub Pages workflow 已完成且结果为 success：
+  - run id: `27495013306`
+  - workflow: `Deploy GitHub Pages`
+- 当前部署版本已可进入真实摄像头设备验证。

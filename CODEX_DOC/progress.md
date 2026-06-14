@@ -1440,3 +1440,16 @@
   - `git diff --check` passed with only Git line-ending warnings.
   - local browser smoke passed: `http://127.0.0.1:4174/gesture-mask-studio/` title is `Gesture Mask Studio`, core controls are visible, and console error count is 0 before camera start.
   - screenshot saved to `output/browser-smoke-454c4a4-clean-template-20260614.png`.
+
+## 2026-06-14 17:45
+
+### Commit, Push, And Deployment
+- Committed the code fix:
+  - `b686836357ca82d7153d7fd129ceb3661cc9857f`
+  - commit message: `fix: enforce fingertip topology render path`
+- HTTPS git push repeatedly failed to connect to GitHub port 443; pushed successfully through the authenticated SSH URL.
+- Remote `main` was confirmed at `b686836357ca82d7153d7fd129ceb3661cc9857f`.
+- GitHub Pages workflow completed successfully:
+  - run id: `27495013306`
+  - workflow: `Deploy GitHub Pages`
+- The deployed version is ready for real-camera device validation.
