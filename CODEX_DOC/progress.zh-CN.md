@@ -1347,3 +1347,17 @@ English version: [progress.md](progress.md)
   - `git diff --check` 通过，仅有 Git 换行提示。
 - 已清理最终验证发现的唯一空白问题：`app/src/components/TopStatusBar.tsx` 文件末尾多余空白行。
 - 本次提交范围会排除 `assets/analysis/` 下与本轮无关的已跟踪删除项。
+
+## 2026-06-14 20:12
+
+### Loading 稳定器提交、推送和部署
+- 已提交 loading/闪烁修复：
+  - `11a4a0a`
+  - commit message: `fix: reduce loading and template flicker`
+- 请求外部网络权限后，已通过 SSH remote 成功推送 `main`：
+  - `git@github.com:Baldman-JYH/gesture-mask-studio.git`
+- GitHub Pages workflow 已成功完成：
+  - run id: `27498417720`
+  - workflow: `Deploy GitHub Pages`
+- 当前部署地址已可进入真实摄像头验证：
+  - `https://baldman-jyh.github.io/gesture-mask-studio/`
