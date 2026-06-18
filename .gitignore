@@ -13,5 +13,6 @@ playwright-report/
 test-results/
 output/
 .worktrees/
+assets/analysis/
 测试记录/
 参考视频.mp4
