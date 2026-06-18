@@ -230,3 +230,35 @@
   - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
 - 结论：
   - Task 2 已具备进入 Task 3 canonical reference mesh builder 的条件；后续网格可使用 `depthDelta` 做左右镜像折叠方向，而不必在 renderer 层补救。
+
+## 阶段 13：Task 3 受控参考网格生成
+
+- 时间：2026-06-18 Task 3 实施与复核阶段
+- 新增/修改文件：
+  - `app/src/features/spatial-template-model/referenceTemplateMesh.ts`
+  - `app/src/features/spatial-template-model/referenceTemplateMesh.test.ts`
+  - `app/src/features/spatial-template-model/types.ts`
+- 实现内容：
+  - 新增 `buildReferenceTemplateMesh(state)`，从 `TemplateState` 生成受控空间模板网格。
+  - 新增材质 id：`face-blue`、`face-card`、`face-green`、`edge-white`、`glass-clear`。
+  - 支持 `wide-blue-face`、`triangle-fold`、`thin-edge`、`white-card-face`、`green-cyan-face`、`one-hand-wedge` 和 hidden/invisible 状态。
+  - 使用 `state.rotation` 把局部几何旋转到显示坐标。
+  - 使用 signed `state.depthDelta` 控制折叠深度方向，保留左右镜像折叠能力。
+  - hidden/invisible/opacity 为 0 时返回空 mesh。
+- TDD 与修复：
+  - worker 先实现并提交 Task 3 主体。
+  - 主线程构建发现 TypeScript 不可达分支：guard 已排除 `hidden` 后，`switch` 中再写 `case 'hidden'` 不可比较；已移除该分支。
+  - 规格复核发现 rotation transform 已实现但缺少非零角度测试。
+  - 已新增 `rotates local mesh points around the template center` 测试，确认 `rotation: Math.PI / 2` 时宽条变为高条。
+- 复核结果：
+  - 初次规格复核：实现本身满足网格需求，但因缺少 rotation 覆盖，严格视为不完整。
+  - 修复后规格复核：Health Score 100/100，Task 3 spec compliant，无 blocker。
+  - Brooks Review：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+  - renderer material slot 映射暂不在 Task 3 修改；已记录为 Task 6 集成前必须处理，否则新 material id 会回落到 slot 0。
+- 验证：
+  - `npm.cmd test -- src/features/spatial-template-model/referenceTemplateMesh.test.ts src/features/template-state/deriveTemplateState.test.ts` 通过，2 个测试文件、14 个测试。
+  - `npm.cmd test` 通过，21 个测试文件、84 个测试。
+  - `npm.cmd run build` 通过。
+  - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
+- 结论：
+  - 几何层已经从 raw fingertip lattice 迈向可控折纸/三角/薄边模板；下一步可以独立推进 face texture source 和 reference shader。

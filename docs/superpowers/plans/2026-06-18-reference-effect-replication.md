@@ -427,7 +427,7 @@ git commit -m "feat: add stable template state model"
 - Create: `app/src/features/spatial-template-model/referenceTemplateMesh.test.ts`
 - Modify: `app/src/features/spatial-template-model/types.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `referenceTemplateMesh.test.ts`:
 
@@ -488,7 +488,7 @@ function state(mode: TemplateState['mode']): TemplateState {
 }
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 cd app
@@ -497,7 +497,7 @@ npm.cmd test -- src/features/spatial-template-model/referenceTemplateMesh.test.t
 
 Expected: FAIL because builder does not exist.
 
-- [ ] **Step 3: Extend material ids**
+- [x] **Step 3: Extend material ids**
 
 Add material ids in `types.ts`:
 
@@ -521,7 +521,7 @@ export type SpatialTemplateMaterialId =
   | 'glass-clear';
 ```
 
-- [ ] **Step 4: Add mesh builder**
+- [x] **Step 4: Add mesh builder**
 
 Create `referenceTemplateMesh.ts`:
 
@@ -586,7 +586,7 @@ function primaryFaceMaterial(state: TemplateState) {
 }
 ```
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 ```bash
 cd app
@@ -595,7 +595,7 @@ npm.cmd test -- src/features/spatial-template-model/referenceTemplateMesh.test.t
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/features/spatial-template-model/types.ts app/src/features/spatial-template-model/referenceTemplateMesh.ts app/src/features/spatial-template-model/referenceTemplateMesh.test.ts

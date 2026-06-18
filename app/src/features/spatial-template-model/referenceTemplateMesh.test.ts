@@ -62,6 +62,23 @@ describe('buildReferenceTemplateMesh', () => {
     );
   });
 
+  it('rotates local mesh points around the template center', () => {
+    const unrotated = buildReferenceTemplateMesh({
+      ...state('wide-blue-face'),
+      rotation: 0,
+    });
+    const rotated = buildReferenceTemplateMesh({
+      ...state('wide-blue-face'),
+      rotation: Math.PI / 2,
+    });
+
+    const unrotatedBounds = bounds(unrotated.vertices.map((vertex) => vertex.position));
+    const rotatedBounds = bounds(rotated.vertices.map((vertex) => vertex.position));
+
+    expect(unrotatedBounds.width).toBeGreaterThan(unrotatedBounds.height * 3);
+    expect(rotatedBounds.height).toBeGreaterThan(rotatedBounds.width * 3);
+  });
+
   it('returns a hidden mesh when state is hidden', () => {
     const mesh = buildReferenceTemplateMesh({
       ...state('wide-blue-face'),

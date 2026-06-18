@@ -28,8 +28,6 @@ export function buildReferenceTemplateMesh(state: TemplateState): SpatialTemplat
       return meshFromLocalState(state, greenCyanFace(state));
     case 'one-hand-wedge':
       return meshFromLocalState(state, oneHandWedge(state));
-    case 'hidden':
-      return hiddenMesh();
   }
 }
 
