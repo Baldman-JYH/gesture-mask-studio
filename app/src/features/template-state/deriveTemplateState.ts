@@ -11,29 +11,11 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
     input.fingertipQuality !== 'valid' &&
     input.previous?.visible
   ) {
-    return {
-      ...input.previous,
-      activeHandCount: input.activeHandCount,
-      opacity: 1,
-      timestampMs: input.timestampMs,
-    };
+    return holdPreviousShapeWithCurrentPose(input);
   }
 
   if (input.activeHandCount === 0 || !input.leftAnchor) {
-    return {
-      mode: 'hidden',
-      visible: false,
-      activeHandCount: input.activeHandCount,
-      center: { x: 0.5, y: 0.5, z: 0 },
-      span: 0,
-      rotation: 0,
-      depthTilt: 0,
-      depthDelta: 0,
-      foldAmount: 0,
-      opacity: 0,
-      materialPreset: 'edge-only',
-      timestampMs: input.timestampMs,
-    };
+    return hiddenState(input.timestampMs, input.activeHandCount);
   }
 
   if (input.activeHandCount === 1 || !input.rightAnchor) {
@@ -83,6 +65,91 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
     opacity: 1,
     materialPreset: materialPresetForMode(mode),
     timestampMs: input.timestampMs,
+  };
+}
+
+function holdPreviousShapeWithCurrentPose(input: DeriveTemplateStateInput): TemplateState {
+  const previous = input.previous as TemplateState;
+
+  if (!input.leftAnchor) {
+    return {
+      ...previous,
+      activeHandCount: input.activeHandCount,
+      opacity: 1,
+      timestampMs: input.timestampMs,
+    };
+  }
+
+  if (input.activeHandCount === 1 || !input.rightAnchor) {
+    return {
+      ...previous,
+      activeHandCount: input.activeHandCount,
+      center: input.leftAnchor,
+      span: Math.max(previous.span, 0.24),
+      rotation: previous.rotation,
+      opacity: 1,
+      timestampMs: input.timestampMs,
+    };
+  }
+
+  const pose = twoHandPose(input.leftAnchor, input.rightAnchor);
+
+  return {
+    ...previous,
+    activeHandCount: input.activeHandCount,
+    center: pose.center,
+    span: pose.span,
+    rotation: pose.rotation,
+    depthTilt: pose.depthTilt,
+    depthDelta: pose.depthDelta,
+    opacity: 1,
+    timestampMs: input.timestampMs,
+  };
+}
+
+function twoHandPose(
+  left: NonNullable<DeriveTemplateStateInput['leftAnchor']>,
+  right: NonNullable<DeriveTemplateStateInput['rightAnchor']>,
+): {
+  center: TemplateState['center'];
+  span: number;
+  rotation: number;
+  depthTilt: number;
+  depthDelta: number;
+} {
+  const dx = right.x - left.x;
+  const dy = right.y - left.y;
+  const leftZ = left.z ?? 0;
+  const rightZ = right.z ?? 0;
+  const depthDelta = rightZ - leftZ;
+
+  return {
+    center: {
+      x: (left.x + right.x) / 2,
+      y: (left.y + right.y) / 2,
+      z: (leftZ + rightZ) / 2,
+    },
+    span: Math.hypot(dx, dy),
+    rotation: Math.atan2(dy, dx),
+    depthTilt: Math.abs(depthDelta),
+    depthDelta,
+  };
+}
+
+function hiddenState(timestampMs: number, activeHandCount: number): TemplateState {
+  return {
+    mode: 'hidden',
+    visible: false,
+    activeHandCount,
+    center: { x: 0.5, y: 0.5, z: 0 },
+    span: 0,
+    rotation: 0,
+    depthTilt: 0,
+    depthDelta: 0,
+    foldAmount: 0,
+    opacity: 0,
+    materialPreset: 'edge-only',
+    timestampMs,
   };
 }
 

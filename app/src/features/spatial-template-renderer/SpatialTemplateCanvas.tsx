@@ -2,18 +2,19 @@ import { useEffect, useRef } from 'react';
 import {
   BufferAttribute,
   BufferGeometry,
-  DoubleSide,
   Mesh,
-  MeshBasicMaterial,
   OrthographicCamera,
   Scene,
+  ShaderMaterial,
   WebGLRenderer,
   type VideoTexture,
 } from 'three';
 import { createVideoTexture, disposeTexture } from '../scene-sampling/videoTexture';
-import type { SpatialTemplateMaterialId } from '../spatial-template-model/types';
-import { resolveSpatialTemplateMaterialSettings } from './materialSettings';
 import { spatialTemplateToBufferData } from './rendererCore';
+import {
+  createReferenceTemplateMaterials,
+  updateReferenceTemplateMaterials,
+} from './referenceMaterials';
 import type { SpatialTemplateRenderInput } from './renderInput';
 
 type SpatialTemplateCanvasProps = {
@@ -26,26 +27,12 @@ type RendererRefs = {
   scene: Scene;
   camera: OrthographicCamera;
   geometry: BufferGeometry;
-  materials: MeshBasicMaterial[];
+  materials: ShaderMaterial[];
   mesh: Mesh;
   texture: VideoTexture | null;
   video: HTMLVideoElement | null;
   animationFrame: number;
 };
-
-const MATERIAL_SLOT_IDS: SpatialTemplateMaterialId[] = [
-  'scene',
-  'panel',
-  'back',
-  'accent',
-  'cap',
-  'edge',
-  'strip-ab',
-  'strip-bc',
-  'strip-cd',
-  'strip-de',
-  'strip-ea',
-];
 
 export function SpatialTemplateCanvas({ renderInput, className }: SpatialTemplateCanvasProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
@@ -72,8 +59,13 @@ export function SpatialTemplateCanvas({ renderInput, className }: SpatialTemplat
     resizeRenderer(host, refs);
 
     const renderLoop = () => {
+      const input = inputRef.current;
       if (refs.texture) {
         refs.texture.needsUpdate = true;
+      }
+
+      if (input && input.mesh.mode !== 'hidden') {
+        updateMaterials(refs, input);
       }
 
       refs.renderer.render(refs.scene, refs.camera);
@@ -109,14 +101,7 @@ function createRendererRefs(): RendererRefs {
   camera.lookAt(0, 0, 0);
 
   const geometry = new BufferGeometry();
-  const materials = Array.from({ length: 11 }, () => (
-    new MeshBasicMaterial({
-      transparent: true,
-      opacity: 0,
-      depthWrite: false,
-      side: DoubleSide,
-    })
-  ));
+  const materials = createReferenceTemplateMaterials();
   const mesh = new Mesh(geometry, materials);
   mesh.visible = false;
   scene.add(mesh);
@@ -183,6 +168,10 @@ function updateGeometry(refs: RendererRefs, renderInput: SpatialTemplateRenderIn
     'uv',
     new BufferAttribute(new Float32Array(data.uvs), 2),
   );
+  refs.geometry.setAttribute(
+    'faceUv',
+    new BufferAttribute(new Float32Array(data.faceUvs), 2),
+  );
   refs.geometry.setIndex(new BufferAttribute(new Uint16Array(data.indices), 1));
   refs.geometry.clearGroups();
   data.groups.forEach((group) => refs.geometry.addGroup(group.start, group.count, group.materialIndex));
@@ -191,16 +180,14 @@ function updateGeometry(refs: RendererRefs, renderInput: SpatialTemplateRenderIn
 }
 
 function updateMaterials(refs: RendererRefs, renderInput: SpatialTemplateRenderInput): void {
-  refs.materials.forEach((material, index) => {
-    const settings = resolveSpatialTemplateMaterialSettings(
-      MATERIAL_SLOT_IDS[index] ?? 'scene',
-      renderInput.style,
-      renderInput.mesh.opacity,
-    );
-    material.map = settings.usesVideoTexture ? refs.texture : null;
-    material.color.setHex(settings.color);
-    material.opacity = settings.opacity;
-    material.needsUpdate = true;
+  updateReferenceTemplateMaterials(refs.materials, {
+    sceneTexture: refs.texture,
+    faceTexture: refs.texture,
+    opacity: renderInput.style.opacity * renderInput.mesh.opacity,
+    timestampMs: renderInput.timestampMs,
+    pixelSize: 0.03125,
+    glitchAmount: 0.012,
+    faceRoi: renderInput.faceRoi,
   });
 }
 

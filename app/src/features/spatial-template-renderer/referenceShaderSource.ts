@@ -1,12 +1,14 @@
 import { REFERENCE_MATERIAL_MODES } from './referenceMaterialModes';
 
 export const REFERENCE_VERTEX_SHADER = `
+attribute vec2 faceUv;
+
 varying vec2 vVideoUv;
 varying vec2 vFaceUv;
 
 void main() {
   vVideoUv = uv;
-  vFaceUv = uv;
+  vFaceUv = faceUv;
   gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
 }
 `;
@@ -21,6 +23,7 @@ uniform float uTime;
 uniform float uPixelSize;
 uniform float uGlitchAmount;
 uniform int uMaterialMode;
+uniform vec4 uFaceRoi;
 
 const int MATERIAL_MODE_BLUE_FACE = ${REFERENCE_MATERIAL_MODES.blueFace};
 const int MATERIAL_MODE_CARD_FACE = ${REFERENCE_MATERIAL_MODES.cardFace};
@@ -73,11 +76,12 @@ float faceMaskFromTexture(vec4 faceSample) {
 }
 
 void main() {
-  vec2 pixelUv = pixelateUv(vVideoUv, uPixelSize);
+  vec2 faceUv = uFaceRoi.xy + clamp(vFaceUv, 0.0, 1.0) * uFaceRoi.zw;
+  vec2 pixelUv = pixelateUv(faceUv, uPixelSize);
   vec3 glitchedFace = rgbGlitch(pixelUv, uGlitchAmount);
   vec3 sceneBacklight = texture2D(uSceneTexture, vVideoUv).rgb;
   vec3 paletteColor = mix(paletteMap(glitchedFace), sceneBacklight, 0.08);
-  vec4 faceSample = texture2D(uFaceTexture, vFaceUv);
+  vec4 faceSample = texture2D(uFaceTexture, faceUv);
   float faceMask = faceMaskFromTexture(faceSample);
   vec3 color = paletteColor;
   float alpha = uOpacity * max(faceMask, 0.45);

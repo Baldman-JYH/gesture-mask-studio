@@ -28,6 +28,10 @@ export type SpatialTemplateMaterialId =
 export type SpatialTemplateVertex = {
   position: NormalizedPoint;
   samplePoint: NormalizedPoint;
+  faceUv?: {
+    u: number;
+    v: number;
+  };
 };
 
 export type SpatialTemplateFace = {

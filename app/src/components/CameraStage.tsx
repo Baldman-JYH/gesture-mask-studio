@@ -11,6 +11,7 @@ import {
   stabilizeSpatialTemplateFrame,
   type SpatialTemplateStabilizerState,
 } from '../features/spatial-template-renderer/renderStabilizer';
+import type { TemplateState } from '../features/template-state/types';
 import type { TrackedHand, TrackingState } from '../shared/runtime/types';
 import { ControlDock } from './ControlDock';
 import { PermissionOverlay } from './PermissionOverlay';
@@ -31,6 +32,7 @@ export function CameraStage() {
   const activePresetIdRef = useRef(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const mirroredRef = useRef(true);
   const stabilizerStateRef = useRef<SpatialTemplateStabilizerState | null>(null);
+  const templateStateRef = useRef<TemplateState | null>(null);
 
   const [cameraState, setCameraState] = useState<CameraState>('idle');
   const [trackingState, setTrackingState] = useState<TrackingState>('idle');
@@ -56,6 +58,7 @@ export function CameraStage() {
 
     if (!video || !isRenderableVideo(video)) {
       stabilizerStateRef.current = null;
+      templateStateRef.current = null;
       setRenderInput(null);
       animationFrameRef.current = requestAnimationFrame(runFrame);
       return;
@@ -96,7 +99,9 @@ export function CameraStage() {
       style: activePreset,
       timestampMs,
       activeHandCount,
+      previousTemplateState: templateStateRef.current,
     });
+    templateStateRef.current = nextRenderInput.templateState;
     const stabilizedState = stabilizeSpatialTemplateFrame(
       stabilizerStateRef.current,
       {
@@ -187,6 +192,7 @@ export function CameraStage() {
     setTrackingState('idle');
     setHandsCount(0);
     stabilizerStateRef.current = null;
+    templateStateRef.current = null;
     setRenderInput(null);
     setMessage(null);
   }, [stopRenderLoop]);

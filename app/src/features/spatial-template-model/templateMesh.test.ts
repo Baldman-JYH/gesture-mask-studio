@@ -12,27 +12,27 @@ describe('buildSpatialTemplateMeshFromHands', () => {
     expect(mesh.opacity).toBe(0);
   });
 
-  it('builds the primary two-hand mesh from fingertip topology', () => {
+  it('builds the primary two-hand reference template from hand topology', () => {
     const mesh = buildSpatialTemplateMeshFromHands([
       topologyHand('right', 'right', 0.78),
       topologyHand('left', 'left', 0.22),
     ]);
 
-    expect(mesh.mode).toBe('two-hand-lattice');
-    expect(mesh.vertices.length).toBeGreaterThanOrEqual(20);
-    expect(mesh.faces.every((face) => face.indices.length === 3)).toBe(true);
-    expect(mesh.faces.length).toBeGreaterThan(20);
+    expect(mesh.mode).toBe('two-hand-template');
+    expect(mesh.vertices.length).toBeGreaterThanOrEqual(6);
+    expect(mesh.faces.some((face) => face.materialId === 'face-blue')).toBe(true);
+    expect(mesh.faces.some((face) => face.materialId === 'edge-white')).toBe(true);
   });
 
-  it('keeps one-hand mode as a single fingertip face, not an anchor template', () => {
+  it('builds one-hand mode as a reference wedge instead of a raw fingertip face', () => {
     const mesh = buildSpatialTemplateMeshFromHands([
       topologyHand('single', 'left', 0.45),
     ]);
 
-    expect(mesh.mode).toBe('one-hand-lattice');
-    expect(mesh.vertices).toHaveLength(5);
-    expect(mesh.faces).toHaveLength(3);
-    expect(mesh.faces.every((face) => face.materialId === 'scene')).toBe(true);
+    expect(mesh.mode).toBe('one-hand-template');
+    expect(mesh.vertices.length).toBeGreaterThanOrEqual(5);
+    expect(mesh.faces.some((face) => face.materialId === 'face-blue')).toBe(true);
+    expect(mesh.faces.some((face) => face.materialId === 'edge-white')).toBe(true);
   });
 });
 

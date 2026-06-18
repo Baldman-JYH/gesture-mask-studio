@@ -323,3 +323,58 @@
   - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
 - 结论：
   - 参考视频所需的低像素人脸纹理、黄/绿/青高对比调色、RGB 色差和稳定材质 mode 合同已经在静态 shader 层锁定；下一步可以进入 Task 6，把 TemplateState、reference mesh、face ROI 和 shader material 接入 `SpatialTemplateCanvas` 主渲染路径。
+
+## 阶段 16：Task 6 主渲染路径集成
+
+- 时间：2026-06-18 Task 6 实施与复核阶段
+- 修改/新增文件：
+  - `app/src/components/CameraStage.tsx`
+  - `app/src/features/spatial-template-model/types.ts`
+  - `app/src/features/spatial-template-model/templateMesh.ts`
+  - `app/src/features/spatial-template-model/templateMesh.test.ts`
+  - `app/src/features/spatial-template-model/referenceTemplateMesh.ts`
+  - `app/src/features/spatial-template-model/referenceTemplateMesh.test.ts`
+  - `app/src/features/spatial-template-renderer/renderInput.ts`
+  - `app/src/features/spatial-template-renderer/renderInput.test.ts`
+  - `app/src/features/spatial-template-renderer/rendererCore.ts`
+  - `app/src/features/spatial-template-renderer/rendererCore.test.ts`
+  - `app/src/features/spatial-template-renderer/SpatialTemplateCanvas.tsx`
+  - `app/src/features/spatial-template-renderer/referenceMaterials.ts`
+  - `app/src/features/spatial-template-renderer/referenceMaterials.test.ts`
+  - `app/src/features/spatial-template-renderer/referenceShaderSource.ts`
+  - `app/src/features/spatial-template-renderer/referenceShaderSource.test.ts`
+  - `app/src/features/template-state/deriveTemplateState.ts`
+  - `app/src/features/template-state/deriveTemplateState.test.ts`
+  - `docs/superpowers/plans/2026-06-18-reference-effect-replication.md`
+- 实现内容：
+  - 主生产路径已从 raw fingertip lattice 改为 `TemplateState -> buildReferenceTemplateMesh -> shader renderer`。
+  - `templateMesh.ts` 现在负责集成手势 anchor、hand topology、TemplateState 和 reference mesh；旧 lattice 不再作为可见 mesh 输出。
+  - `renderInput` 新增 `templateState` 和 `faceRoi`，并让 `activeHandCount` 来自 `TemplateState`，避免 duplicate hand collapse 后状态不一致。
+  - `CameraStage` 新增 `templateStateRef`，每帧向 render input 传入上一帧 TemplateState；视频不可渲染或停止相机时同步重置。
+  - `SpatialTemplateCanvas` 从 `MeshBasicMaterial` 切换为 shader materials，统一更新 live video texture、face texture、opacity、time、pixel size、glitch amount 和 face ROI uniforms。
+  - `rendererCore` 新增稳定材质槽数组，`face-blue`、`face-card`、`face-green`、`edge-white`、`glass-clear` 不再回落到 slot 0。
+  - 新增 `faceUv` attribute：scene/video UV 和 face-local UV 分离，face ROI 按 canonical local surface 铺到 reference mesh 上。
+  - reference mesh 顶点新增 canonical `faceUv`，在旋转前基于局部几何生成；rendererCore 优先使用该 `faceUv`，仅 legacy mesh 缺失时 fallback 到 bounds。
+  - shader `uTime` 改为秒单位，避免毫秒输入导致 glitch/card band 过快闪烁。
+- TDD 与复核修复：
+  - 先写失败测试覆盖：renderInput 输出 reference mesh、activeHandCount/templateState 一致、material slot、新 shader uniforms、reference materials、invalid fingertips 与 previous state。
+  - 初次实现后 Brooks 复核指出三个 warning：face UV 与 scene UV 混用、reference route 仍受旧 lattice hidden 语义控制、`uTime` 时间单位不一致。
+  - 已修复为独立 canonical face-local UV、anchor/hand-count 优先的 degraded template、秒单位 `uTime`。
+  - 后续 Brooks 复核又指出 invalid fingertips + previous state 会冻结 pose；已改为保留上一帧 shape/mode/fold/material，但用当前 anchors 更新 center/span/rotation/depthDelta。
+- 浏览器验证：
+  - 生产 preview 服务：`http://127.0.0.1:4176/gesture-mask-studio/`。
+  - in-app Browser 页面 smoke 通过：标题为 `Gesture Mask Studio`，`Start camera` 可见，无 framework overlay，无 console warn/error。
+  - 交互 proof：`Mirror` 按钮从 `aria-pressed=true` 切换为 `false`，控制台仍无 warn/error。
+  - 尝试通过 `data:` 页面做 WebGL shader compile smoke 被 Browser 安全策略阻止；按策略未绕过。真实 shader 编译与摄像头纹理效果需进入 Task 7 实机验证。
+- 复核结果：
+  - 最终规格复核：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+  - 最终 Brooks Review：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+  - 残余风险：代码级 blocker 已清除；剩余风险集中在真实浏览器/WebGL shader compile、摄像头 face ROI、pixel size、glitch amount、旋转/缩放手感的实机视觉校准。
+- 验证：
+  - `npm.cmd test -- src/features/template-state/deriveTemplateState.test.ts src/features/spatial-template-model/referenceTemplateMesh.test.ts src/features/spatial-template-renderer/renderInput.test.ts src/features/spatial-template-renderer/rendererCore.test.ts src/features/spatial-template-renderer/referenceMaterials.test.ts` 通过，5 个测试文件、28 个测试。
+  - `npm.cmd test -- src/features/template-state/deriveTemplateState.test.ts src/features/spatial-template-renderer/renderInput.test.ts src/features/spatial-template-model/templateMesh.test.ts src/features/spatial-template-renderer/rendererCore.test.ts src/features/spatial-template-renderer/referenceMaterials.test.ts src/features/spatial-template-renderer/referenceShaderSource.test.ts` 通过，6 个测试文件、27 个测试。
+  - `npm.cmd test` 通过，25 个测试文件、103 个测试。
+  - `npm.cmd run build` 通过。
+  - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
+- 结论：
+  - Task 6 已把参考效果路线接入主渲染路径：可见性不再由 raw fingertip lattice 决定，活动手势期间可生成/保持 reference template，shader material 已进入生产 Canvas。下一步应进入 Task 7，在真实摄像头和 FFmpeg 逐帧对比中校准视觉参数并验证是否接近目标参考视频。

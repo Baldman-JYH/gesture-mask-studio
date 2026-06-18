@@ -18,6 +18,25 @@ describe('deriveTemplateState', () => {
     expect(next.mode).toBe('wide-blue-face');
     expect(next.visible).toBe(true);
     expect(next.opacity).toBe(1);
+    expect(next.center.x).toBeCloseTo(0.5);
+    expect(next.center.y).toBeCloseTo(0.515);
+    expect(next.span).toBeCloseTo(Math.hypot(0.56, -0.07));
+    expect(next.rotation).toBeCloseTo(Math.atan2(-0.07, 0.56));
+  });
+
+  it('creates a degraded visible state from active anchors even when fingertips are invalid', () => {
+    const next = deriveTemplateState({
+      activeHandCount: 2,
+      leftAnchor: { x: 0.22, y: 0.55, z: 0 },
+      rightAnchor: { x: 0.78, y: 0.48, z: 0 },
+      fingertipQuality: 'invalid',
+      timestampMs: 2450,
+      previous: null,
+    });
+
+    expect(next.mode).not.toBe('hidden');
+    expect(next.visible).toBe(true);
+    expect(next.activeHandCount).toBe(2);
   });
 
   it('selects thin-edge when hand span is high but projected height is low', () => {

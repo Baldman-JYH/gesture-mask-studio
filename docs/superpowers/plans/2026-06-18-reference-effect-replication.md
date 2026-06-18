@@ -879,7 +879,7 @@ git commit -m "feat: add reference effect shader source"
 - Modify: `app/src/features/spatial-template-renderer/materialSettings.ts`
 - Modify: `app/src/features/spatial-template-model/templateMesh.ts`
 
-- [ ] **Step 1: Add integration tests at pure boundaries first**
+- [x] **Step 1: Add integration tests at pure boundaries first**
 
 Extend `renderInput.test.ts` with:
 
@@ -899,7 +899,7 @@ it('keeps active hand count and template state in render input', () => {
 });
 ```
 
-- [ ] **Step 2: Run targeted tests**
+- [x] **Step 2: Run targeted tests**
 
 ```bash
 cd app
@@ -908,7 +908,7 @@ npm.cmd test -- src/features/spatial-template-renderer/renderInput.test.ts src/f
 
 Expected before integration: the new render input assertion may pass, but production path still uses old lattice mesh.
 
-- [ ] **Step 3: Route mesh generation through `TemplateState`**
+- [x] **Step 3: Route mesh generation through `TemplateState`**
 
 Use this production flow in `CameraStage` or `renderInput`:
 
@@ -927,11 +927,11 @@ templateStateRef.current = templateState;
 const mesh = buildReferenceTemplateMesh(templateState);
 ```
 
-- [ ] **Step 4: Replace `MeshBasicMaterial` for front faces**
+- [x] **Step 4: Replace `MeshBasicMaterial` for front faces**
 
 In `SpatialTemplateCanvas.tsx`, create shader materials for `face-blue`, `face-card`, `face-green`, and `edge-white`. Keep a simple white untextured material only for emergency fallback.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
 ```bash
 cd app
@@ -941,7 +941,7 @@ npm.cmd run build
 
 Expected: all tests and build pass, no TypeScript errors.
 
-- [ ] **Step 6: Browser smoke**
+- [x] **Step 6: Browser smoke**
 
 Run local preview and verify the page renders before camera start:
 
@@ -953,7 +953,9 @@ npm.cmd run preview -- --host 127.0.0.1 --port 4176
 
 Expected: no framework error overlay, canvas container mounts.
 
-- [ ] **Step 7: Commit**
+Actual: production preview at `http://127.0.0.1:4176/gesture-mask-studio/` loaded, showed the primary app shell and controls, `Mirror` interaction toggled state, and browser console had no warn/error entries. The Browser security policy blocked a `data:` WebGL shader-compile smoke page, so direct shader compile remains part of camera-enabled real-device validation.
+
+- [x] **Step 7: Commit**
 
 ```bash
 git add app/src/components/CameraStage.tsx app/src/features/spatial-template-renderer app/src/features/spatial-template-model app/src/features/template-state app/src/features/face-texture

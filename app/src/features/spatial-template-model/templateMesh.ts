@@ -1,34 +1,73 @@
 import type { TrackedHand } from '../../shared/runtime/types';
-import { buildFingertipLattice } from '../fingertip-lattice/fingertipLattice';
+import { deriveGestureAnchorFrame, getGestureAnchorHandCount } from '../gesture-anchor-frame/anchorFrame';
 import { extractHandTopologyFrame } from '../hand-topology/handTopology';
+import { deriveTemplateState } from '../template-state/deriveTemplateState';
+import type { FingertipQuality, TemplateState } from '../template-state/types';
+import { buildReferenceTemplateMesh } from './referenceTemplateMesh';
 import type { SpatialTemplateMesh } from './types';
 
-export function buildSpatialTemplateMeshFromHands(hands: TrackedHand[]): SpatialTemplateMesh {
-  const lattice = buildFingertipLattice(extractHandTopologyFrame(hands));
+export type SpatialTemplateBuildOptions = {
+  activeHandCount?: number;
+  previousTemplateState?: TemplateState | null;
+  timestampMs?: number;
+};
 
-  if (lattice.mode === 'hidden') {
-    return {
-      mode: 'hidden',
-      vertices: [],
-      faces: [],
-      opacity: 0,
-      confidence: 0,
-    };
-  }
+export type SpatialTemplateBuildResult = {
+  mesh: SpatialTemplateMesh;
+  templateState: TemplateState;
+};
+
+export function buildSpatialTemplateFromHands(
+  hands: TrackedHand[],
+  options: SpatialTemplateBuildOptions = {},
+): SpatialTemplateBuildResult {
+  const anchorFrame = deriveGestureAnchorFrame(hands);
+  const topologyFrame = extractHandTopologyFrame(hands);
+  const activeHandCount = options.activeHandCount ?? getGestureAnchorHandCount(anchorFrame);
+  const templateState = deriveTemplateState({
+    activeHandCount,
+    leftAnchor: anchorFrame.left?.point ?? anchorFrame.primary?.point,
+    rightAnchor: anchorFrame.right?.point,
+    projectedHeight: estimateProjectedHeight(topologyFrame),
+    fingertipQuality: deriveFingertipQuality(activeHandCount, topologyFrame),
+    timestampMs: options.timestampMs ?? 0,
+    previous: options.previousTemplateState ?? null,
+  });
 
   return {
-    mode: lattice.mode,
-    vertices: lattice.vertices,
-    faces: lattice.faces,
-    opacity: lerp(0.62, 0.9, clamp01(lattice.confidence)),
-    confidence: clamp01(lattice.confidence),
+    mesh: buildReferenceTemplateMesh(templateState),
+    templateState,
   };
 }
 
-function lerp(start: number, end: number, amount: number): number {
-  return start + (end - start) * amount;
+export function buildSpatialTemplateMeshFromHands(hands: TrackedHand[]): SpatialTemplateMesh {
+  return buildSpatialTemplateFromHands(hands).mesh;
 }
 
-function clamp01(value: number): number {
-  return Math.min(1, Math.max(0, value));
+function deriveFingertipQuality(
+  activeHandCount: number,
+  topologyFrame: ReturnType<typeof extractHandTopologyFrame>,
+): FingertipQuality {
+  if (activeHandCount === 0) {
+    return 'missing';
+  }
+
+  if (topologyFrame.mode === 'hidden') {
+    return 'invalid';
+  }
+
+  return 'valid';
+}
+
+function estimateProjectedHeight(
+  topologyFrame: ReturnType<typeof extractHandTopologyFrame>,
+): number | undefined {
+  const points = topologyFrame.hands.flatMap((hand) => Object.values(hand.fingertips));
+
+  if (points.length === 0) {
+    return undefined;
+  }
+
+  const yValues = points.map((point) => point.y);
+  return Math.max(...yValues) - Math.min(...yValues);
 }

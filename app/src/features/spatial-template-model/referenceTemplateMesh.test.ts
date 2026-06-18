@@ -79,6 +79,24 @@ describe('buildReferenceTemplateMesh', () => {
     expect(rotatedBounds.height).toBeGreaterThan(rotatedBounds.width * 3);
   });
 
+  it('preserves canonical face uvs when rotating the template', () => {
+    const mesh = buildReferenceTemplateMesh({
+      ...state('wide-blue-face'),
+      rotation: Math.PI / 2,
+    });
+    const faceUvs = mesh.vertices
+      .filter((vertex) => vertex.faceUv)
+      .map((vertex) => vertex.faceUv);
+
+    expect(faceUvs.length).toBe(mesh.vertices.length);
+    expect(faceUvs).toContainEqual({ u: 0, v: 0 });
+    expect(faceUvs).toContainEqual({ u: 0.5, v: 0 });
+    expect(faceUvs).toContainEqual({ u: 1, v: 0 });
+    expect(faceUvs).toContainEqual({ u: 0, v: 1 });
+    expect(faceUvs).toContainEqual({ u: 0.5, v: 1 });
+    expect(faceUvs).toContainEqual({ u: 1, v: 1 });
+  });
+
   it('returns a hidden mesh when state is hidden', () => {
     const mesh = buildReferenceTemplateMesh({
       ...state('wide-blue-face'),

@@ -193,21 +193,28 @@ type MeshParts = {
 };
 
 function meshFromLocalState(state: TemplateState, parts: MeshParts): SpatialTemplateMesh {
+  const faceUvBounds = localFaceUvBounds(parts.points);
+
   return {
     mode: spatialMode(state),
-    vertices: parts.points.map((localPoint) => vertex(state, localPoint)),
+    vertices: parts.points.map((localPoint) => vertex(state, localPoint, faceUvBounds)),
     faces: parts.faces,
     opacity: clamp01(state.opacity),
     confidence: clamp01(state.opacity),
   };
 }
 
-function vertex(state: TemplateState, localPoint: LocalPoint): SpatialTemplateVertex {
+function vertex(
+  state: TemplateState,
+  localPoint: LocalPoint,
+  faceUvBounds: LocalFaceUvBounds,
+): SpatialTemplateVertex {
   const position = rotateIntoDisplaySpace(state, localPoint);
 
   return {
     position,
     samplePoint: position,
+    faceUv: localFaceUv(localPoint, faceUvBounds),
   };
 }
 
@@ -250,6 +257,35 @@ function point(x: number, y: number, z: number): LocalPoint {
   return { x, y, z };
 }
 
+type LocalFaceUvBounds = {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+};
+
+function localFaceUvBounds(points: LocalPoint[]): LocalFaceUvBounds {
+  const xs = points.map((point) => point.x);
+  const ys = points.map((point) => point.y);
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+}
+
+function localFaceUv(point: LocalPoint, bounds: LocalFaceUvBounds): { u: number; v: number } {
+  const width = Math.max(bounds.maxX - bounds.minX, Number.EPSILON);
+  const height = Math.max(bounds.maxY - bounds.minY, Number.EPSILON);
+
+  return {
+    u: roundUv(clamp01((point.x - bounds.minX) / width)),
+    v: roundUv(clamp01((point.y - bounds.minY) / height)),
+  };
+}
+
 function span(state: TemplateState): number {
   return Math.max(0.08, state.span);
 }
@@ -271,4 +307,8 @@ function depthSign(state: TemplateState): 1 | -1 {
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function roundUv(value: number): number {
+  return Math.round(value * 1000000) / 1000000;
 }

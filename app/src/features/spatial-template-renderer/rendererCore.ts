@@ -1,6 +1,25 @@
 import type { SpatialTemplateMaterialId, SpatialTemplateMesh } from '../spatial-template-model/types';
 import { toVideoUv, type VideoUvMapping } from '../scene-sampling/screenSpaceSampling';
 
+export const SPATIAL_TEMPLATE_MATERIAL_SLOT_IDS: SpatialTemplateMaterialId[] = [
+  'scene',
+  'panel',
+  'back',
+  'accent',
+  'cap',
+  'edge',
+  'strip-ab',
+  'strip-bc',
+  'strip-cd',
+  'strip-de',
+  'strip-ea',
+  'face-blue',
+  'face-card',
+  'face-green',
+  'edge-white',
+  'glass-clear',
+];
+
 export type SpatialTemplateBufferGroup = {
   start: number;
   count: number;
@@ -10,6 +29,7 @@ export type SpatialTemplateBufferGroup = {
 export type SpatialTemplateBufferData = {
   positions: number[];
   uvs: number[];
+  faceUvs: number[];
   indices: number[];
   groups: SpatialTemplateBufferGroup[];
 };
@@ -25,8 +45,10 @@ export function spatialTemplateToBufferData(
 ): SpatialTemplateBufferData {
   const positions: number[] = [];
   const uvs: number[] = [];
+  const faceUvs: number[] = [];
   const indices: number[] = [];
   const groups: SpatialTemplateBufferGroup[] = [];
+  const faceUvBounds = getFaceUvBounds(mesh);
 
   for (const vertex of mesh.vertices) {
     positions.push(
@@ -37,6 +59,9 @@ export function spatialTemplateToBufferData(
 
     const uv = toVideoUv(vertex.samplePoint, options.videoMapping);
     uvs.push(uv.u, uv.v);
+
+    const faceUv = vertex.faceUv ?? toFaceUv(vertex.position, faceUvBounds);
+    faceUvs.push(faceUv.u, faceUv.v);
   }
 
   for (const face of mesh.faces) {
@@ -53,53 +78,15 @@ export function spatialTemplateToBufferData(
   return {
     positions,
     uvs,
+    faceUvs,
     indices,
     groups,
   };
 }
 
 export function materialIdToIndex(materialId: SpatialTemplateMaterialId): number {
-  if (materialId === 'panel') {
-    return 1;
-  }
-
-  if (materialId === 'back') {
-    return 2;
-  }
-
-  if (materialId === 'accent') {
-    return 3;
-  }
-
-  if (materialId === 'cap') {
-    return 4;
-  }
-
-  if (materialId === 'edge') {
-    return 5;
-  }
-
-  if (materialId === 'strip-ab') {
-    return 6;
-  }
-
-  if (materialId === 'strip-bc') {
-    return 7;
-  }
-
-  if (materialId === 'strip-cd') {
-    return 8;
-  }
-
-  if (materialId === 'strip-de') {
-    return 9;
-  }
-
-  if (materialId === 'strip-ea') {
-    return 10;
-  }
-
-  return 0;
+  const index = SPATIAL_TEMPLATE_MATERIAL_SLOT_IDS.indexOf(materialId);
+  return index === -1 ? 0 : index;
 }
 
 function triangulateFace(
@@ -110,4 +97,42 @@ function triangulateFace(
   }
 
   return [indices[0], indices[1], indices[2], indices[0], indices[2], indices[3]];
+}
+
+function getFaceUvBounds(mesh: SpatialTemplateMesh): {
+  minX: number;
+  maxX: number;
+  minY: number;
+  maxY: number;
+} {
+  if (mesh.vertices.length === 0) {
+    return { minX: 0, maxX: 1, minY: 0, maxY: 1 };
+  }
+
+  const xs = mesh.vertices.map((vertex) => vertex.position.x);
+  const ys = mesh.vertices.map((vertex) => vertex.position.y);
+
+  return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
+    minY: Math.min(...ys),
+    maxY: Math.max(...ys),
+  };
+}
+
+function toFaceUv(
+  point: { x: number; y: number },
+  bounds: { minX: number; maxX: number; minY: number; maxY: number },
+): { u: number; v: number } {
+  const width = Math.max(bounds.maxX - bounds.minX, Number.EPSILON);
+  const height = Math.max(bounds.maxY - bounds.minY, Number.EPSILON);
+
+  return {
+    u: clamp01((point.x - bounds.minX) / width),
+    v: clamp01((bounds.maxY - point.y) / height),
+  };
+}
+
+function clamp01(value: number): number {
+  return Math.min(1, Math.max(0, value));
 }

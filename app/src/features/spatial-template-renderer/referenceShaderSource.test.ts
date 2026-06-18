@@ -14,6 +14,7 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('uniform float uPixelSize');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('uniform float uGlitchAmount');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('uniform int uMaterialMode');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('uniform vec4 uFaceRoi');
   });
 
   it('includes pixelation, palette mapping, and rgb glitch branches', () => {
@@ -28,6 +29,7 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('texture2D(uFaceTexture, uv - offset).b');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 glitchedFace = rgbGlitch');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('paletteMap(glitchedFace)');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec2 faceUv = uFaceRoi.xy +');
   });
 
   it('passes model and video uv varyings from the vertex shader', () => {
