@@ -49,6 +49,10 @@ Create:
   - Vertex/fragment shader strings for face pixelation, palette mapping, RGB glitch, edge glow, and panel modes.
 - `app/src/features/spatial-template-renderer/referenceShaderSource.test.ts`
   - Verifies required uniforms and shader branches exist.
+- `app/src/features/spatial-template-renderer/referenceMaterialModes.ts`
+  - Shares stable shader material-mode values between shader source tests and renderer integration.
+- `app/src/features/spatial-template-renderer/referenceMaterialModes.test.ts`
+  - Verifies template material ids map to stable shader material modes.
 - `app/src/features/spatial-template-renderer/referenceMaterials.ts`
   - Creates shader materials and maps template material roles to uniforms.
 - `app/src/features/spatial-template-renderer/referenceMaterials.test.ts`
@@ -610,7 +614,7 @@ git commit -m "feat: build canonical reference template meshes"
 - Create: `app/src/features/face-texture/faceTextureSource.ts`
 - Create: `app/src/features/face-texture/faceTextureSource.test.ts`
 
-- [ ] **Step 1: Write failing tests**
+- [x] **Step 1: Write failing tests**
 
 Create `faceTextureSource.test.ts`:
 
@@ -651,7 +655,7 @@ describe('faceTextureSource', () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 cd app
@@ -660,7 +664,7 @@ npm.cmd test -- src/features/face-texture/faceTextureSource.test.ts
 
 Expected: FAIL because module does not exist.
 
-- [ ] **Step 3: Implement ROI helpers**
+- [x] **Step 3: Implement ROI helpers**
 
 ```ts
 export type FaceRoi = {
@@ -703,7 +707,7 @@ function clamp01(value: number): number {
 }
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 cd app
@@ -712,7 +716,7 @@ npm.cmd test -- src/features/face-texture/faceTextureSource.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add app/src/features/face-texture
@@ -727,7 +731,7 @@ git commit -m "feat: add face texture roi source"
 - Create: `app/src/features/spatial-template-renderer/referenceShaderSource.ts`
 - Create: `app/src/features/spatial-template-renderer/referenceShaderSource.test.ts`
 
-- [ ] **Step 1: Write failing shader contract tests**
+- [x] **Step 1: Write failing shader contract tests**
 
 ```ts
 import { describe, expect, it } from 'vitest';
@@ -755,7 +759,7 @@ describe('reference shader source', () => {
 });
 ```
 
-- [ ] **Step 2: Run RED**
+- [x] **Step 2: Run RED**
 
 ```bash
 cd app
@@ -764,7 +768,7 @@ npm.cmd test -- src/features/spatial-template-renderer/referenceShaderSource.tes
 
 Expected: FAIL because shader source does not exist.
 
-- [ ] **Step 3: Implement shader source**
+- [x] **Step 3: Implement shader source**
 
 Create `referenceShaderSource.ts`:
 
@@ -848,7 +852,7 @@ void main() {
 `;
 ```
 
-- [ ] **Step 4: Verify**
+- [x] **Step 4: Verify**
 
 ```bash
 cd app
@@ -857,10 +861,10 @@ npm.cmd test -- src/features/spatial-template-renderer/referenceShaderSource.tes
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
-git add app/src/features/spatial-template-renderer/referenceShaderSource.ts app/src/features/spatial-template-renderer/referenceShaderSource.test.ts
+git add app/src/features/spatial-template-renderer/referenceShaderSource.ts app/src/features/spatial-template-renderer/referenceShaderSource.test.ts app/src/features/spatial-template-renderer/referenceMaterialModes.ts app/src/features/spatial-template-renderer/referenceMaterialModes.test.ts
 git commit -m "feat: add reference effect shader source"
 ```
 

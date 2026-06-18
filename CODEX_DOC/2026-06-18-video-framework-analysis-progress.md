@@ -262,3 +262,64 @@
   - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
 - 结论：
   - 几何层已经从 raw fingertip lattice 迈向可控折纸/三角/薄边模板；下一步可以独立推进 face texture source 和 reference shader。
+
+## 阶段 14：Task 4 人脸纹理 ROI 源
+
+- 时间：2026-06-18 Task 4 实施与复核阶段
+- 新增文件：
+  - `app/src/features/face-texture/faceTextureSource.ts`
+  - `app/src/features/face-texture/faceTextureSource.test.ts`
+- 实现内容：
+  - 新增 `FaceRoi` 类型，使用 normalized `{ x, y, width, height }` 表示人脸纹理裁剪区域。
+  - 新增 `fallbackFaceRoi()`，默认返回 `{ x: 0.34, y: 0.12, width: 0.32, height: 0.42 }`，作为没有 face detector 时的中心偏上人脸区域。
+  - 新增 `clampFaceRoi()`，确保 ROI 不越出 0..1 的视频范围。
+  - 新增 `smoothFaceRoi(previous, next, amount)`，用于后续低频 face ROI 更新时平滑纹理区域。
+- TDD 与复核修复：
+  - worker 先以缺失模块作为 RED，实现 clamp、smooth、fallback 后目标测试变绿。
+  - Brooks 复核指出 `smoothFaceRoi` 对 `amount` 不设边界会在 tab resume 或相机卡顿时外推 ROI。
+  - 已新增越界测试，确认 `amount < 0` 回到 previous，`amount > 1` 回到 next；实现中将 `amount` clamp 到 `[0, 1]`。
+- 复核结果：
+  - Task 4 规格复核通过，确认纯模块、无 DOM/Three.js 依赖。
+  - 最新 Brooks Review：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+- 验证：
+  - `npm.cmd test -- src/features/face-texture/faceTextureSource.test.ts` 通过，1 个测试文件、4 个测试。
+  - 与 Task 5 一起执行的全量 `npm.cmd test` 通过，24 个测试文件、96 个测试。
+  - `npm.cmd run build` 通过。
+  - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
+- 结论：
+  - 人脸纹理裁剪的纯数据层已经准备好；Task 6 集成时可以先用 fallback ROI，再按需要接入 FaceLandmarker/FaceDetector。
+
+## 阶段 15：Task 5 参考效果 Shader 与材质 mode 合同
+
+- 时间：2026-06-18 Task 5 实施与复核阶段
+- 新增/修改文件：
+  - `app/src/features/spatial-template-renderer/referenceShaderSource.ts`
+  - `app/src/features/spatial-template-renderer/referenceShaderSource.test.ts`
+  - `app/src/features/spatial-template-renderer/referenceMaterialModes.ts`
+  - `app/src/features/spatial-template-renderer/referenceMaterialModes.test.ts`
+  - `docs/superpowers/plans/2026-06-18-reference-effect-replication.md`
+- 实现内容：
+  - 新增 `REFERENCE_VERTEX_SHADER` 和 `REFERENCE_FRAGMENT_SHADER` 静态 shader source。
+  - shader 暴露 `uSceneTexture`、`uFaceTexture`、`uOpacity`、`uTime`、`uPixelSize`、`uGlitchAmount`、`uMaterialMode`。
+  - fragment shader 包含 `pixelateUv`、`paletteMap`、`rgbGlitch`，并以 `uFaceTexture` 作为低像素化、调色和 RGB 色差的主来源。
+  - `uSceneTexture` 仅作为很轻的环境 backlight 混合，不再驱动主纹理效果。
+  - modes 1/2/3 保留 `paletteColor` 作为人脸派生主基底，分别调制蓝面、白红卡面、绿青面；mode 4 保留为白色边缘材质。
+  - 新增 `REFERENCE_MATERIAL_MODES` 和 `materialModeForTemplateMaterial()`，把 `face-blue`、`face-card`、`face-green`、`edge-white` 映射为稳定 shader mode。
+  - shader 中的 GLSL `MATERIAL_MODE_*` 常量由同一份 `REFERENCE_MATERIAL_MODES` 生成，测试也从同一常量断言，避免 Task 6 集成时裸数字漂移。
+- TDD 与复核修复：
+  - 初始 worker 版本满足静态 shader 合同，但 RGB glitch 采样的是 `uSceneTexture`；主线程新增失败测试后改为采样 `uFaceTexture`。
+  - 规格复核指出材质分支会覆盖人脸像素化主效果；已新增测试并改为 modes 1/2/3 都以 `paletteColor` 为主基底。
+  - Brooks 复核指出材质 mode 裸数字可能漂移；已新增 `referenceMaterialModes` 合同，并把 shader GLSL 常量从该合同生成。
+  - shader 单元测试补齐 `uOpacity`、`uTime`、face texture 主来源、material mode 分支和 palette 基底约束。
+- 复核结果：
+  - 规格复核：Health Score 100/100，确认四个 prior findings 均关闭。
+  - 最新 Brooks Review：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+  - 残余风险：当前仍是字符串/TypeScript 合同测试，真实 WebGL shader compile smoke 应放到 Task 6 renderer 集成阶段完成。
+- 验证：
+  - `npm.cmd test -- src/features/spatial-template-renderer/referenceShaderSource.test.ts src/features/spatial-template-renderer/referenceMaterialModes.test.ts` 通过，2 个测试文件、8 个测试。
+  - `npm.cmd test -- src/features/face-texture/faceTextureSource.test.ts` 通过，1 个测试文件、4 个测试。
+  - `npm.cmd test` 通过，24 个测试文件、96 个测试。
+  - `npm.cmd run build` 通过。
+  - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
+- 结论：
+  - 参考视频所需的低像素人脸纹理、黄/绿/青高对比调色、RGB 色差和稳定材质 mode 合同已经在静态 shader 层锁定；下一步可以进入 Task 6，把 TemplateState、reference mesh、face ROI 和 shader material 接入 `SpatialTemplateCanvas` 主渲染路径。

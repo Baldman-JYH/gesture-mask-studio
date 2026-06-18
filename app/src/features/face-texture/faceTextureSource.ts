@@ -28,9 +28,13 @@ export const clampFaceRoi = (roi: FaceRoi): FaceRoi => {
   };
 };
 
-export const smoothFaceRoi = (previous: FaceRoi, next: FaceRoi, amount: number): FaceRoi => ({
-  x: lerp(previous.x, next.x, amount),
-  y: lerp(previous.y, next.y, amount),
-  width: lerp(previous.width, next.width, amount),
-  height: lerp(previous.height, next.height, amount),
-});
+export const smoothFaceRoi = (previous: FaceRoi, next: FaceRoi, amount: number): FaceRoi => {
+  const clampedAmount = clamp(amount, 0, 1);
+
+  return {
+    x: lerp(previous.x, next.x, clampedAmount),
+    y: lerp(previous.y, next.y, clampedAmount),
+    width: lerp(previous.width, next.width, clampedAmount),
+    height: lerp(previous.height, next.height, clampedAmount),
+  };
+};

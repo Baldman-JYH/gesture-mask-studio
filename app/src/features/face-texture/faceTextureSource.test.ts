@@ -23,6 +23,14 @@ describe('faceTextureSource', () => {
     });
   });
 
+  it('clamps smoothing amount to avoid extrapolated face crops', () => {
+    const previous = { x: 0.2, y: 0.2, width: 0.3, height: 0.4 };
+    const next = { x: 0.6, y: 0.4, width: 0.2, height: 0.3 };
+
+    expect(smoothFaceRoi(previous, next, -0.5)).toEqual(previous);
+    expect(smoothFaceRoi(previous, next, 1.5)).toEqual(next);
+  });
+
   it('uses a portrait-centered fallback when face detection is unavailable', () => {
     expect(fallbackFaceRoi()).toEqual({
       x: 0.34,
