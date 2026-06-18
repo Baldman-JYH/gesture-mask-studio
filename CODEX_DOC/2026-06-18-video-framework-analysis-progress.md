@@ -378,3 +378,24 @@
   - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
 - 结论：
   - Task 6 已把参考效果路线接入主渲染路径：可见性不再由 raw fingertip lattice 决定，活动手势期间可生成/保持 reference template，shader material 已进入生产 Canvas。下一步应进入 Task 7，在真实摄像头和 FFmpeg 逐帧对比中校准视觉参数并验证是否接近目标参考视频。
+
+## 阶段 17：敏感分析产物移出 Git 跟踪
+
+- 时间：2026-06-19 敏感文件清理检查阶段
+- 范围：
+  - `assets/analysis/`
+  - `.gitignore`
+- 检查结果：
+  - `assets/analysis` 当前有 570 个已跟踪文件，工作区已显示为删除状态。
+  - 除 `assets/analysis` 外，当前没有其他未提交改动。
+  - GitHub 远端为 `https://github.com/Baldman-JYH/gesture-mask-studio.git`，默认分支为 `main`。
+  - `gh` 已登录并具备 `repo` 权限；`git-filter-repo` 当前环境未安装。
+- 处理计划：
+  - 先执行当前树清理：把 `assets/analysis/` 加入 `.gitignore`，并用 `git rm --cached --ignore-unmatch` 从 Git 索引移除该目录。
+  - 提交并推送后，远端对应分支的最新文件树将不再包含 `assets/analysis`。
+  - 如果这些文件曾经推送到 GitHub 历史中，仅普通删除提交不足以彻底清除历史对象；后续需要执行历史重写并 force push，或按 GitHub sensitive data removal 流程清理缓存和派生引用。
+- 执行结果：
+  - 已加入 `.gitignore` 规则：`assets/analysis/`。
+  - 已执行 `git rm -r --cached --ignore-unmatch assets/analysis`。
+  - `git ls-files assets/analysis` 已返回 0 个跟踪文件。
+  - `git check-ignore -v assets/analysis/example.jpg` 确认忽略规则生效。
