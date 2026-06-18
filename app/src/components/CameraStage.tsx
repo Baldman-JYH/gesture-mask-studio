@@ -76,7 +76,8 @@ export function CameraStage() {
       video: videoSize,
     });
     const anchorFrame = deriveGestureAnchorFrame(displayHands);
-    setHandsCount(getGestureAnchorHandCount(anchorFrame));
+    const activeHandCount = getGestureAnchorHandCount(anchorFrame);
+    setHandsCount(activeHandCount);
 
     const gestureState = deriveLightSheetGestureState({
       hands: displayHands,
@@ -94,6 +95,7 @@ export function CameraStage() {
       mirrored: mirroredRef.current,
       style: activePreset,
       timestampMs,
+      activeHandCount,
     });
     const stabilizedState = stabilizeSpatialTemplateFrame(
       stabilizerStateRef.current,

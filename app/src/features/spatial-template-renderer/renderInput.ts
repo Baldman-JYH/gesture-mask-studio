@@ -11,6 +11,7 @@ export type SpatialTemplateRenderInput = {
   style: LightSheetStylePreset;
   scene: SceneSamplingInput;
   timestampMs: number;
+  activeHandCount: number;
 };
 
 export type CreateSpatialTemplateRenderInputOptions = {
@@ -19,6 +20,7 @@ export type CreateSpatialTemplateRenderInputOptions = {
   mirrored: boolean;
   style: LightSheetStylePreset;
   timestampMs: number;
+  activeHandCount?: number;
 };
 
 export function createSpatialTemplateRenderInput(
@@ -38,5 +40,6 @@ export function createSpatialTemplateRenderInput(
       },
     },
     timestampMs: options.timestampMs,
+    activeHandCount: options.activeHandCount ?? options.displayHands.length,
   };
 }

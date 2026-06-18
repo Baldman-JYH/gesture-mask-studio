@@ -69,12 +69,12 @@ function shouldHoldPreviousVisibleInput(
     return false;
   }
 
-  if (previous.lastVisibleInput.mesh.mode !== 'two-hand-lattice') {
+  if (!isLowerFidelityDegradation(next.mesh.mode)) {
     return false;
   }
 
-  if (!isLowerFidelityDegradation(next.mesh.mode)) {
-    return false;
+  if (next.activeHandCount > 0) {
+    return true;
   }
 
   const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
@@ -90,7 +90,7 @@ function holdPreviousVisibleInput(
   holdMs: number,
 ): SpatialTemplateStabilizerState {
   const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
-  const opacityScale = Math.max(0.15, 1 - gapAgeMs / holdMs);
+  const opacityScale = next.activeHandCount > 0 ? 1 : Math.max(0.15, 1 - gapAgeMs / holdMs);
   const heldInput = previous.lastVisibleInput;
 
   return {
