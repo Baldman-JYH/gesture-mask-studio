@@ -23,6 +23,7 @@ export type TemplateState = {
   span: number;
   rotation: number;
   depthTilt: number;
+  depthDelta: number;
   foldAmount: number;
   opacity: number;
   materialPreset: TemplateMaterialPreset;

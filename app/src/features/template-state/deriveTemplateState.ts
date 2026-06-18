@@ -28,6 +28,7 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
       span: 0,
       rotation: 0,
       depthTilt: 0,
+      depthDelta: 0,
       foldAmount: 0,
       opacity: 0,
       materialPreset: 'edge-only',
@@ -44,6 +45,7 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
       span: 0.24,
       rotation: 0,
       depthTilt: 0,
+      depthDelta: 0,
       foldAmount: 0.65,
       opacity: 1,
       materialPreset: 'blue-face',
@@ -59,7 +61,8 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
   const rotation = Math.atan2(dy, dx);
   const leftZ = left.z ?? 0;
   const rightZ = right.z ?? 0;
-  const depthTilt = Math.abs(rightZ - leftZ);
+  const depthDelta = rightZ - leftZ;
+  const depthTilt = Math.abs(depthDelta);
   const projectedHeight = input.projectedHeight ?? 0.16;
   const mode = selectMode(projectedHeight, span, depthTilt);
 
@@ -75,6 +78,7 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
     span,
     rotation,
     depthTilt,
+    depthDelta,
     foldAmount: clamp01(depthTilt * 2.2 + (0.18 - projectedHeight)),
     opacity: 1,
     materialPreset: materialPresetForMode(mode),
@@ -95,21 +99,39 @@ function selectMode(
     return 'triangle-fold';
   }
 
+  if (span < 0.35) {
+    return 'white-card-face';
+  }
+
+  if (projectedHeight >= 0.16) {
+    return 'green-cyan-face';
+  }
+
   return 'wide-blue-face';
 }
 
 function materialPresetForMode(mode: TemplateMode): TemplateMaterialPreset {
-  if (mode === 'thin-edge') {
-    return 'green-cyan';
+  switch (mode) {
+    case 'hidden':
+      return 'edge-only';
+    case 'wide-blue-face':
+    case 'one-hand-wedge':
+      return 'blue-face';
+    case 'white-card-face':
+    case 'triangle-fold':
+      return 'white-red-pixels';
+    case 'green-cyan-face':
+    case 'thin-edge':
+      return 'green-cyan';
+    default:
+      return assertNever(mode);
   }
-
-  if (mode === 'triangle-fold') {
-    return 'white-red-pixels';
-  }
-
-  return 'blue-face';
 }
 
 function clamp01(value: number): number {
   return Math.min(1, Math.max(0, value));
+}
+
+function assertNever(value: never): never {
+  throw new Error(`Unhandled template mode: ${value}`);
 }

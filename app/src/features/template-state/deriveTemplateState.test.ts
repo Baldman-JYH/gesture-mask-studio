@@ -49,6 +49,61 @@ describe('deriveTemplateState', () => {
     expect(next.mode).toBe('triangle-fold');
     expect(next.depthTilt).toBeGreaterThan(0.15);
   });
+
+  it('preserves signed depth direction for folded mesh orientation', () => {
+    const leftNear = deriveTemplateState({
+      activeHandCount: 2,
+      leftAnchor: { x: 0.18, y: 0.55, z: -0.22 },
+      rightAnchor: { x: 0.72, y: 0.42, z: 0.08 },
+      projectedHeight: 0.12,
+      fingertipQuality: 'valid',
+      timestampMs: 1500,
+      previous: null,
+    });
+    const rightNear = deriveTemplateState({
+      activeHandCount: 2,
+      leftAnchor: { x: 0.18, y: 0.55, z: 0.08 },
+      rightAnchor: { x: 0.72, y: 0.42, z: -0.22 },
+      projectedHeight: 0.12,
+      fingertipQuality: 'valid',
+      timestampMs: 1500,
+      previous: null,
+    });
+
+    expect(leftNear.depthDelta).toBeCloseTo(0.3);
+    expect(rightNear.depthDelta).toBeCloseTo(-0.3);
+    expect(leftNear.depthTilt).toBeCloseTo(rightNear.depthTilt);
+  });
+
+  it('selects white-card-face for compact two-hand spans', () => {
+    const next = deriveTemplateState({
+      activeHandCount: 2,
+      leftAnchor: { x: 0.36, y: 0.5, z: 0 },
+      rightAnchor: { x: 0.62, y: 0.5, z: 0 },
+      projectedHeight: 0.1,
+      fingertipQuality: 'valid',
+      timestampMs: 1600,
+      previous: null,
+    });
+
+    expect(next.mode).toBe('white-card-face');
+    expect(next.materialPreset).toBe('white-red-pixels');
+  });
+
+  it('selects green-cyan-face for mid-height two-hand panels', () => {
+    const next = deriveTemplateState({
+      activeHandCount: 2,
+      leftAnchor: { x: 0.2, y: 0.48, z: 0 },
+      rightAnchor: { x: 0.82, y: 0.52, z: 0 },
+      projectedHeight: 0.18,
+      fingertipQuality: 'valid',
+      timestampMs: 1700,
+      previous: null,
+    });
+
+    expect(next.mode).toBe('green-cyan-face');
+    expect(next.materialPreset).toBe('green-cyan');
+  });
 });
 
 function visibleState(mode: TemplateState['mode']): TemplateState {
@@ -60,6 +115,7 @@ function visibleState(mode: TemplateState['mode']): TemplateState {
     span: 0.58,
     rotation: 0,
     depthTilt: 0,
+    depthDelta: 0,
     foldAmount: 0.4,
     opacity: 1,
     materialPreset: 'blue-face',

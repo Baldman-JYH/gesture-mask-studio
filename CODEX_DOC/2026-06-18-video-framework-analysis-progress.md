@@ -198,3 +198,35 @@
   - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
 - 结论：
   - “有活动手势时效果不应消失”的状态契约已经锁定，可以作为后续 TemplateState 和参考 shader renderer 的基线。
+
+## 阶段 12：Task 2 TemplateState 领域边界
+
+- 时间：2026-06-18 Task 2 实施与复核阶段
+- 新增文件：
+  - `app/src/features/template-state/types.ts`
+  - `app/src/features/template-state/deriveTemplateState.ts`
+  - `app/src/features/template-state/deriveTemplateState.test.ts`
+- 实现内容：
+  - 新增 `TemplateState`、`TemplateMode`、`TemplateMaterialPreset`、`FingertipQuality` 和 `DeriveTemplateStateInput`。
+  - `deriveTemplateState` 现在把活动手数、左右手锚点、投影高度、指尖质量和上一个状态转换成稳定模板状态。
+  - 当手仍活跃但当前指尖质量无效时，保持上一个可见状态并恢复完整 opacity。
+  - 新增 signed `depthDelta = rightZ - leftZ`，保留左右手谁更靠近摄像头的信息；`depthTilt` 继续表示绝对倾斜强度。
+  - `thin-edge`、`triangle-fold`、`wide-blue-face`、`white-card-face`、`green-cyan-face`、`one-hand-wedge` 均有明确派生或返回路径。
+  - 材质映射改为 exhaustive switch，避免后续新增 mode 时静默落到错误材质。
+- TDD 过程：
+  - 初始 Task 2 测试覆盖 invalid quality 持有、thin-edge 选择和 triangle-fold 选择。
+  - Brooks 质量复核发现 `depthTilt` 丢失方向，以及 `white-card-face` / `green-cyan-face` 不可达。
+  - 先新增 failing tests：signed depth direction、compact white-card、mid-height green-cyan。
+  - 目标测试先失败，再实现 `depthDelta` 和 mode/material 补齐后变绿。
+- 复核结果：
+  - 规格复核：通过，确认 `leftAnchor` 缺失但 `activeHandCount > 0` 时保留活动手数是合理的，因为它区分“有手但锚点不可用”和“无手”。
+  - 初次 Brooks Review：Health Score 87/100，要求先修 signed depth 后再进入 mesh。
+  - 修复后 Brooks Review：Health Score 100/100，无 Critical、Warning、Suggestion finding。
+  - `NormalizedPoint` 仍按计划从 `shared/runtime/types` type-only 引入；共享类型拆分属于后续可选整理，不在 Task 2 扩大范围。
+- 验证：
+  - `npm.cmd test -- src/features/template-state/deriveTemplateState.test.ts` 通过，1 个测试文件、6 个测试。
+  - `npm.cmd test` 通过，20 个测试文件、76 个测试。
+  - `npm.cmd run build` 通过。
+  - `git diff --check` 无 whitespace error，仅有 Windows LF/CRLF 提示。
+- 结论：
+  - Task 2 已具备进入 Task 3 canonical reference mesh builder 的条件；后续网格可使用 `depthDelta` 做左右镜像折叠方向，而不必在 renderer 层补救。

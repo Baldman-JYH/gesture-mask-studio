@@ -171,7 +171,7 @@ git commit -m "fix: keep template visible while hands are active"
 - Create: `app/src/features/template-state/deriveTemplateState.ts`
 - Create: `app/src/features/template-state/deriveTemplateState.test.ts`
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `deriveTemplateState.test.ts`:
 
@@ -246,7 +246,7 @@ function visibleState(mode: TemplateState['mode']): TemplateState {
 }
 ```
 
-- [ ] **Step 2: Run test to verify RED**
+- [x] **Step 2: Run test to verify RED**
 
 ```bash
 cd app
@@ -255,7 +255,7 @@ npm.cmd test -- src/features/template-state/deriveTemplateState.test.ts
 
 Expected: FAIL because files do not exist.
 
-- [ ] **Step 3: Add `types.ts`**
+- [x] **Step 3: Add `types.ts`**
 
 ```ts
 import type { NormalizedPoint } from '../../shared/runtime/types';
@@ -302,7 +302,7 @@ export type DeriveTemplateStateInput = {
 };
 ```
 
-- [ ] **Step 4: Add minimal `deriveTemplateState.ts`**
+- [x] **Step 4: Add minimal `deriveTemplateState.ts`**
 
 ```ts
 import type { DeriveTemplateStateInput, TemplateMaterialPreset, TemplateMode, TemplateState } from './types';
@@ -402,7 +402,7 @@ function clamp01(value: number): number {
 }
 ```
 
-- [ ] **Step 5: Verify GREEN**
+- [x] **Step 5: Verify GREEN**
 
 ```bash
 cd app
@@ -411,7 +411,7 @@ npm.cmd test -- src/features/template-state/deriveTemplateState.test.ts
 
 Expected: PASS.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add app/src/features/template-state
