@@ -28,3 +28,14 @@
   - 提交发布验证文档。
   - 推送 `codex/reference-effect-replication`。
   - 创建指向 `main` 的 draft PR。
+
+## 阶段 3：功能分支推送
+
+- 执行内容：
+  - 提交发布验证进展文档：`docs: record reference effect release validation`。
+  - 执行 `git push -u origin codex/reference-effect-replication`。
+- 推送结果：
+  - 远端新建分支：`origin/codex/reference-effect-replication`。
+  - 本地分支已设置 upstream：`origin/codex/reference-effect-replication`。
+- 下一步：
+  - 创建 `codex/reference-effect-replication` -> `main` 的 draft PR。
