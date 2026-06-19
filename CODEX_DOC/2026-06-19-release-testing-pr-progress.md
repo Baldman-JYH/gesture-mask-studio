@@ -195,3 +195,21 @@
 - 下一步：
   - 创建 `codex/reference-effect-stability` -> `main` 的 PR。
   - 等 PR 构建完成后，用新的线上构建再录一次短视频，重点验证 no-hand gap 后结构是否持续保留。
+
+## 阶段 13：使用 GitHub CLI 对齐远端分支
+
+- 背景：
+  - 本地分支 `codex/reference-effect-stability` 比 `origin/codex/reference-effect-stability` ahead 1。
+  - 普通 `git push` 多次因 GitHub HTTPS 连接失败无法完成。
+- 执行内容：
+  - 使用 `gh auth status` 确认 GitHub CLI 登录和 token 权限正常。
+  - 使用 `gh repo view`、`gh pr list`、`gh api git/ref` 检查仓库、PR 和远端 ref。
+  - 通过 `gh api` 创建与本地 Git 对象一致的 blob/tree/commit，并用 `PATCH git/refs` 快进远端分支。
+  - 使用 `git update-ref` 将本地 remote-tracking ref 对齐到经 `gh api` 验证过的远端 SHA。
+- 结果：
+  - 远端 `codex/reference-effect-stability` 已对齐到本地提交 `a18fae6a8bcd6119ee093dd39ccf2bdec5664647`。
+  - `origin/codex/reference-effect-stability...HEAD` 差异为 `0 0`。
+  - 当前没有已创建的 `codex/reference-effect-stability` -> `main` PR。
+- 下一步：
+  - 提交并同步本阶段文档记录。
+  - 再次确认本地工作区和远端分支保持一致。
