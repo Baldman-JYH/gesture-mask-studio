@@ -173,3 +173,22 @@
   - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
 - 下一步：
   - 提交并同步远端。
+
+## 阶段 30：远端引用对齐与当前树复验
+
+- 背景：
+  - 上一阶段代码已通过 GitHub API 推送到远端，但本地分支仍指向普通 `git commit` 生成的等价提交 SHA。
+  - 远端真实提交为 `f68b1b9bd130fd604dd0acd34fe11ea3630109ce`，本地原提交 `52e21041fdc5d919f9f35c8396ef9d65a137f2b1` 与其 tree 相同，但 SHA 不同。
+- 处理：
+  - 确认 `origin` 指向 `Baldman-JYH/gesture-mask-studio`。
+  - 确认远端 `codex/reference-effect-stability` 已位于 `f68b1b9bd130fd604dd0acd34fe11ea3630109ce`。
+  - 更新本地 `refs/heads/codex/reference-effect-stability` 与 `refs/remotes/origin/codex/reference-effect-stability`，使本地和远端完全一致。
+- 验证：
+  - `git status --short --branch` 显示本地分支与 `origin/codex/reference-effect-stability` 无 ahead/behind。
+  - `git rev-list --left-right --count origin/codex/reference-effect-stability...HEAD` 返回 `0 0`。
+  - 首次在仓库根目录执行 `npm.cmd test` 失败，原因是根目录没有 `package.json`；有效项目目录为 `app`。
+  - 在 `app` 目录执行 `npm.cmd test` 通过：27 个测试文件，122 个测试。
+  - 在 `app` 目录执行 `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+- 下一步：
+  - 基于当前构建重新录制摄像头测试视频。
+  - 用新视频继续与 `参考视频.mp4` 做逐帧对比，重点检查折面透视、头像 ROI 贴图位置、红点白卡材质、结构是否仍有消失或跳变。
