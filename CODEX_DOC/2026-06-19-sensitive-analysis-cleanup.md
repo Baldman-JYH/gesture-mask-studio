@@ -116,3 +116,44 @@
   - 这两个 PR 均为 merged PR，GitHub 的 `refs/pull/*` 是只读引用，不能由普通 git push 直接覆盖。
 - 下一步：
   - 准备 GitHub Support 敏感数据清理请求，包含仓库、受影响 PR、First Changed Commit、已强推分支和需清理的路径。
+
+## 阶段 8：本地仓库历史清理
+
+- 背景：
+  - 远端可写分支已经清理，但当前本地工作仓库仍保留旧分支 refs 和旧对象。
+  - 为避免本地 `.git` 继续持有敏感对象，需要对当前工作仓库执行同样路径过滤。
+- 执行内容：
+  - 已先提交进展文档：`docs: record history cleanup progress`。
+  - 首次执行 `python -m git_filter_repo --sensitive-data-removal --invert-paths --path assets/analysis/ --force` 时，工具检测到本地分支和远端分支不同，试图先执行会丢弃本地变更的 mirror-like fetch；非交互环境下中止。
+  - 已改用 `--no-fetch` 保留本地分支：`python -m git_filter_repo --sensitive-data-removal --no-fetch --invert-paths --path assets/analysis/ --force`。
+- 执行结果：
+  - 共解析 62 个提交。
+  - 重写 38 个提交。
+  - First Changed Commit 仍为 `3774e09930636b3658a6763e59811290a14a932c`。
+  - 本地 `main` 更新为 `5084f7a docs: record history cleanup progress`。
+  - 本地 `codex/reference-effect-replication` 更新为 `2d0da6a`，保留了此前参考效果实现分支。
+  - 本地 `feat/spatial-template-mvp` 更新为 `9d86dd9`，仍比远端对应清理分支领先 1 个本地提交。
+- 本地验证：
+  - `git for-each-ref` + `git ls-tree` 检查所有 refs，未发现 `assets/analysis`。
+  - `git log --all --name-only -- assets/analysis` 无输出。
+  - 旧 PR head commits `156409593d720a7a127bac824976a07bd40e9dda`、`ef50df4b1d7016e19bb66878a41ede40193871c9` 以及 First Changed Commit 在当前本地仓库中均已无法解析。
+  - 附加 worktree `.worktrees/implement-realtime-light-sheet` 状态干净。
+- 远端同步：
+  - 已执行 `git push origin main`，将文档提交推送到远端。
+  - 当时远端 `main` 更新到 `5084f7a7a4f0cab0ca8ae878e033a93b619b06d4`，后续阶段文档会继续产生新的 `main` 提交。
+
+## 阶段 9：临时镜像清理与 Support 材料
+
+- 临时镜像：
+  - 已删除 `D:\code\AIProjects\ShowProjects\gesture-mask-studio-sensitive-backup-20260619-154417.git`。
+  - 已删除 `D:\code\AIProjects\ShowProjects\gesture-mask-studio-history-clean-20260619-154417.git`。
+  - 删除前已确认清理镜像中旧敏感 commits 均无法解析。
+- 保留日志：
+  - `D:\code\AIProjects\ShowProjects\gesture-mask-studio-filter-repo-20260619-154417.log`
+  - `D:\code\AIProjects\ShowProjects\gesture-mask-studio-local-filter-repo-20260619-154417.log`
+  - 日志仅包含 filter-repo 输出、commit id 和路径信息，不包含图片内容。
+- 当前仍需 GitHub Support 处理：
+  - `refs/pull/1/head` 仍指向旧 commit `156409593d720a7a127bac824976a07bd40e9dda`。
+  - `refs/pull/2/head` 仍指向旧 commit `ef50df4b1d7016e19bb66878a41ede40193871c9`。
+  - 这两个 PR head refs 是 GitHub 只读引用，CLI 无法直接覆盖。
+  - 已新增 `CODEX_DOC/2026-06-19-github-support-sensitive-cleanup-request.md` 作为提交给 GitHub Support 的材料草稿。
