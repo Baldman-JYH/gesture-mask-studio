@@ -33,6 +33,7 @@ const DUPLICATE_BOUNDS_OVERLAP = 0.46;
 type HandAnchorSample = {
   hand: TrackedHand;
   anchor: GestureAnchor;
+  bounds: LandmarkBounds;
   openness: number;
 };
 
@@ -62,8 +63,10 @@ export function deriveGestureAnchorFrame(hands: TrackedHand[]): GestureAnchorFra
   uniqueAnchors.sort((a, b) => a.anchor.point.x - b.anchor.point.x);
   const left = uniqueAnchors[0];
   const right = uniqueAnchors[uniqueAnchors.length - 1];
-  const dx = right.anchor.point.x - left.anchor.point.x;
-  const dy = right.anchor.point.y - left.anchor.point.y;
+  const leftAnchor = toOuterHandAnchor(left, 'left');
+  const rightAnchor = toOuterHandAnchor(right, 'right');
+  const dx = rightAnchor.point.x - leftAnchor.point.x;
+  const dy = rightAnchor.point.y - leftAnchor.point.y;
 
   return {
     mode: 'two-hand',
@@ -71,8 +74,8 @@ export function deriveGestureAnchorFrame(hands: TrackedHand[]): GestureAnchorFra
     span: Math.hypot(dx, dy),
     openness: clamp01((left.openness + right.openness) / 2),
     rotation: Math.atan2(dy, dx),
-    left: left.anchor,
-    right: right.anchor,
+    left: leftAnchor,
+    right: rightAnchor,
   };
 }
 
@@ -139,7 +142,18 @@ function toHandAnchorSample(hand: TrackedHand): HandAnchorSample {
       }),
       direction: normalize2d(dx, dy),
     },
+    bounds: getLandmarkBounds(hand),
     openness: clamp01(distance / OPENNESS_NORMALIZER),
+  };
+}
+
+function toOuterHandAnchor(sample: HandAnchorSample, side: 'left' | 'right'): GestureAnchor {
+  return {
+    ...sample.anchor,
+    point: {
+      ...sample.anchor.point,
+      x: side === 'left' ? sample.bounds.minX : sample.bounds.maxX,
+    },
   };
 }
 
@@ -203,13 +217,15 @@ function getBoundsOverlapRatio(left: TrackedHand, right: TrackedHand): number {
   return intersectionArea / smallerArea;
 }
 
-function getLandmarkBounds(hand: TrackedHand): {
+type LandmarkBounds = {
   minX: number;
   maxX: number;
   minY: number;
   maxY: number;
   area: number;
-} {
+};
+
+function getLandmarkBounds(hand: TrackedHand): LandmarkBounds {
   const xs = hand.landmarks.map((landmark) => landmark.x);
   const ys = hand.landmarks.map((landmark) => landmark.y);
   const minX = Math.min(...xs);

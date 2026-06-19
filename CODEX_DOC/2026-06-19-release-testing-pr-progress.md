@@ -306,3 +306,37 @@
 - 下一步：
   - 同步本阶段文档提交。
   - 基于 `ca3d048` 的构建进行下一轮摄像头实拍，继续逐帧比对参考视频。
+
+## 阶段 19：双手外边界锚点修复
+
+- 继续定位的问题：
+  - 18:36 视频中结构虽然变大，但仍容易偏右/偏低，没有稳定横跨双手。
+- 根因：
+  - `deriveGestureAnchorFrame` 的 two-hand 锚点沿用了 thumb/index 指尖中点。
+  - 用户开掌时 thumb/index 中点通常靠身体内侧，会压缩双手 span，并把模板中心拖向一侧。
+  - 渲染层 normalized -> world 映射和 CSS `object-fit: cover` 对齐，没有发现同级别偏移根因。
+- TDD：
+  - 新增 `uses the visible outer hand bounds for two-hand projection span` 测试。
+  - 先观察失败：left/right anchor 仍为 `0.37/0.63` 的内部指尖中点，而不是 `0.16/0.84` 的可见外边界。
+- 修复：
+  - `HandAnchorSample` 增加手部 landmark bounds。
+  - one-hand 仍使用 thumb/index 中点保持交互手感。
+  - two-hand 模式改为左手 `minX`、右手 `maxX` 作为投影锚点，扩大双手之间的有效 span。
+  - rotation 改为基于新左右锚点自然推导。
+- 验证：
+  - `npm.cmd test -- anchorFrame deriveTemplateState renderInput`：通过，3 个测试文件、20 个测试。
+- 下一步：
+  - 跑全量测试和 production build。
+  - 提交并推送本轮锚点修复。
+
+## 阶段 20：双手锚点修复全量验证
+
+- 自动化验证：
+  - `npm.cmd test`：通过，25 个测试文件、109 个测试。
+  - `npm.cmd run build`：通过，TypeScript 与 Vite production build 均完成。
+- 本轮预期影响：
+  - 双手张开时结构使用整只手的左右外边界作为投影跨度。
+  - 结构应更稳定地横跨双手之间，而不是被 thumb/index 内侧中点压缩到一侧。
+- 下一步：
+  - 提交并推送本阶段改动。
+  - 需要基于新构建再录视频，确认实拍中结构位置和参考视频更接近。
