@@ -74,6 +74,13 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('referenceHueBoost');
   });
 
+  it('adds a low-pixel portrait particle grid over the face texture', () => {
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('portraitParticleGrid');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('float portraitParticles = portraitParticleGrid');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 particleInk');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('mix(portraitInk, particleInk, portraitParticles');
+  });
+
   it('renders the card material with a reference-style red pixel dot grid', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('redPixelDotGrid');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('float redDotGrid = redPixelDotGrid');

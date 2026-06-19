@@ -98,6 +98,20 @@ float faceEdgeMagnitude(vec2 uv, float pixelSize) {
   return smoothstep(0.08, 0.28, edge);
 }
 
+float portraitParticleGrid(vec2 uv, float edge, float mask) {
+  vec2 grid = vec2(42.0, 24.0);
+  vec2 cell = floor(uv * grid);
+  vec2 gridUv = fract(uv * grid);
+  vec2 centered = gridUv - vec2(0.5);
+  float cellNoise = fract(sin(dot(cell, vec2(12.9898, 78.233))) * 43758.5453);
+  float dotShape = 1.0 - smoothstep(0.16, 0.36, length(centered));
+  float scanline = 1.0 - smoothstep(0.18, 0.5, abs(fract((uv.y + uTime * 0.035) * 72.0) - 0.5));
+  float brokenCells = step(0.18, cellNoise);
+  float edgeBoost = mix(0.22, 1.0, clamp(edge * 1.4, 0.0, 1.0));
+
+  return clamp(dotShape * brokenCells * edgeBoost + scanline * 0.16, 0.0, 1.0) * max(mask, 0.42);
+}
+
 float redPixelDotGrid(vec2 uv) {
   vec2 gridUv = fract(uv * vec2(18.0, 9.0));
   vec2 centered = gridUv - vec2(0.5);
@@ -114,12 +128,14 @@ void main() {
   vec2 pixelUv = pixelateUv(faceUv, uPixelSize);
   vec3 glitchedFace = rgbGlitch(pixelUv, uGlitchAmount);
   vec3 sceneBacklight = texture2D(uSceneTexture, vVideoUv).rgb;
-  float faceEdge = faceEdgeMagnitude(pixelUv, uPixelSize);
-  vec3 boostedFace = mix(paletteMap(glitchedFace), referenceHueBoost(glitchedFace), 0.38);
-  vec3 portraitInk = mix(boostedFace, vec3(1.0, 0.96, 0.08), faceEdge);
-  vec3 paletteColor = mix(portraitInk, sceneBacklight, 0.04);
   vec4 faceSample = texture2D(uFaceTexture, faceUv);
   float faceMask = faceMaskFromTexture(faceSample);
+  float faceEdge = faceEdgeMagnitude(pixelUv, uPixelSize);
+  float portraitParticles = portraitParticleGrid(vFaceUv, faceEdge, faceMask);
+  vec3 boostedFace = mix(paletteMap(glitchedFace), referenceHueBoost(glitchedFace), 0.38);
+  vec3 particleInk = mix(vec3(0.0, 1.0, 0.88), vec3(1.0, 0.96, 0.04), smoothstep(0.22, 0.86, faceLuma(pixelUv)));
+  vec3 portraitInk = mix(boostedFace, vec3(1.0, 0.96, 0.08), max(faceEdge, portraitParticles * 0.58));
+  vec3 paletteColor = mix(mix(portraitInk, particleInk, portraitParticles * 0.44), sceneBacklight, 0.035);
   vec3 color = paletteColor;
   float alpha = uOpacity * max(faceMask, 0.45);
 

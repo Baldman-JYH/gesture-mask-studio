@@ -254,3 +254,29 @@
 - 下一步：
   - 提交并同步本轮几何出界修复。
   - 基于当前构建重新录制视频，重新逐帧验证结构是否仍偏右/偏下，以及 face shader 细节是否继续需要调参。
+
+## 阶段 33：参考人脸贴图粒子层增强
+
+- 证据：
+  - 参考视频中的人脸贴图不是普通连续色块，而是低像素、高饱和黄/绿/青色块叠加明显线稿/粒子化纹理。
+  - 当前 shader 已有 `pixelateUv`、`rgbGlitch`、`faceEdgeMagnitude` 和红点白卡，但蓝/绿人脸材质缺少明确的低像素粒子点阵层。
+- 根因：
+  - `REFERENCE_FRAGMENT_SHADER` 的主 `paletteColor` 只混合了 palette、hue boost、face edge 和少量 scene backlight。
+  - 人脸边缘能被提亮，但面内缺少参考视频中可见的破碎粒子/扫描线节奏，容易表现成大片平滑色块。
+- TDD：
+  - 新增 `adds a low-pixel portrait particle grid over the face texture`。
+  - 红灯结果：shader 中不存在 `portraitParticleGrid`，也没有 `particleInk` 混入主 portrait ink。
+- 实现：
+  - 新增 GLSL `portraitParticleGrid(vec2 uv, float edge, float mask)`。
+  - 使用低分辨率网格、cell noise、scanline 和 face edge boost 生成破碎粒子层。
+  - 新增 `particleInk`，在青绿色和黄色之间按像素化人脸亮度映射。
+  - 将粒子层混入 `portraitInk`，并继续保留 RGB glitch、face ROI、face edge 和少量 scene backlight。
+- 验证：
+  - `npm.cmd test -- referenceShaderSource` 通过：1 个测试文件，10 个测试。
+  - `npm.cmd test -- referenceShaderSource referenceMaterials` 通过：2 个测试文件，12 个测试。
+  - `npm.cmd test` 通过：27 个测试文件，125 个测试。
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
+- 下一步：
+  - 提交并同步本轮 shader 修复。
+  - 基于最新构建重新录制视频，验证面片上是否出现更接近参考的低像素人脸粒子和黄/绿/青高对比线稿。
