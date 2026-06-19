@@ -38,3 +38,18 @@
 - 判断：
   - 本地 `main` 清理提交已完成，但尚未进入 GitHub 远端。
   - 当前阻塞是 GitHub 网络连通性，不是工作区或认证状态问题。
+
+## 阶段 4：GitHub 远端文件树清理完成
+
+- 时间：2026-06-19 网络恢复后验证阶段
+- 执行内容：
+  - 使用 `gh auth status` 确认 GitHub CLI 登录正常。
+  - 使用 `gh repo view --json nameWithOwner,defaultBranchRef,url` 确认仓库为 `Baldman-JYH/gesture-mask-studio`，默认分支为 `main`。
+  - 执行 `git push origin main`，将 `1cbde62 chore: stop tracking analysis artifacts` 推送到 `origin/main`。
+- 远端验证：
+  - `git fetch origin main` 后，本地 `HEAD` 与 `origin/main` 均为 `1cbde62101b58ca34a2dad60d08d65c56a0ab19e`。
+  - `git ls-tree -r --name-only origin/main assets/analysis` 返回 0 个文件。
+  - `gh api repos/Baldman-JYH/gesture-mask-studio/contents/assets/analysis` 返回 404，说明默认分支最新文件树已无该目录。
+- 残余风险：
+  - 当前完成的是默认分支最新文件树删除和后续忽略。
+  - 因为 `assets/analysis` 曾存在于历史提交，若其中包含已泄露凭证或敏感个人信息，仍需要执行历史重写与 GitHub 敏感数据清理流程；凭证类内容应立即轮换或作废。
