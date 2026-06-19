@@ -90,3 +90,39 @@
 - 下一步：
   - 运行全量测试和 production build。
   - 提交并推送本轮几何与 shader 修复。
+
+## 阶段 26：MediaPipe Vision Fileset 共享初始化
+
+- 证据：
+  - 当前 hand tracker 和 face tracker 都会调用 `FilesetResolver.forVisionTasks`。
+  - 参考效果要求实时稳定，重复初始化 MediaPipe WASM 会增加启动成本，也会让双任务追踪更容易在低性能环境下出现延迟。
+- TDD：
+  - 新增 `visionFileset.test.ts`。
+  - 红灯验证缺少 `visionFileset` 模块。
+  - 测试同一个 WASM base URL 只调用一次 resolver，不同 URL 独立缓存。
+- 实现：
+  - 新增 `features/mediapipe/visionFileset.ts`。
+  - `createMediaPipeHandTracker` 和 `createMediaPipeFaceTracker` 共享 `resolveVisionFileset`。
+  - 保持模型创建仍各自独立，只复用底层 WASM fileset 初始化。
+- 验证：
+  - `npm.cmd test -- visionFileset faceTracker` 通过：2 个测试文件，4 个测试。
+- 下一步：
+  - 跑全量测试和 production build。
+  - 若通过，提交并推送本轮稳定性改动。
+
+## 阶段 27：共享初始化全量验证
+
+- 目标测试：
+  - `npm.cmd test -- visionFileset faceTracker` 通过：2 个测试文件，4 个测试。
+- 全量测试：
+  - `npm.cmd test` 通过：27 个测试文件，120 个测试。
+- Build 修正：
+  - 首次 `npm.cmd run build` 暴露 `WasmFileset` 不是 `@mediapipe/tasks-vision` 公开导出类型。
+  - 将 `resolveVisionFileset` 改为泛型 Promise cache，不再依赖 MediaPipe 内部类型。
+- 最终验证：
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 修正后重新执行 `npm.cmd test`，仍通过：27 个测试文件，120 个测试。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
+- 下一步：
+  - 提交并推送本轮共享初始化改动。
+  - 等下一段实拍视频后继续逐帧对比真实效果。

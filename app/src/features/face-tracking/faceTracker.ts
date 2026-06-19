@@ -1,6 +1,7 @@
 import type { FaceLandmarkerResult } from '@mediapipe/tasks-vision';
 import type { FaceRoi } from '../face-texture/faceTextureSource';
 import { selectTrackedFaceRoi } from '../face-texture/faceTextureSource';
+import { resolveVisionFileset } from '../mediapipe/visionFileset';
 
 export type FaceTracker = {
   detect(video: HTMLVideoElement, timestampMs: number): FaceRoi | null;
@@ -22,7 +23,10 @@ export async function createMediaPipeFaceTracker(
   options: FaceTrackerOptions = {},
 ): Promise<FaceTracker> {
   const { FaceLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
-  const vision = await FilesetResolver.forVisionTasks(options.wasmBaseUrl ?? DEFAULT_WASM_BASE_URL);
+  const vision = await resolveVisionFileset(
+    options.wasmBaseUrl ?? DEFAULT_WASM_BASE_URL,
+    (wasmBaseUrl) => FilesetResolver.forVisionTasks(wasmBaseUrl),
+  );
   const landmarker = await FaceLandmarker.createFromOptions(vision, {
     baseOptions: {
       modelAssetPath: options.modelAssetPath ?? DEFAULT_MODEL_ASSET_PATH,

@@ -1,5 +1,6 @@
 import type { HandLandmarkerResult } from '@mediapipe/tasks-vision';
 import type { NormalizedPoint, TrackedHand } from '../../shared/runtime/types';
+import { resolveVisionFileset } from '../mediapipe/visionFileset';
 
 export type HandTracker = {
   detect(video: HTMLVideoElement, timestampMs: number): TrackedHand[];
@@ -21,7 +22,10 @@ export async function createMediaPipeHandTracker(
   options: HandTrackerOptions = {},
 ): Promise<HandTracker> {
   const { FilesetResolver, HandLandmarker } = await import('@mediapipe/tasks-vision');
-  const vision = await FilesetResolver.forVisionTasks(options.wasmBaseUrl ?? DEFAULT_WASM_BASE_URL);
+  const vision = await resolveVisionFileset(
+    options.wasmBaseUrl ?? DEFAULT_WASM_BASE_URL,
+    (wasmBaseUrl) => FilesetResolver.forVisionTasks(wasmBaseUrl),
+  );
   const landmarker = await HandLandmarker.createFromOptions(vision, {
     baseOptions: {
       modelAssetPath: options.modelAssetPath ?? DEFAULT_MODEL_ASSET_PATH,
