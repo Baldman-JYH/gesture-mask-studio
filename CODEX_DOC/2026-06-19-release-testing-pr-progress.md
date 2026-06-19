@@ -39,3 +39,19 @@
   - 本地分支已设置 upstream：`origin/codex/reference-effect-replication`。
 - 下一步：
   - 创建 `codex/reference-effect-replication` -> `main` 的 draft PR。
+
+## 阶段 4：Draft PR 创建
+
+- 首选路径：
+  - 尝试使用 GitHub connector 创建 draft PR。
+  - 结果：GitHub API 返回 403 `Resource not accessible by integration`，connector 权限不足。
+- 兜底路径：
+  - 使用已认证的 GitHub CLI 执行 `gh pr create --draft`。
+- PR 结果：
+  - PR：`https://github.com/Baldman-JYH/gesture-mask-studio/pull/3`
+  - base：`main`
+  - head：`codex/reference-effect-replication`
+  - 状态：draft
+- 下一步：
+  - 推送本阶段文档。
+  - 触发 GitHub Pages workflow 在功能分支上部署测试版。
