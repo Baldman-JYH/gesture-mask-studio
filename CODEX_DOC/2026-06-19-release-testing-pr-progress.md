@@ -182,3 +182,16 @@
 - 下一步：
   - 提交本地补丁。
   - 网络恢复后推送 `codex/reference-effect-stability`，并基于 `main` 创建新的 PR 做发布验证。
+
+## 阶段 12：稳定性补丁提交与推送
+
+- 本地提交：
+  - `fcd6290 fix: persist reference effect through tracking gaps`
+- 推送结果：
+  - 远端分支已创建：`origin/codex/reference-effect-stability`
+  - upstream 已设置：`codex/reference-effect-stability` -> `origin/codex/reference-effect-stability`
+- GitHub 提示的 PR 地址：
+  - `https://github.com/Baldman-JYH/gesture-mask-studio/pull/new/codex/reference-effect-stability`
+- 下一步：
+  - 创建 `codex/reference-effect-stability` -> `main` 的 PR。
+  - 等 PR 构建完成后，用新的线上构建再录一次短视频，重点验证 no-hand gap 后结构是否持续保留。
