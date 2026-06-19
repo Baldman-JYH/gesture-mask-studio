@@ -9,6 +9,7 @@ import type {
 } from './types';
 
 type LocalPoint = Required<NormalizedPoint>;
+const DEPTH_SCREEN_PROJECTION = 0.85;
 
 export function buildReferenceTemplateMesh(state: TemplateState): SpatialTemplateMesh {
   if (state.mode === 'hidden' || !state.visible || state.opacity <= 0) {
@@ -222,10 +223,11 @@ function rotateIntoDisplaySpace(state: TemplateState, localPoint: LocalPoint): L
   const cos = Math.cos(state.rotation);
   const sin = Math.sin(state.rotation);
   const centerZ = state.center.z ?? 0;
+  const projectedLocalY = localPoint.y + localPoint.z * DEPTH_SCREEN_PROJECTION;
 
   return {
-    x: state.center.x + localPoint.x * cos - localPoint.y * sin,
-    y: state.center.y + localPoint.x * sin + localPoint.y * cos,
+    x: state.center.x + localPoint.x * cos - projectedLocalY * sin,
+    y: state.center.y + localPoint.x * sin + projectedLocalY * cos,
     z: centerZ + localPoint.z,
   };
 }

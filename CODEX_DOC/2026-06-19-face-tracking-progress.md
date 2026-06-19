@@ -150,3 +150,26 @@
   - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
 - 下一步：
   - 提交并同步远端。
+
+## 阶段 29：折面 z 深度屏幕投影修复
+
+- 证据：
+  - 参考视频中的折纸飞机结构有明显折面错位和透视感。
+  - 当前 mesh 虽然为折面顶点写入了 `z`，但 `rotateIntoDisplaySpace` 只把 local x/y 映射到屏幕坐标，local z 不会改变屏幕位置。
+  - 在正交相机和当前 shader 下，仅有 z 值不足以产生参考视频中的可见折面形变。
+- 根因：
+  - 折面深度只存在于 vertex z，缺少屏幕空间投影，导致折叠状态视觉上仍像平面贴片。
+- TDD：
+  - 新增 `projects fold depth into screen space instead of keeping folds visually flat`。
+  - 红灯结果：高 `foldAmount` 的三角折面顶点 z 增加，但 y 位置与 flat 状态完全一致。
+- 实现：
+  - 新增 `DEPTH_SCREEN_PROJECTION`。
+  - `rotateIntoDisplaySpace` 先把 local z 投影到 local y，再一起按模板 rotation 旋转到屏幕坐标。
+  - 折面顶点现在会随深度产生可见屏幕位移，增强纸飞机的 3D 透视感。
+- 验证：
+  - `npm.cmd test -- referenceTemplateMesh` 通过：1 个测试文件，12 个测试。
+  - `npm.cmd test` 通过：27 个测试文件，122 个测试。
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
+- 下一步：
+  - 提交并同步远端。

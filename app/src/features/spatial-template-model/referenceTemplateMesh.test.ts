@@ -92,6 +92,27 @@ describe('buildReferenceTemplateMesh', () => {
     );
   });
 
+  it('projects fold depth into screen space instead of keeping folds visually flat', () => {
+    const flat = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 0,
+    });
+    const folded = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 1,
+    });
+
+    const foldVertexIndex = 2;
+    expect(folded.vertices[foldVertexIndex].position.z).toBeGreaterThan(0);
+    expect(folded.vertices[foldVertexIndex].position.y).toBeGreaterThan(
+      flat.vertices[foldVertexIndex].position.y + 0.025,
+    );
+  });
+
   it('rotates local mesh points around the template center', () => {
     const unrotated = buildReferenceTemplateMesh({
       ...state('wide-blue-face'),
