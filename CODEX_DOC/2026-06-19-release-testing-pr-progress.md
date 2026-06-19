@@ -55,3 +55,25 @@
 - 下一步：
   - 推送本阶段文档。
   - 触发 GitHub Pages workflow 在功能分支上部署测试版。
+
+## 阶段 5：GitHub Pages 分支部署尝试
+
+- 执行内容：
+  - 执行 `gh workflow run pages.yml --ref codex/reference-effect-replication`。
+  - 触发 workflow run：`https://github.com/Baldman-JYH/gesture-mask-studio/actions/runs/27813342180`。
+- 执行结果：
+  - `build` job 成功。
+  - `Install`、`Test`、`Build`、`Upload artifact` 步骤均成功。
+  - `deploy` job 失败。
+- 失败特征：
+  - `deploy` job 没有任何执行 step 日志。
+  - deployment ref 为 `codex/reference-effect-replication`，环境为 `github-pages`。
+  - deployment status 从 `waiting` 变为 `failure`。
+  - 当前 Pages 配置源分支为 `main`，说明 `github-pages` 环境没有接受该非 `main` ref 的部署。
+- 判断：
+  - 功能分支 CI 级别的安装、测试、构建、artifact 上传已经通过。
+  - Pages 线上发布仍需通过 `main` 分支部署，或临时调整 Pages 环境/部署策略允许功能分支部署。
+- 下一步：
+  - 推送本阶段文档。
+  - 保持 draft PR，不自动合并到 `main`。
+  - 若需要线上实机测试，建议由用户确认是否允许将 PR 合并/发布到 `main`。
