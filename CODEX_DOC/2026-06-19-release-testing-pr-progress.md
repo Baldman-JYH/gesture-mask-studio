@@ -77,3 +77,20 @@
   - 推送本阶段文档。
   - 保持 draft PR，不自动合并到 `main`。
   - 若需要线上实机测试，建议由用户确认是否允许将 PR 合并/发布到 `main`。
+
+## 阶段 6：本地 production preview
+
+- 背景：
+  - GitHub Pages 分支部署未通过 `github-pages` 环境。
+  - 为了不自动合并 draft PR 到 `main`，先启动本地 production preview 供桌面摄像头验证。
+- 执行内容：
+  - 在 `app/` 下启动 `npm run preview -- --host 127.0.0.1 --port 4176`。
+- 结果：
+  - 本地地址：`http://127.0.0.1:4176/gesture-mask-studio/`
+  - HTTP 检查：`200 OK`
+  - preview 根进程：`cmd.exe` PID `19308`
+  - 主要子进程：Node/Vite PID `25636`、`18068`
+- 使用方式：
+  - 在本机浏览器打开上述地址。
+  - 点击 `Start camera` 授权摄像头。
+  - 用桌面录屏工具录制验证视频，后续与 `参考视频.mp4` 进行 FFmpeg 逐帧对比。
