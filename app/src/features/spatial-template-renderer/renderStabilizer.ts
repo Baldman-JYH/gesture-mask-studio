@@ -57,6 +57,12 @@ export function stabilizeSpatialTemplateFrame(
   };
 }
 
+export function resolveRenderInputForUnavailableVideoFrame(
+  previous: SpatialTemplateStabilizerState | null,
+): SpatialTemplateRenderInput | null {
+  return previous?.renderInput ?? null;
+}
+
 function shouldHoldPreviousVisibleInput(
   previous: SpatialTemplateStabilizerState | null,
   next: SpatialTemplateRenderInput,

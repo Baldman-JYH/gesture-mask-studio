@@ -10,6 +10,7 @@ import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features
 import { isRenderableVideo } from '../features/scene-sampling/screenSpaceSampling';
 import { createSpatialTemplateRenderInput, type SpatialTemplateRenderInput } from '../features/spatial-template-renderer/renderInput';
 import {
+  resolveRenderInputForUnavailableVideoFrame,
   stabilizeSpatialTemplateFrame,
   type SpatialTemplateStabilizerState,
 } from '../features/spatial-template-renderer/renderStabilizer';
@@ -60,11 +61,17 @@ export function CameraStage() {
   const runFrame = useCallback(() => {
     const video = videoRef.current;
 
-    if (!video || !isRenderableVideo(video)) {
+    if (!video) {
       stabilizerStateRef.current = null;
       templateStateRef.current = null;
       faceRoiRef.current = null;
       setRenderInput(null);
+      animationFrameRef.current = requestAnimationFrame(runFrame);
+      return;
+    }
+
+    if (!isRenderableVideo(video)) {
+      setRenderInput(resolveRenderInputForUnavailableVideoFrame(stabilizerStateRef.current));
       animationFrameRef.current = requestAnimationFrame(runFrame);
       return;
     }

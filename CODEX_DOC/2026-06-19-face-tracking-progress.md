@@ -192,3 +192,27 @@
 - 下一步：
   - 基于当前构建重新录制摄像头测试视频。
   - 用新视频继续与 `参考视频.mp4` 做逐帧对比，重点检查折面透视、头像 ROI 贴图位置、红点白卡材质、结构是否仍有消失或跳变。
+
+## 阶段 31：视频短暂不可渲染时不清空已生成效果
+
+- 证据：
+  - 用户反馈效果会出现消失，但目标效果生成后不应因短暂跟踪/视频波动而消失。
+  - `renderStabilizer` 已默认无限期保留上一个可见 mesh。
+  - `CameraStage` 仍在 `!isRenderableVideo(video)` 时直接清空 `stabilizerStateRef`、`templateStateRef`、`faceRoiRef` 和 `renderInput`，绕过了稳定器。
+- 根因：
+  - 当 video 元素存在但某一帧 `readyState` 或尺寸暂时不满足采样条件时，运行时把它当成彻底不可用并清空 AR 状态。
+  - 这会造成一次短暂的视频可渲染性波动就让已经生成的结构消失。
+- TDD：
+  - 新增 `reuses the stabilized render input through a transient unrenderable video frame`。
+  - 红灯结果：`resolveRenderInputForUnavailableVideoFrame` 不存在，当前运行时没有明确的不可渲染帧保留策略。
+- 实现：
+  - 在 `renderStabilizer` 中新增 `resolveRenderInputForUnavailableVideoFrame`，返回当前稳定后的 `renderInput`。
+  - `CameraStage` 将 `!video` 和 `!isRenderableVideo(video)` 拆开处理。
+  - 没有 video 元素时仍重置；video 存在但短暂不可渲染时不清空 stabilizer，只复用上一帧稳定输出。
+- 验证：
+  - `npm.cmd test -- renderStabilizer` 通过：1 个测试文件，7 个测试。
+  - `npm.cmd test` 通过：27 个测试文件，123 个测试。
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+- 下一步：
+  - 提交并同步本轮稳定性修复。
+  - 基于最新构建重新录制测试视频，确认效果不再因短暂视频帧不可渲染而消失。
