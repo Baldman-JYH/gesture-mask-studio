@@ -27,11 +27,24 @@ describe('stabilizeSpatialTemplateFrame', () => {
     expect(degradedState.lastVisibleTimestampMs).toBe(1000);
   });
 
-  it('clears the held template after the hidden gap exceeds the hold window', () => {
+  it('keeps the held template by default even after a long no-hand gap', () => {
+    const visibleState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh()));
+    const hiddenState = stabilizeSpatialTemplateFrame(
+      visibleState,
+      renderInput(7000, hiddenMesh(), 0),
+    );
+
+    expect(hiddenState.renderInput?.mesh.mode).toBe('two-hand-lattice');
+    expect(hiddenState.renderInput?.mesh.opacity).toBe(0.8);
+    expect(hiddenState.lastVisibleTimestampMs).toBe(1000);
+  });
+
+  it('clears the held template after an explicit finite hold window', () => {
     const visibleState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh()));
     const hiddenState = stabilizeSpatialTemplateFrame(
       visibleState,
       renderInput(1700, hiddenMesh(), 0),
+      { holdMs: 520 },
     );
 
     expect(hiddenState.renderInput).toBeNull();

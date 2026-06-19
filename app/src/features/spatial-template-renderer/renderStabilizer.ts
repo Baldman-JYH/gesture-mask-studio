@@ -11,7 +11,7 @@ export type SpatialTemplateStabilizerOptions = {
   holdMs?: number;
 };
 
-const DEFAULT_HOLD_MS = 520;
+const DEFAULT_HOLD_MS = Number.POSITIVE_INFINITY;
 
 export function stabilizeSpatialTemplateFrame(
   previous: SpatialTemplateStabilizerState | null,
@@ -38,11 +38,11 @@ export function stabilizeSpatialTemplateFrame(
 
   const hiddenAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
 
-  if (hiddenAgeMs > holdMs) {
+  if (!isWithinHoldWindow(hiddenAgeMs, holdMs)) {
     return emptyState();
   }
 
-  const opacityScale = Math.max(0.15, 1 - hiddenAgeMs / holdMs);
+  const opacityScale = holdOpacityScale(hiddenAgeMs, holdMs);
   const heldInput = previous.lastVisibleInput;
 
   return {
@@ -78,7 +78,7 @@ function shouldHoldPreviousVisibleInput(
   }
 
   const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
-  return gapAgeMs <= holdMs;
+  return isWithinHoldWindow(gapAgeMs, holdMs);
 }
 
 function holdPreviousVisibleInput(
@@ -90,7 +90,7 @@ function holdPreviousVisibleInput(
   holdMs: number,
 ): SpatialTemplateStabilizerState {
   const gapAgeMs = Math.max(0, next.timestampMs - previous.lastVisibleTimestampMs);
-  const opacityScale = next.activeHandCount > 0 ? 1 : Math.max(0.15, 1 - gapAgeMs / holdMs);
+  const opacityScale = next.activeHandCount > 0 ? 1 : holdOpacityScale(gapAgeMs, holdMs);
   const heldInput = previous.lastVisibleInput;
 
   return {
@@ -115,6 +115,18 @@ function emptyState(): SpatialTemplateStabilizerState {
     lastVisibleInput: null,
     lastVisibleTimestampMs: null,
   };
+}
+
+function isWithinHoldWindow(ageMs: number, holdMs: number): boolean {
+  return !Number.isFinite(holdMs) || ageMs <= holdMs;
+}
+
+function holdOpacityScale(ageMs: number, holdMs: number): number {
+  if (!Number.isFinite(holdMs)) {
+    return 1;
+  }
+
+  return Math.max(0.15, 1 - ageMs / holdMs);
 }
 
 function fadeMesh(mesh: SpatialTemplateMesh, opacityScale: number): SpatialTemplateMesh {
