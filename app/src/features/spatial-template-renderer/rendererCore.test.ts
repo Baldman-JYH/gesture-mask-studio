@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
-import { materialIdToIndex, spatialTemplateToBufferData } from './rendererCore';
+import {
+  SPATIAL_TEMPLATE_MATERIAL_SLOT_IDS,
+  materialIdToIndex,
+  spatialTemplateToBufferData,
+} from './rendererCore';
 
 const triangleMesh: SpatialTemplateMesh = {
   mode: 'one-hand-template',
@@ -39,8 +43,24 @@ describe('spatialTemplateToBufferData', () => {
     expect(data.positions[2]).toBeCloseTo(0.04, 6);
     expect(data.uvs[0]).toBeCloseTo(0.5, 6);
     expect(data.uvs[1]).toBeCloseTo(0.6, 6);
+    expect(data.faceUvs[0]).toBeCloseTo(0.5, 6);
+    expect(data.faceUvs[1]).toBeCloseTo(1, 6);
     expect(Array.from(data.indices)).toEqual([0, 1, 2]);
     expect(data.groups[0]).toEqual({ start: 0, count: 3, materialIndex: 0 });
+  });
+
+  it('uses local mesh bounds for face uvs independent of video sampling', () => {
+    const data = spatialTemplateToBufferData(quadMesh, {
+      aspect: 1,
+      videoMapping: { mirrored: true },
+    });
+
+    expect(data.faceUvs).toEqual([
+      0, 1,
+      1, 1,
+      1, 0,
+      0, 0,
+    ]);
   });
 
   it('triangulates quad faces and assigns the matching material group', () => {
@@ -65,5 +85,12 @@ describe('spatialTemplateToBufferData', () => {
     expect(materialIdToIndex('strip-cd')).toBe(8);
     expect(materialIdToIndex('strip-de')).toBe(9);
     expect(materialIdToIndex('strip-ea')).toBe(10);
+    expect(materialIdToIndex('face-blue')).toBe(11);
+    expect(materialIdToIndex('face-card')).toBe(12);
+    expect(materialIdToIndex('face-green')).toBe(13);
+    expect(materialIdToIndex('edge-white')).toBe(14);
+    expect(materialIdToIndex('glass-clear')).toBe(15);
+    expect(SPATIAL_TEMPLATE_MATERIAL_SLOT_IDS[materialIdToIndex('face-blue')]).toBe('face-blue');
+    expect(SPATIAL_TEMPLATE_MATERIAL_SLOT_IDS[materialIdToIndex('edge-white')]).toBe('edge-white');
   });
 });

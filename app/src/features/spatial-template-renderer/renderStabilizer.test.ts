@@ -29,11 +29,26 @@ describe('stabilizeSpatialTemplateFrame', () => {
 
   it('clears the held template after the hidden gap exceeds the hold window', () => {
     const visibleState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh()));
-    const hiddenState = stabilizeSpatialTemplateFrame(visibleState, renderInput(1700, hiddenMesh()));
+    const hiddenState = stabilizeSpatialTemplateFrame(
+      visibleState,
+      renderInput(1700, hiddenMesh(), 0),
+    );
 
     expect(hiddenState.renderInput).toBeNull();
     expect(hiddenState.lastVisibleInput).toBeNull();
     expect(hiddenState.lastVisibleTimestampMs).toBeNull();
+  });
+
+  it('keeps the last visible template beyond the hold window while hands are still active', () => {
+    const visibleState = stabilizeSpatialTemplateFrame(null, renderInput(1000, visibleMesh(), 2));
+    const hiddenState = stabilizeSpatialTemplateFrame(
+      visibleState,
+      renderInput(2400, hiddenMesh(), 2),
+    );
+
+    expect(hiddenState.renderInput?.mesh.mode).toBe('two-hand-lattice');
+    expect(hiddenState.renderInput?.mesh.opacity).toBe(0.8);
+    expect(hiddenState.lastVisibleTimestampMs).toBe(1000);
   });
 
   it('replaces held geometry immediately when a new visible template arrives', () => {
@@ -46,7 +61,11 @@ describe('stabilizeSpatialTemplateFrame', () => {
   });
 });
 
-function renderInput(timestampMs: number, mesh: SpatialTemplateMesh): SpatialTemplateRenderInput {
+function renderInput(
+  timestampMs: number,
+  mesh: SpatialTemplateMesh,
+  activeHandCount = mesh.mode === 'hidden' ? 0 : 2,
+): SpatialTemplateRenderInput {
   return {
     mesh,
     style,
@@ -56,6 +75,7 @@ function renderInput(timestampMs: number, mesh: SpatialTemplateMesh): SpatialTem
       viewport: { width: 640, height: 360 },
     },
     timestampMs,
+    activeHandCount,
   };
 }
 

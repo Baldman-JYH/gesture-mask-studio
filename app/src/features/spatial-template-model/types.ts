@@ -18,11 +18,20 @@ export type SpatialTemplateMaterialId =
   | 'strip-bc'
   | 'strip-cd'
   | 'strip-de'
-  | 'strip-ea';
+  | 'strip-ea'
+  | 'face-blue'
+  | 'face-card'
+  | 'face-green'
+  | 'edge-white'
+  | 'glass-clear';
 
 export type SpatialTemplateVertex = {
   position: NormalizedPoint;
   samplePoint: NormalizedPoint;
+  faceUv?: {
+    u: number;
+    v: number;
+  };
 };
 
 export type SpatialTemplateFace = {
