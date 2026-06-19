@@ -213,6 +213,7 @@
   - `npm.cmd test -- renderStabilizer` 通过：1 个测试文件，7 个测试。
   - `npm.cmd test` 通过：27 个测试文件，123 个测试。
   - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
 - 下一步：
   - 提交并同步本轮稳定性修复。
   - 基于最新构建重新录制测试视频，确认效果不再因短暂视频帧不可渲染而消失。
