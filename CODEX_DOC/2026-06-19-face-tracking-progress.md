@@ -54,3 +54,39 @@
 - 剩余验证：
   - 需要基于本轮构建重新录制摄像头测试视频。
   - 下一次逐帧对比应重点看面片上是否出现更明确的人脸低像素轮廓，以及黄/绿/青色故障贴图是否接近参考视频。
+
+## 阶段 24：三角折面几何超跨度修复
+
+- 证据：
+  - 18:36 测试视频抽样图中，结构仍偏右、偏小，更像短三角贴片。
+  - 参考视频中的三角/飞机形态经常明显超出双手锚点跨度，并带更长的鼻尖投影。
+- TDD：
+  - 新增 `projects triangle folds as an oversized paper-plane body beyond the hand span`。
+  - 红灯结果：当前 `triangle-fold` 宽度为 `0.708`，未达到 `span * 1.38` 的参考比例要求。
+- 实现：
+  - 将 `triangleFold` 宽度从 `span * 1.18` 提升到 `span * 1.52`。
+  - 将高度从 `span * 0.72` 提升到 `span * 0.78`。
+  - 同步增加折深与白色边缘厚度，让折面更接近参考视频中的纸飞机体块。
+- 验证：
+  - `npm.cmd test -- referenceTemplateMesh` 通过：1 个测试文件，11 个测试。
+- 下一步：
+  - 继续处理白色折面材质：参考视频有明显红色像素点阵，当前 shader 更像条带/色块。
+
+## 阶段 25：白色折面红色像素点阵材质修复
+
+- 证据：
+  - 参考视频多处出现白色折面，上面是红色离散像素点阵。
+  - 当前 `CARD_FACE` shader 分支使用斜向条带，视觉上更像色块，不像参考视频。
+- TDD：
+  - 新增 shader 源码测试，要求存在 `redPixelDotGrid`。
+  - 测试要求 `CARD_FACE` 分支使用 `redDotGrid`、`redDotInk` 和白纸底混合。
+  - 红灯结果：当前 shader 不包含点阵函数。
+- 实现：
+  - 新增 GLSL `redPixelDotGrid(vec2 uv)`。
+  - 将卡片材质改为 `cardPaper` 白纸底 + `redDotInk` 红色像素点阵。
+  - 保留一部分 `paletteColor`，让白卡仍带人脸低像素/故障纹理底色。
+- 验证：
+  - `npm.cmd test -- referenceShaderSource referenceTemplateMesh` 通过：2 个测试文件，19 个测试。
+- 下一步：
+  - 运行全量测试和 production build。
+  - 提交并推送本轮几何与 shader 修复。

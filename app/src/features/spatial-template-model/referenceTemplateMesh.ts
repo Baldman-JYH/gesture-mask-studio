@@ -65,12 +65,12 @@ function wideBlueFace(state: TemplateState): MeshParts {
 }
 
 function triangleFold(state: TemplateState): MeshParts {
-  const width = span(state) * 1.18;
+  const width = span(state) * 1.52;
   const halfWidth = width / 2;
-  const height = span(state) * 0.72;
-  const foldZ = foldDepth(state, 0.22);
+  const height = span(state) * 0.78;
+  const foldZ = foldDepth(state, 0.25);
   const backFoldZ = -foldZ * 0.35;
-  const edgeHeight = Math.max(span(state) * 0.045, 0.014);
+  const edgeHeight = Math.max(span(state) * 0.055, 0.016);
 
   return {
     points: [

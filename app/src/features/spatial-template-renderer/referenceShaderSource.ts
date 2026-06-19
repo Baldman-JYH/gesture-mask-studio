@@ -98,6 +98,16 @@ float faceEdgeMagnitude(vec2 uv, float pixelSize) {
   return smoothstep(0.08, 0.28, edge);
 }
 
+float redPixelDotGrid(vec2 uv) {
+  vec2 gridUv = fract(uv * vec2(18.0, 9.0));
+  vec2 centered = gridUv - vec2(0.5);
+  float dotShape = 1.0 - smoothstep(0.1, 0.21, length(centered));
+  float paperBounds = step(0.06, uv.x) * step(uv.x, 0.96) * step(0.12, uv.y) * step(uv.y, 0.9);
+  float brokenRows = step(0.22, fract((uv.y + uTime * 0.025) * 5.0));
+
+  return dotShape * paperBounds * brokenRows;
+}
+
 void main() {
   vec2 faceUv = uFaceRoi.xy + clamp(vFaceUv, 0.0, 1.0) * uFaceRoi.zw;
   vec2 pixelUv = pixelateUv(faceUv, uPixelSize);
@@ -120,9 +130,11 @@ void main() {
     alpha = uOpacity * max(faceMask, 0.62);
   } else if (uMaterialMode == MATERIAL_MODE_CARD_FACE) {
     // White/red card branch.
-    float redCardBand = step(0.54, fract((vFaceUv.x + vFaceUv.y + uTime * 0.035) * 4.0));
-    vec3 cardTint = mix(vec3(1.0), vec3(1.0, 0.02, 0.08), redCardBand * 0.72);
-    vec3 cardFace = mix(paletteColor, cardTint, 0.28);
+    float redDotGrid = redPixelDotGrid(vFaceUv);
+    vec3 cardPaper = mix(vec3(0.94, 0.95, 0.86), paletteColor, 0.18);
+    vec3 redDotInk = vec3(1.0, 0.02, 0.08);
+    vec3 cardTint = mix(cardPaper, redDotInk, redDotGrid * 0.88);
+    vec3 cardFace = mix(paletteColor, cardTint, 0.62);
     color = cardFace;
     alpha = uOpacity * max(faceMask, 0.7);
   } else if (uMaterialMode == MATERIAL_MODE_GREEN_FACE) {

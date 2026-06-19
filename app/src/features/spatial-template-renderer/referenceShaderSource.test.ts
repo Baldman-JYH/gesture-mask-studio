@@ -67,4 +67,11 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('portraitInk');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('referenceHueBoost');
   });
+
+  it('renders the card material with a reference-style red pixel dot grid', () => {
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('redPixelDotGrid');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('float redDotGrid = redPixelDotGrid');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 redDotInk = vec3(1.0, 0.02, 0.08)');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('mix(cardPaper, redDotInk, redDotGrid');
+  });
 });

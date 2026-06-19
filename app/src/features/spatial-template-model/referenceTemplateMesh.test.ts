@@ -43,6 +43,22 @@ describe('buildReferenceTemplateMesh', () => {
     expect(height).toBeGreaterThan(templateState.span * 0.5);
   });
 
+  it('projects triangle folds as an oversized paper-plane body beyond the hand span', () => {
+    const templateState = {
+      ...state('triangle-fold'),
+      foldAmount: 0.9,
+      depthDelta: 0.26,
+      depthTilt: 0.26,
+    };
+    const mesh = buildReferenceTemplateMesh(templateState);
+    const { minX, maxX, width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(width).toBeGreaterThan(templateState.span * 1.38);
+    expect(height).toBeGreaterThan(templateState.span * 0.68);
+    expect(maxX - templateState.center.x).toBeGreaterThan(templateState.span * 0.7);
+    expect(templateState.center.x - minX).toBeGreaterThan(templateState.span * 0.7);
+  });
+
   it('builds a thin edge without creating a bulky box', () => {
     const mesh = buildReferenceTemplateMesh({
       ...state('thin-edge'),
@@ -182,11 +198,18 @@ function state(mode: TemplateMode): TemplateState {
   };
 }
 
-function bounds(points: Array<{ x: number; y: number }>): { width: number; height: number } {
+function bounds(points: Array<{ x: number; y: number }>): {
+  minX: number;
+  maxX: number;
+  width: number;
+  height: number;
+} {
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);
 
   return {
+    minX: Math.min(...xs),
+    maxX: Math.max(...xs),
     width: Math.max(...xs) - Math.min(...xs),
     height: Math.max(...ys) - Math.min(...ys),
   };
