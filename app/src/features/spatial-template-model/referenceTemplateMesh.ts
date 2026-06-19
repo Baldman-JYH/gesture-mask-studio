@@ -9,6 +9,8 @@ import type {
 } from './types';
 
 type LocalPoint = Required<NormalizedPoint>;
+const DEPTH_SCREEN_PROJECTION = 0.85;
+const VIEWPORT_SAFE_MARGIN = 0.035;
 
 export function buildReferenceTemplateMesh(state: TemplateState): SpatialTemplateMesh {
   if (state.mode === 'hidden' || !state.visible || state.opacity <= 0) {
@@ -32,11 +34,11 @@ export function buildReferenceTemplateMesh(state: TemplateState): SpatialTemplat
 }
 
 function wideBlueFace(state: TemplateState): MeshParts {
-  const width = span(state);
+  const width = span(state) * 1.46;
   const halfWidth = width / 2;
-  const halfHeight = width * 0.08;
-  const edgeHeight = Math.max(width * 0.018, 0.008);
-  const foldZ = foldDepth(state, 0.08);
+  const halfHeight = width * 0.095;
+  const edgeHeight = Math.max(width * 0.025, 0.01);
+  const foldZ = foldDepth(state, 0.1);
 
   return {
     points: [
@@ -65,12 +67,12 @@ function wideBlueFace(state: TemplateState): MeshParts {
 }
 
 function triangleFold(state: TemplateState): MeshParts {
-  const width = span(state) * 0.82;
+  const width = span(state) * 1.52;
   const halfWidth = width / 2;
-  const height = span(state) * 0.48;
-  const foldZ = foldDepth(state, 0.18);
+  const height = span(state) * 0.78;
+  const foldZ = foldDepth(state, 0.25);
   const backFoldZ = -foldZ * 0.35;
-  const edgeHeight = Math.max(span(state) * 0.035, 0.012);
+  const edgeHeight = Math.max(span(state) * 0.055, 0.016);
 
   return {
     points: [
@@ -116,10 +118,10 @@ function thinEdge(state: TemplateState): MeshParts {
 }
 
 function whiteCardFace(state: TemplateState): MeshParts {
-  const width = span(state) * 0.76;
-  const height = span(state) * 0.42;
-  const foldZ = foldDepth(state, 0.05);
-  const edgeHeight = Math.max(span(state) * 0.02, 0.008);
+  const width = span(state) * 1.12;
+  const height = span(state) * 0.54;
+  const foldZ = foldDepth(state, 0.07);
+  const edgeHeight = Math.max(span(state) * 0.028, 0.01);
 
   return {
     points: [
@@ -141,10 +143,10 @@ function whiteCardFace(state: TemplateState): MeshParts {
 }
 
 function greenCyanFace(state: TemplateState): MeshParts {
-  const width = span(state) * 0.86;
-  const height = span(state) * 0.34;
-  const foldZ = foldDepth(state, 0.06);
-  const edgeHeight = Math.max(span(state) * 0.018, 0.008);
+  const width = span(state) * 1.18;
+  const height = span(state) * 0.5;
+  const foldZ = foldDepth(state, 0.08);
+  const edgeHeight = Math.max(span(state) * 0.026, 0.01);
 
   return {
     points: [
@@ -166,9 +168,9 @@ function greenCyanFace(state: TemplateState): MeshParts {
 }
 
 function oneHandWedge(state: TemplateState): MeshParts {
-  const width = span(state) * 0.48;
-  const height = span(state) * 0.42;
-  const foldZ = foldDepth(state, 0.14);
+  const width = span(state) * 0.9;
+  const height = span(state) * 0.68;
+  const foldZ = foldDepth(state, 0.18);
 
   return {
     points: [
@@ -194,10 +196,11 @@ type MeshParts = {
 
 function meshFromLocalState(state: TemplateState, parts: MeshParts): SpatialTemplateMesh {
   const faceUvBounds = localFaceUvBounds(parts.points);
+  const vertices = parts.points.map((localPoint) => vertex(state, localPoint, faceUvBounds));
 
   return {
     mode: spatialMode(state),
-    vertices: parts.points.map((localPoint) => vertex(state, localPoint, faceUvBounds)),
+    vertices: fitVerticesIntoViewport(vertices),
     faces: parts.faces,
     opacity: clamp01(state.opacity),
     confidence: clamp01(state.opacity),
@@ -222,11 +225,118 @@ function rotateIntoDisplaySpace(state: TemplateState, localPoint: LocalPoint): L
   const cos = Math.cos(state.rotation);
   const sin = Math.sin(state.rotation);
   const centerZ = state.center.z ?? 0;
+  const projectedLocalY = localPoint.y + localPoint.z * DEPTH_SCREEN_PROJECTION;
 
   return {
-    x: state.center.x + localPoint.x * cos - localPoint.y * sin,
-    y: state.center.y + localPoint.x * sin + localPoint.y * cos,
+    x: state.center.x + localPoint.x * cos - projectedLocalY * sin,
+    y: state.center.y + localPoint.x * sin + projectedLocalY * cos,
     z: centerZ + localPoint.z,
+  };
+}
+
+function fitVerticesIntoViewport(vertices: SpatialTemplateVertex[]): SpatialTemplateVertex[] {
+  if (vertices.length === 0) {
+    return vertices;
+  }
+
+  const initialBounds = vertexBounds(vertices);
+  const availableSize = 1 - VIEWPORT_SAFE_MARGIN * 2;
+  const scale = Math.min(
+    1,
+    availableSize / Math.max(initialBounds.width, Number.EPSILON),
+    availableSize / Math.max(initialBounds.height, Number.EPSILON),
+  );
+  const center = {
+    x: (initialBounds.minX + initialBounds.maxX) / 2,
+    y: (initialBounds.minY + initialBounds.maxY) / 2,
+  };
+  const scaledVertices =
+    scale < 1 ? vertices.map((item) => scaleVertexAround(item, center, scale)) : vertices;
+  const scaledBounds = vertexBounds(scaledVertices);
+  const dx = viewportCorrection(scaledBounds.minX, scaledBounds.maxX);
+  const dy = viewportCorrection(scaledBounds.minY, scaledBounds.maxY);
+
+  if (scale === 1 && dx === 0 && dy === 0) {
+    return vertices;
+  }
+
+  return scaledVertices.map((item) => translateVertex(item, dx, dy));
+}
+
+function scaleVertexAround(
+  vertexItem: SpatialTemplateVertex,
+  center: { x: number; y: number },
+  scale: number,
+): SpatialTemplateVertex {
+  return {
+    ...vertexItem,
+    position: scalePointAround(vertexItem.position, center, scale),
+    samplePoint: scalePointAround(vertexItem.samplePoint, center, scale),
+  };
+}
+
+function translateVertex(vertexItem: SpatialTemplateVertex, dx: number, dy: number): SpatialTemplateVertex {
+  return {
+    ...vertexItem,
+    position: translatePoint(vertexItem.position, dx, dy),
+    samplePoint: translatePoint(vertexItem.samplePoint, dx, dy),
+  };
+}
+
+function scalePointAround(
+  pointValue: NormalizedPoint,
+  center: { x: number; y: number },
+  scale: number,
+): NormalizedPoint {
+  return {
+    ...pointValue,
+    x: center.x + (pointValue.x - center.x) * scale,
+    y: center.y + (pointValue.y - center.y) * scale,
+  };
+}
+
+function translatePoint(pointValue: NormalizedPoint, dx: number, dy: number): NormalizedPoint {
+  return {
+    ...pointValue,
+    x: pointValue.x + dx,
+    y: pointValue.y + dy,
+  };
+}
+
+function viewportCorrection(min: number, max: number): number {
+  if (min < VIEWPORT_SAFE_MARGIN) {
+    return VIEWPORT_SAFE_MARGIN - min;
+  }
+
+  if (max > 1 - VIEWPORT_SAFE_MARGIN) {
+    return 1 - VIEWPORT_SAFE_MARGIN - max;
+  }
+
+  return 0;
+}
+
+function vertexBounds(vertices: SpatialTemplateVertex[]): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  width: number;
+  height: number;
+} {
+  const xs = vertices.map((item) => item.position.x);
+  const ys = vertices.map((item) => item.position.y);
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  const maxX = Math.max(...xs);
+  const maxY = Math.max(...ys);
+
+  return {
+    minX,
+    minY,
+    maxX,
+    maxY,
+    width: maxX - minX,
+    height: maxY - minY,
   };
 }
 

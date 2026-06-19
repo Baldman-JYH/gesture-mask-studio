@@ -213,3 +213,130 @@
 - 下一步：
   - 提交并同步本阶段文档记录。
   - 再次确认本地工作区和远端分支保持一致。
+
+## 阶段 14：接收 18:36 最新测试视频
+
+- 当前分支：
+  - `codex/reference-effect-stability`
+  - 本地与 `origin/codex/reference-effect-stability` 已对齐。
+- 最新测试视频：
+  - `D:\code\AIProjects\ShowProjects\gesture-mask-studio\测试记录\测试视频\屏幕录制 2026-06-19 183611.mp4`
+  - 3814x1946，30fps，820 帧，约 27.43 秒。
+- 参考视频：
+  - `D:\code\AIProjects\ShowProjects\gesture-mask-studio\参考视频.mp4`
+  - 1226x686，30fps，736 帧，约 24.58 秒。
+- 本阶段目标：
+  - 重新抽帧对比最新构建效果与参考视频。
+  - 判断前一轮“不消失”补丁是否生效。
+  - 继续定位几何、Shader、面部采样和跟手关系的剩余差距。
+
+## 阶段 15：18:36 视频抽帧完成
+
+- 输出目录：
+  - `D:\code\AIProjects\ShowProjects\gesture-mask-studio\output\reference-validation-20260619-183611`
+- 抽取内容：
+  - 最新测试视频全帧：`test_frames_1280/test_%04d.jpg`
+  - 参考视频全帧：`reference_frames_1280/reference_%04d.jpg`
+  - 抽样总览图：`contact_sheets/test_1fps_contact.jpg`、`contact_sheets/test_2fps_contact.jpg`、`contact_sheets/reference_1fps_contact.jpg`、`contact_sheets/reference_2fps_contact.jpg`
+- 抽取结果：
+  - 最新测试视频：820 帧。
+  - 参考视频：736 帧。
+  - 全帧统一缩放到 1280 宽，便于关键帧对比。
+- 下一步：
+  - 查看总览图和关键帧，确认“不消失”是否生效。
+  - 继续拆分几何形态、面部纹理、颜色 Shader、跟手位置/尺度的剩余差距。
+
+## 阶段 16：18:36 视频差距定位与第一轮修复
+
+- 逐帧/关键帧结论：
+  - “丢手后立即消失”的问题已有改善；最新测试中结构在 1 手/2 手波动期间保持可见。
+  - 末尾消失对应用户点击 `Stop camera` 后进入 `Camera idle`，属于显式停止摄像头流程。
+  - 主要剩余差距集中在几何和材质：当前结构仍偏小、偏三角楔形、偏右/偏低；参考视频是横跨双手的大尺寸折纸飞机状长条结构。
+  - 当前材质仍缺少清晰的人脸低像素肖像和黄/绿/青为主的高饱和边缘故障效果。
+- 根因定位：
+  - `fallbackFaceRoi` 固定采样画面上方，测试者脸部在画面下方时采不到脸。
+  - `referenceTemplateMesh` 的宽度/高度比例偏保守，三角折面和单手 fallback 过小。
+  - Shader 只做亮度调色和 RGB 偏移，缺少参考视频里明显的人脸边缘墨线。
+- 已实现修复：
+  - 新增动态 `deriveGestureFaceRoi`，根据模板中心和 span 推导更宽的人像采样区域。
+  - `createSpatialTemplateRenderInput` 接入动态 face ROI。
+  - 放大 wide strip、triangle fold、white card、green cyan、one-hand wedge 的参考几何比例。
+  - 单手 fallback span 从 `0.24` 提升到 `0.44`，避免初始小楔形。
+  - Shader 增加 `faceEdgeMagnitude`、`portraitInk`、`referenceHueBoost`，减少默认红色块，强化黄/绿/青与人脸边缘。
+- TDD 验证：
+  - 先添加失败测试覆盖 ROI、几何尺寸、Shader 边缘增强和单手 fallback 尺寸。
+  - 实现后运行 `npm test -- deriveTemplateState faceTextureSource referenceTemplateMesh referenceShaderSource referenceMaterials renderInput`。
+  - 结果：6 个测试文件、38 个测试通过。
+- 下一步：
+  - 运行全量测试和 production build。
+  - 使用浏览器验证 production preview 可加载，无框架错误。
+  - 让用户基于新构建录制下一轮视频，继续和参考视频逐帧比对。
+
+## 阶段 17：全量验证与本地预览检查
+
+- 自动化验证：
+  - `npm test`：通过，25 个测试文件、108 个测试。
+  - `npm run build`：通过，TypeScript 与 Vite production build 均完成。
+  - 受 Windows PowerShell execution policy 影响，最终复跑使用 `npm.cmd test` 和 `npm.cmd run build`，结果同样通过。
+- 浏览器验证：
+  - 地址：`http://127.0.0.1:4176/gesture-mask-studio/`
+  - 页面标题：`Gesture Mask Studio`
+  - DOM 快照包含 `Gesture Mask Studio`、`Camera idle`、`Tracking idle`、`Start camera`。
+  - 未检测到 Vite/框架错误覆盖。
+  - 控制台 error/warn 数量：0。
+- 限制：
+  - in-app browser 截图接口 `Page.captureScreenshot` 连续超时，本阶段未把浏览器截图作为验收证据。
+  - 摄像头实拍验证仍需要用户在本机授权摄像头后录制新视频。
+- 下一步：
+  - 提交本轮几何、Shader、ROI 和文档修复。
+  - 用新构建录制下一轮视频，重点观察结构尺寸、位置、脸部纹理和黄/绿/青故障色是否更接近参考视频。
+
+## 阶段 18：18:36 对比修复提交与推送
+
+- 本地提交：
+  - `ca3d048 feat: improve reference effect fidelity`
+- 推送结果：
+  - 已推送到 `origin/codex/reference-effect-stability`
+  - 远端范围从 `1c8876e` 更新到 `ca3d048`
+- 本轮修复范围：
+  - 动态面部 ROI。
+  - 放大参考几何与单手 fallback。
+  - 强化 Shader 的人脸边缘、黄/绿/青调色与故障肖像效果。
+  - 补充对应 TDD 测试和 18:36 视频对比记录。
+- 下一步：
+  - 同步本阶段文档提交。
+  - 基于 `ca3d048` 的构建进行下一轮摄像头实拍，继续逐帧比对参考视频。
+
+## 阶段 19：双手外边界锚点修复
+
+- 继续定位的问题：
+  - 18:36 视频中结构虽然变大，但仍容易偏右/偏低，没有稳定横跨双手。
+- 根因：
+  - `deriveGestureAnchorFrame` 的 two-hand 锚点沿用了 thumb/index 指尖中点。
+  - 用户开掌时 thumb/index 中点通常靠身体内侧，会压缩双手 span，并把模板中心拖向一侧。
+  - 渲染层 normalized -> world 映射和 CSS `object-fit: cover` 对齐，没有发现同级别偏移根因。
+- TDD：
+  - 新增 `uses the visible outer hand bounds for two-hand projection span` 测试。
+  - 先观察失败：left/right anchor 仍为 `0.37/0.63` 的内部指尖中点，而不是 `0.16/0.84` 的可见外边界。
+- 修复：
+  - `HandAnchorSample` 增加手部 landmark bounds。
+  - one-hand 仍使用 thumb/index 中点保持交互手感。
+  - two-hand 模式改为左手 `minX`、右手 `maxX` 作为投影锚点，扩大双手之间的有效 span。
+  - rotation 改为基于新左右锚点自然推导。
+- 验证：
+  - `npm.cmd test -- anchorFrame deriveTemplateState renderInput`：通过，3 个测试文件、20 个测试。
+- 下一步：
+  - 跑全量测试和 production build。
+  - 提交并推送本轮锚点修复。
+
+## 阶段 20：双手锚点修复全量验证
+
+- 自动化验证：
+  - `npm.cmd test`：通过，25 个测试文件、109 个测试。
+  - `npm.cmd run build`：通过，TypeScript 与 Vite production build 均完成。
+- 本轮预期影响：
+  - 双手张开时结构使用整只手的左右外边界作为投影跨度。
+  - 结构应更稳定地横跨双手之间，而不是被 thumb/index 内侧中点压缩到一侧。
+- 下一步：
+  - 提交并推送本阶段改动。
+  - 需要基于新构建再录视频，确认实拍中结构位置和参考视频更接近。

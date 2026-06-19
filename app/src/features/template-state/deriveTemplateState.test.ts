@@ -39,6 +39,19 @@ describe('deriveTemplateState', () => {
     expect(next.activeHandCount).toBe(2);
   });
 
+  it('uses a reference-sized one-hand fallback span instead of a tiny wedge', () => {
+    const next = deriveTemplateState({
+      activeHandCount: 1,
+      leftAnchor: { x: 0.42, y: 0.52, z: 0 },
+      fingertipQuality: 'valid',
+      timestampMs: 900,
+      previous: null,
+    });
+
+    expect(next.mode).toBe('one-hand-wedge');
+    expect(next.span).toBeGreaterThanOrEqual(0.42);
+  });
+
   it('selects thin-edge when hand span is high but projected height is low', () => {
     const next = deriveTemplateState({
       activeHandCount: 2,

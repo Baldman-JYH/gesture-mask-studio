@@ -2,7 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { LightSheetStylePreset } from '../../shared/runtime/types';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
 import type { SpatialTemplateRenderInput } from './renderInput';
-import { stabilizeSpatialTemplateFrame } from './renderStabilizer';
+import {
+  resolveRenderInputForUnavailableVideoFrame,
+  stabilizeSpatialTemplateFrame,
+} from './renderStabilizer';
 
 describe('stabilizeSpatialTemplateFrame', () => {
   it('keeps the last visible template through a short hidden tracking gap', () => {
@@ -71,6 +74,13 @@ describe('stabilizeSpatialTemplateFrame', () => {
 
     expect(nextState.renderInput?.mesh.vertices[0]?.position.x).toBe(0.72);
     expect(nextState.lastVisibleTimestampMs).toBe(1080);
+  });
+
+  it('reuses the stabilized render input through a transient unrenderable video frame', () => {
+    const visible = renderInput(1000, visibleMesh());
+    const visibleState = stabilizeSpatialTemplateFrame(null, visible);
+
+    expect(resolveRenderInputForUnavailableVideoFrame(visibleState)).toBe(visible);
   });
 });
 

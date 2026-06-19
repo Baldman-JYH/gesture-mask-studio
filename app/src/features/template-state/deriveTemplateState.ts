@@ -24,7 +24,7 @@ export function deriveTemplateState(input: DeriveTemplateStateInput): TemplateSt
       visible: true,
       activeHandCount: input.activeHandCount,
       center: input.leftAnchor,
-      span: 0.24,
+      span: 0.44,
       rotation: 0,
       depthTilt: 0,
       depthDelta: 0,

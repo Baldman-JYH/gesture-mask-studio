@@ -15,18 +15,48 @@ describe('buildReferenceTemplateMesh', () => {
     expect(width).toBeGreaterThan(height * 3);
   });
 
+  it('overscales the wide strip beyond the raw hand span like the reference projection', () => {
+    const templateState = state('wide-blue-face');
+    const mesh = buildReferenceTemplateMesh(templateState);
+    const { width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(width).toBeGreaterThan(templateState.span * 1.35);
+    expect(height).toBeGreaterThan(templateState.span * 0.2);
+  });
+
   it('builds a triangle fold with three visible face materials', () => {
-    const mesh = buildReferenceTemplateMesh({
+    const templateState = {
       ...state('triangle-fold'),
       foldAmount: 0.9,
       materialPreset: 'white-red-pixels',
       depthDelta: 0.3,
       depthTilt: 0.3,
-    });
+    };
+    const mesh = buildReferenceTemplateMesh(templateState);
 
     expect(mesh.faces.filter((face) => face.materialId === 'face-card').length).toBeGreaterThan(0);
     expect(mesh.faces.filter((face) => face.materialId === 'face-blue').length).toBeGreaterThan(0);
     expect(mesh.faces.filter((face) => face.materialId === 'edge-white').length).toBeGreaterThan(0);
+
+    const { width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+    expect(width).toBeGreaterThan(templateState.span * 1.05);
+    expect(height).toBeGreaterThan(templateState.span * 0.5);
+  });
+
+  it('projects triangle folds as an oversized paper-plane body beyond the hand span', () => {
+    const templateState = {
+      ...state('triangle-fold'),
+      foldAmount: 0.9,
+      depthDelta: 0.26,
+      depthTilt: 0.26,
+    };
+    const mesh = buildReferenceTemplateMesh(templateState);
+    const { minX, maxX, width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(width).toBeGreaterThan(templateState.span * 1.38);
+    expect(height).toBeGreaterThan(templateState.span * 0.68);
+    expect(maxX - templateState.center.x).toBeGreaterThan(templateState.span * 0.7);
+    expect(templateState.center.x - minX).toBeGreaterThan(templateState.span * 0.7);
   });
 
   it('builds a thin edge without creating a bulky box', () => {
@@ -60,6 +90,45 @@ describe('buildReferenceTemplateMesh', () => {
     expect(nearLeft.vertices[firstFoldVertexIndex].position.z).toBeCloseTo(
       -(nearRight.vertices[firstFoldVertexIndex].position.z ?? 0),
     );
+  });
+
+  it('projects fold depth into screen space instead of keeping folds visually flat', () => {
+    const flat = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 0,
+    });
+    const folded = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 1,
+    });
+
+    const foldVertexIndex = 2;
+    expect(folded.vertices[foldVertexIndex].position.z).toBeGreaterThan(0);
+    expect(folded.vertices[foldVertexIndex].position.y).toBeGreaterThan(
+      flat.vertices[foldVertexIndex].position.y + 0.025,
+    );
+  });
+
+  it('keeps oversized reference folds inside the visible viewport near screen edges', () => {
+    const mesh = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      center: { x: 0.82, y: 0.86, z: 0 },
+      span: 0.74,
+      rotation: -0.18,
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 0.95,
+    });
+    const meshBounds = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(meshBounds.minX).toBeGreaterThanOrEqual(0.0349);
+    expect(meshBounds.maxX).toBeLessThanOrEqual(0.9651);
+    expect(meshBounds.minY).toBeGreaterThanOrEqual(0.0349);
+    expect(meshBounds.maxY).toBeLessThanOrEqual(0.9651);
   });
 
   it('rotates local mesh points around the template center', () => {
@@ -168,11 +237,22 @@ function state(mode: TemplateMode): TemplateState {
   };
 }
 
-function bounds(points: Array<{ x: number; y: number }>): { width: number; height: number } {
+function bounds(points: Array<{ x: number; y: number }>): {
+  minX: number;
+  minY: number;
+  maxX: number;
+  maxY: number;
+  width: number;
+  height: number;
+} {
   const xs = points.map((point) => point.x);
   const ys = points.map((point) => point.y);
 
   return {
+    minX: Math.min(...xs),
+    minY: Math.min(...ys),
+    maxX: Math.max(...xs),
+    maxY: Math.max(...ys),
     width: Math.max(...xs) - Math.min(...xs),
     height: Math.max(...ys) - Math.min(...ys),
   };

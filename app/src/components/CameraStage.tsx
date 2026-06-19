@@ -1,6 +1,8 @@
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { createCameraController, type CameraState } from '../features/camera/cameraController';
 import { toDisplayHands } from '../features/coordinate-space/displaySpace';
+import { stabilizeTrackedFaceRoi, type FaceRoi } from '../features/face-texture/faceTextureSource';
+import { createMediaPipeFaceTracker, type FaceTracker } from '../features/face-tracking/faceTracker';
 import { deriveGestureAnchorFrame, getGestureAnchorHandCount } from '../features/gesture-anchor-frame/anchorFrame';
 import { deriveLightSheetGestureState } from '../features/gesture-engine/gestureState';
 import { createMediaPipeHandTracker, type HandTracker } from '../features/hand-tracking/handTracker';
@@ -8,6 +10,7 @@ import { LIGHT_SHEET_STYLE_PRESETS, getLightSheetStylePreset } from '../features
 import { isRenderableVideo } from '../features/scene-sampling/screenSpaceSampling';
 import { createSpatialTemplateRenderInput, type SpatialTemplateRenderInput } from '../features/spatial-template-renderer/renderInput';
 import {
+  resolveRenderInputForUnavailableVideoFrame,
   stabilizeSpatialTemplateFrame,
   type SpatialTemplateStabilizerState,
 } from '../features/spatial-template-renderer/renderStabilizer';
@@ -27,12 +30,14 @@ export function CameraStage() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const controllerRef = useRef(createCameraController());
   const trackerRef = useRef<HandTracker | null>(null);
+  const faceTrackerRef = useRef<FaceTracker | null>(null);
   const trackerRequestIdRef = useRef(0);
   const animationFrameRef = useRef<number | null>(null);
   const activePresetIdRef = useRef(LIGHT_SHEET_STYLE_PRESETS[0].id);
   const mirroredRef = useRef(true);
   const stabilizerStateRef = useRef<SpatialTemplateStabilizerState | null>(null);
   const templateStateRef = useRef<TemplateState | null>(null);
+  const faceRoiRef = useRef<FaceRoi | null>(null);
 
   const [cameraState, setCameraState] = useState<CameraState>('idle');
   const [trackingState, setTrackingState] = useState<TrackingState>('idle');
@@ -56,15 +61,27 @@ export function CameraStage() {
   const runFrame = useCallback(() => {
     const video = videoRef.current;
 
-    if (!video || !isRenderableVideo(video)) {
+    if (!video) {
       stabilizerStateRef.current = null;
       templateStateRef.current = null;
+      faceRoiRef.current = null;
       setRenderInput(null);
       animationFrameRef.current = requestAnimationFrame(runFrame);
       return;
     }
 
+    if (!isRenderableVideo(video)) {
+      setRenderInput(resolveRenderInputForUnavailableVideoFrame(stabilizerStateRef.current));
+      animationFrameRef.current = requestAnimationFrame(runFrame);
+      return;
+    }
+
     const timestampMs = performance.now();
+    faceRoiRef.current = stabilizeTrackedFaceRoi(
+      faceRoiRef.current,
+      detectFaceRoi(faceTrackerRef.current, video, timestampMs),
+      0.35,
+    );
     const hands = detectHands(trackerRef.current, video, timestampMs);
     const viewport = {
       width: video.clientWidth || video.videoWidth,
@@ -100,6 +117,7 @@ export function CameraStage() {
       timestampMs,
       activeHandCount,
       previousTemplateState: templateStateRef.current,
+      faceRoi: faceRoiRef.current ?? undefined,
     });
     templateStateRef.current = nextRenderInput.templateState;
     const stabilizedState = stabilizeSpatialTemplateFrame(
@@ -174,6 +192,29 @@ export function CameraStage() {
         setTrackingState('unavailable');
       });
 
+    createMediaPipeFaceTracker()
+      .then((tracker) => {
+        if (
+          trackerRequestIdRef.current !== trackerRequestId ||
+          controllerRef.current.getSnapshot().state !== 'ready'
+        ) {
+          tracker.close();
+          return;
+        }
+
+        faceTrackerRef.current = tracker;
+      })
+      .catch(() => {
+        if (
+          trackerRequestIdRef.current !== trackerRequestId ||
+          controllerRef.current.getSnapshot().state !== 'ready'
+        ) {
+          return;
+        }
+
+        faceTrackerRef.current = null;
+      });
+
     startRenderLoop();
   }, [startRenderLoop]);
 
@@ -182,6 +223,8 @@ export function CameraStage() {
     stopRenderLoop();
     trackerRef.current?.close();
     trackerRef.current = null;
+    faceTrackerRef.current?.close();
+    faceTrackerRef.current = null;
     controllerRef.current.stop();
 
     if (videoRef.current) {
@@ -193,6 +236,7 @@ export function CameraStage() {
     setHandsCount(0);
     stabilizerStateRef.current = null;
     templateStateRef.current = null;
+    faceRoiRef.current = null;
     setRenderInput(null);
     setMessage(null);
   }, [stopRenderLoop]);
@@ -257,5 +301,21 @@ function detectHands(
     return tracker.detect(video, timestampMs);
   } catch {
     return [];
+  }
+}
+
+function detectFaceRoi(
+  tracker: FaceTracker | null,
+  video: HTMLVideoElement,
+  timestampMs: number,
+): FaceRoi | null {
+  if (!tracker) {
+    return null;
+  }
+
+  try {
+    return tracker.detect(video, timestampMs);
+  } catch {
+    return null;
   }
 }

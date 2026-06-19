@@ -41,7 +41,35 @@ describe('deriveGestureAnchorFrame', () => {
 
     expect(frame.mode).toBe('two-hand');
     expect(frame.left?.point.x).toBeLessThan(frame.right?.point.x ?? 0);
-    expect(frame.rotation).toBeCloseTo(Math.atan2(0.05, 0.6), 2);
+    expect(frame.rotation).toBeCloseTo(
+      Math.atan2(
+        (frame.right?.point.y ?? 0) - (frame.left?.point.y ?? 0),
+        (frame.right?.point.x ?? 0) - (frame.left?.point.x ?? 0),
+      ),
+      3,
+    );
+  });
+
+  it('uses the visible outer hand bounds for two-hand projection span', () => {
+    const frame = deriveGestureAnchorFrame([
+      openPalm('left', {
+        innerThumbX: 0.35,
+        innerIndexX: 0.39,
+        outerX: 0.16,
+        y: 0.48,
+      }),
+      openPalm('right', {
+        innerThumbX: 0.61,
+        innerIndexX: 0.65,
+        outerX: 0.84,
+        y: 0.46,
+      }),
+    ]);
+
+    expect(frame.mode).toBe('two-hand');
+    expect(frame.left?.point.x).toBeCloseTo(0.16);
+    expect(frame.right?.point.x).toBeCloseTo(0.84);
+    expect(frame.span).toBeGreaterThan(0.66);
   });
 
   it('collapses duplicate detections from one physical hand into one usable anchor', () => {
@@ -65,3 +93,29 @@ describe('deriveGestureAnchorFrame', () => {
     ).toBe(2);
   });
 });
+
+function openPalm(
+  id: string,
+  options: {
+    innerThumbX: number;
+    innerIndexX: number;
+    outerX: number;
+    y: number;
+  },
+): TrackedHand {
+  const centerX = (options.innerThumbX + options.innerIndexX) / 2;
+  const landmarks = Array.from({ length: 21 }, () => ({ x: centerX, y: options.y, z: -0.02 }));
+  landmarks[0] = { x: centerX, y: options.y + 0.16, z: 0 };
+  landmarks[4] = { x: options.innerThumbX, y: options.y + 0.02, z: -0.04 };
+  landmarks[8] = { x: options.innerIndexX, y: options.y - 0.12, z: -0.06 };
+  landmarks[12] = { x: options.outerX, y: options.y - 0.16, z: -0.05 };
+  landmarks[16] = { x: options.outerX, y: options.y - 0.08, z: -0.04 };
+  landmarks[20] = { x: options.outerX, y: options.y + 0.02, z: -0.03 };
+
+  return {
+    id,
+    handedness: 'unknown',
+    confidence: 0.9,
+    landmarks,
+  };
+}

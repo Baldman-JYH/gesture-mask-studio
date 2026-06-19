@@ -40,7 +40,7 @@ export function createReferenceTemplateMaterials(): ShaderMaterial[] {
         uPixelSize: { value: 0.03125 },
         uGlitchAmount: { value: 0.012 },
         uMaterialMode: { value: materialModeForTemplateMaterial(materialId) },
-        uFaceRoi: { value: new Vector4(0.34, 0.12, 0.32, 0.42) },
+        uFaceRoi: { value: new Vector4(0.3, 0.24, 0.4, 0.56) },
       },
     })
   ));
