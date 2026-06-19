@@ -29,7 +29,13 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('texture2D(uFaceTexture, uv - offset).b');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 glitchedFace = rgbGlitch');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('paletteMap(glitchedFace)');
-    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec2 faceUv = uFaceRoi.xy +');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec2 sourceFaceUv = uFaceRoi.xy +');
+  });
+
+  it('converts top-left face ROI coordinates into VideoTexture UV space', () => {
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('sourceFaceUv');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec2 faceUv = vec2(sourceFaceUv.x, 1.0 - sourceFaceUv.y)');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('vec2 pixelUv = pixelateUv(faceUv, uPixelSize)');
   });
 
   it('passes model and video uv varyings from the vertex shader', () => {

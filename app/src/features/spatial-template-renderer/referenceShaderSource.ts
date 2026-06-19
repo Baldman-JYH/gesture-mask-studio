@@ -109,7 +109,8 @@ float redPixelDotGrid(vec2 uv) {
 }
 
 void main() {
-  vec2 faceUv = uFaceRoi.xy + clamp(vFaceUv, 0.0, 1.0) * uFaceRoi.zw;
+  vec2 sourceFaceUv = uFaceRoi.xy + clamp(vFaceUv, 0.0, 1.0) * uFaceRoi.zw;
+  vec2 faceUv = vec2(sourceFaceUv.x, 1.0 - sourceFaceUv.y);
   vec2 pixelUv = pixelateUv(faceUv, uPixelSize);
   vec3 glitchedFace = rgbGlitch(pixelUv, uGlitchAmount);
   vec3 sceneBacklight = texture2D(uSceneTexture, vVideoUv).rgb;

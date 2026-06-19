@@ -126,3 +126,27 @@
 - 下一步：
   - 提交并推送本轮共享初始化改动。
   - 等下一段实拍视频后继续逐帧对比真实效果。
+
+## 阶段 28：人脸 ROI 到 VideoTexture UV 的 y 方向修复
+
+- 证据：
+  - Three.js `Texture` 默认 `flipY = true`，`VideoTexture` 继承该行为。
+  - 项目已有场景采样 `toVideoUv` 会把 top-down 屏幕 y 转成 `1 - y`。
+  - 人脸 ROI 来自 MediaPipe landmarks，是 top-left 归一化坐标；此前 shader 直接使用 `uFaceRoi.y` 采样 `uFaceTexture`。
+- 根因：
+  - `uFaceRoi` 的 y 坐标没有转换到 VideoTexture UV 空间，导致低像素人脸贴图垂直采样区域错误。
+  - 这会削弱参考视频里最关键的“折面上有清晰人脸轮廓”的效果。
+- TDD：
+  - 新增 shader 源码测试，要求使用 `sourceFaceUv` 先计算 top-left ROI 坐标。
+  - 测试要求 `faceUv` 使用 `vec2(sourceFaceUv.x, 1.0 - sourceFaceUv.y)`。
+  - 红灯结果：当前 shader 不包含 `sourceFaceUv`。
+- 实现：
+  - `REFERENCE_FRAGMENT_SHADER` 中将 `faceUv` 改为先计算 `sourceFaceUv`，再把 y 转换为 `1.0 - sourceFaceUv.y`。
+  - `rgbGlitch`、`faceEdgeMagnitude`、`faceSample` 现在都基于修正后的 `faceUv`。
+- 验证：
+  - `npm.cmd test -- referenceShaderSource` 通过：1 个测试文件，9 个测试。
+  - `npm.cmd test` 通过：27 个测试文件，121 个测试。
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
+- 下一步：
+  - 提交并同步远端。
