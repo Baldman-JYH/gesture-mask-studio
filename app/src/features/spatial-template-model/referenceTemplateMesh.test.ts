@@ -113,6 +113,24 @@ describe('buildReferenceTemplateMesh', () => {
     );
   });
 
+  it('keeps oversized reference folds inside the visible viewport near screen edges', () => {
+    const mesh = buildReferenceTemplateMesh({
+      ...state('triangle-fold'),
+      center: { x: 0.82, y: 0.86, z: 0 },
+      span: 0.74,
+      rotation: -0.18,
+      depthDelta: 0.3,
+      depthTilt: 0.3,
+      foldAmount: 0.95,
+    });
+    const meshBounds = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(meshBounds.minX).toBeGreaterThanOrEqual(0.0349);
+    expect(meshBounds.maxX).toBeLessThanOrEqual(0.9651);
+    expect(meshBounds.minY).toBeGreaterThanOrEqual(0.0349);
+    expect(meshBounds.maxY).toBeLessThanOrEqual(0.9651);
+  });
+
   it('rotates local mesh points around the template center', () => {
     const unrotated = buildReferenceTemplateMesh({
       ...state('wide-blue-face'),
@@ -221,7 +239,9 @@ function state(mode: TemplateMode): TemplateState {
 
 function bounds(points: Array<{ x: number; y: number }>): {
   minX: number;
+  minY: number;
   maxX: number;
+  maxY: number;
   width: number;
   height: number;
 } {
@@ -230,7 +250,9 @@ function bounds(points: Array<{ x: number; y: number }>): {
 
   return {
     minX: Math.min(...xs),
+    minY: Math.min(...ys),
     maxX: Math.max(...xs),
+    maxY: Math.max(...ys),
     width: Math.max(...xs) - Math.min(...xs),
     height: Math.max(...ys) - Math.min(...ys),
   };

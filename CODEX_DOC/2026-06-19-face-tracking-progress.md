@@ -217,3 +217,40 @@
 - 下一步：
   - 提交并同步本轮稳定性修复。
   - 基于最新构建重新录制测试视频，确认效果不再因短暂视频帧不可渲染而消失。
+
+## 阶段 32：逐帧对比定位结构出界并加入视口内约束
+
+- 视频证据：
+  - 最新可用测试视频仍为 `测试记录/测试视频/屏幕录制 2026-06-19 183611.mp4`，未覆盖阶段 29-31 的最新代码。
+  - 使用 ffmpeg 全帧抽取：
+    - `参考视频.mp4`：736 帧，30fps，1226x686。
+    - `屏幕录制 2026-06-19 183611.mp4`：820 帧，30fps，3814x1946。
+  - 本轮分析输出位于 `output/reference-validation-20260620-continue/`。
+- 逐帧统计：
+  - 先裁掉测试视频右侧控制台区域，仅保留 camera stage。
+  - 生成 `normalized_contact_sheet.jpg`、`component_mask_contact_sheet.jpg`、`component_metrics.csv`、`component_metrics_summary.json`。
+  - 基于最大连通 AR 结构统计：
+    - 参考结构中心中位数约为 `x=0.479, y=0.343`。
+    - 测试结构中心中位数约为 `x=0.746, y=0.806`。
+    - 测试结构显著偏右、偏下，且多帧贴近底边或部分出界。
+- 根因：
+  - `referenceTemplateMesh` 会按手势 span 生成超尺度折面，但没有任何视口安全约束。
+  - 当双手跨度较大且锚点靠近右下区域时，折纸结构会投出归一化视口，表现为参考视频没有的贴底、裁切和位置漂移。
+- TDD：
+  - 新增 `keeps oversized reference folds inside the visible viewport near screen edges`。
+  - 红灯结果：靠右下的大跨度 `triangle-fold` 右边界投到 `1.4198`，明显超出可见范围。
+- 实现：
+  - 在 `referenceTemplateMesh` 中新增 `VIEWPORT_SAFE_MARGIN`。
+  - mesh 顶点生成后执行 `fitVerticesIntoViewport`：
+    - 先计算整体 bbox。
+    - 超过安全范围时等比缩小。
+    - 再按 x/y 方向平移回 `0.035..0.965` 的可见区域。
+    - 同步变换 `position` 和 `samplePoint`，保留 `faceUv`。
+- 验证：
+  - `npm.cmd test -- referenceTemplateMesh` 通过：1 个测试文件，13 个测试。
+  - `npm.cmd test` 通过：27 个测试文件，124 个测试。
+  - `npm.cmd run build` 通过：TypeScript build 与 Vite production build 均完成。
+  - 本地 production preview：`http://127.0.0.1:4176/gesture-mask-studio/` 返回 `HTTP 200`。
+- 下一步：
+  - 提交并同步本轮几何出界修复。
+  - 基于当前构建重新录制视频，重新逐帧验证结构是否仍偏右/偏下，以及 face shader 细节是否继续需要调参。
