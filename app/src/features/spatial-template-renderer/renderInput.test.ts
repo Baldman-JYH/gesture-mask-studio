@@ -66,7 +66,9 @@ describe('createSpatialTemplateRenderInput', () => {
 
     expect(input.mesh.mode).toBe('one-hand-template');
     expect(input.templateState.mode).toBe('one-hand-wedge');
-    expect(input.faceRoi).toEqual({ x: 0.34, y: 0.12, width: 0.32, height: 0.42 });
+    expect(input.faceRoi.width).toBeGreaterThanOrEqual(0.4);
+    expect(input.faceRoi.height).toBeGreaterThanOrEqual(0.5);
+    expect(input.faceRoi.y).toBeGreaterThan(0.12);
     expect(input.scene.viewport).toEqual({ width: 640, height: 360 });
     expect(input.timestampMs).toBe(1200);
   });

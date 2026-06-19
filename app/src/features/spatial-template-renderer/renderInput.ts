@@ -3,7 +3,12 @@ import type {
   SceneSamplingInput,
   TrackedHand,
 } from '../../shared/runtime/types';
-import { clampFaceRoi, fallbackFaceRoi, type FaceRoi } from '../face-texture/faceTextureSource';
+import {
+  clampFaceRoi,
+  deriveGestureFaceRoi,
+  fallbackFaceRoi,
+  type FaceRoi,
+} from '../face-texture/faceTextureSource';
 import { buildSpatialTemplateFromHands } from '../spatial-template-model/templateMesh';
 import type { SpatialTemplateMesh } from '../spatial-template-model/types';
 import type { TemplateState } from '../template-state/types';
@@ -41,7 +46,7 @@ export function createSpatialTemplateRenderInput(
   return {
     mesh: template.mesh,
     templateState: template.templateState,
-    faceRoi: clampFaceRoi(options.faceRoi ?? fallbackFaceRoi()),
+    faceRoi: clampFaceRoi(options.faceRoi ?? deriveFaceRoi(template.templateState)),
     style: options.style,
     scene: {
       video: options.video,
@@ -54,4 +59,12 @@ export function createSpatialTemplateRenderInput(
     timestampMs: options.timestampMs,
     activeHandCount: template.templateState.activeHandCount,
   };
+}
+
+function deriveFaceRoi(templateState: TemplateState): FaceRoi {
+  if (!templateState.visible || templateState.activeHandCount === 0) {
+    return fallbackFaceRoi();
+  }
+
+  return deriveGestureFaceRoi(templateState.center, templateState.span);
 }

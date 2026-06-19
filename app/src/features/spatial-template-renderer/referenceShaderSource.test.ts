@@ -61,4 +61,10 @@ describe('reference shader source', () => {
     expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 cardFace = mix(paletteColor');
     expect(REFERENCE_FRAGMENT_SHADER).toContain('vec3 greenFace = mix(paletteColor');
   });
+
+  it('adds reference-style face edge ink over the pixelated portrait texture', () => {
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('faceEdgeMagnitude');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('portraitInk');
+    expect(REFERENCE_FRAGMENT_SHADER).toContain('referenceHueBoost');
+  });
 });

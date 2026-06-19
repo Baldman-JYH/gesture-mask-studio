@@ -32,11 +32,11 @@ export function buildReferenceTemplateMesh(state: TemplateState): SpatialTemplat
 }
 
 function wideBlueFace(state: TemplateState): MeshParts {
-  const width = span(state);
+  const width = span(state) * 1.46;
   const halfWidth = width / 2;
-  const halfHeight = width * 0.08;
-  const edgeHeight = Math.max(width * 0.018, 0.008);
-  const foldZ = foldDepth(state, 0.08);
+  const halfHeight = width * 0.095;
+  const edgeHeight = Math.max(width * 0.025, 0.01);
+  const foldZ = foldDepth(state, 0.1);
 
   return {
     points: [
@@ -65,12 +65,12 @@ function wideBlueFace(state: TemplateState): MeshParts {
 }
 
 function triangleFold(state: TemplateState): MeshParts {
-  const width = span(state) * 0.82;
+  const width = span(state) * 1.18;
   const halfWidth = width / 2;
-  const height = span(state) * 0.48;
-  const foldZ = foldDepth(state, 0.18);
+  const height = span(state) * 0.72;
+  const foldZ = foldDepth(state, 0.22);
   const backFoldZ = -foldZ * 0.35;
-  const edgeHeight = Math.max(span(state) * 0.035, 0.012);
+  const edgeHeight = Math.max(span(state) * 0.045, 0.014);
 
   return {
     points: [
@@ -116,10 +116,10 @@ function thinEdge(state: TemplateState): MeshParts {
 }
 
 function whiteCardFace(state: TemplateState): MeshParts {
-  const width = span(state) * 0.76;
-  const height = span(state) * 0.42;
-  const foldZ = foldDepth(state, 0.05);
-  const edgeHeight = Math.max(span(state) * 0.02, 0.008);
+  const width = span(state) * 1.12;
+  const height = span(state) * 0.54;
+  const foldZ = foldDepth(state, 0.07);
+  const edgeHeight = Math.max(span(state) * 0.028, 0.01);
 
   return {
     points: [
@@ -141,10 +141,10 @@ function whiteCardFace(state: TemplateState): MeshParts {
 }
 
 function greenCyanFace(state: TemplateState): MeshParts {
-  const width = span(state) * 0.86;
-  const height = span(state) * 0.34;
-  const foldZ = foldDepth(state, 0.06);
-  const edgeHeight = Math.max(span(state) * 0.018, 0.008);
+  const width = span(state) * 1.18;
+  const height = span(state) * 0.5;
+  const foldZ = foldDepth(state, 0.08);
+  const edgeHeight = Math.max(span(state) * 0.026, 0.01);
 
   return {
     points: [
@@ -166,9 +166,9 @@ function greenCyanFace(state: TemplateState): MeshParts {
 }
 
 function oneHandWedge(state: TemplateState): MeshParts {
-  const width = span(state) * 0.48;
-  const height = span(state) * 0.42;
-  const foldZ = foldDepth(state, 0.14);
+  const width = span(state) * 0.9;
+  const height = span(state) * 0.68;
+  const foldZ = foldDepth(state, 0.18);
 
   return {
     points: [

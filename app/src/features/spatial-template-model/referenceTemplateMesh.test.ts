@@ -15,18 +15,32 @@ describe('buildReferenceTemplateMesh', () => {
     expect(width).toBeGreaterThan(height * 3);
   });
 
+  it('overscales the wide strip beyond the raw hand span like the reference projection', () => {
+    const templateState = state('wide-blue-face');
+    const mesh = buildReferenceTemplateMesh(templateState);
+    const { width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+
+    expect(width).toBeGreaterThan(templateState.span * 1.35);
+    expect(height).toBeGreaterThan(templateState.span * 0.2);
+  });
+
   it('builds a triangle fold with three visible face materials', () => {
-    const mesh = buildReferenceTemplateMesh({
+    const templateState = {
       ...state('triangle-fold'),
       foldAmount: 0.9,
       materialPreset: 'white-red-pixels',
       depthDelta: 0.3,
       depthTilt: 0.3,
-    });
+    };
+    const mesh = buildReferenceTemplateMesh(templateState);
 
     expect(mesh.faces.filter((face) => face.materialId === 'face-card').length).toBeGreaterThan(0);
     expect(mesh.faces.filter((face) => face.materialId === 'face-blue').length).toBeGreaterThan(0);
     expect(mesh.faces.filter((face) => face.materialId === 'edge-white').length).toBeGreaterThan(0);
+
+    const { width, height } = bounds(mesh.vertices.map((vertex) => vertex.position));
+    expect(width).toBeGreaterThan(templateState.span * 1.05);
+    expect(height).toBeGreaterThan(templateState.span * 0.5);
   });
 
   it('builds a thin edge without creating a bulky box', () => {
