@@ -53,3 +53,66 @@
 - 残余风险：
   - 当前完成的是默认分支最新文件树删除和后续忽略。
   - 因为 `assets/analysis` 曾存在于历史提交，若其中包含已泄露凭证或敏感个人信息，仍需要执行历史重写与 GitHub 敏感数据清理流程；凭证类内容应立即轮换或作废。
+
+## 阶段 5：历史重写准备检查
+
+- 时间：2026-06-19 历史级清理准备阶段
+- 工具检查：
+  - 初始环境未安装 `git-filter-repo`。
+  - 已执行 `python -m pip install --user --upgrade git-filter-repo`。
+  - 已安装 `git-filter-repo` 2.47.0，满足 GitHub 官方敏感数据清理流程对 `--sensitive-data-removal` 的版本要求。
+- 远端 ref 检查：
+  - `origin/main` 最新文件树中 `assets/analysis` 为 0。
+  - `origin/codex/fix-3d-template-dedupe` 最新文件树仍包含 570 个 `assets/analysis` 文件。
+  - `origin/feat/spatial-template-mvp` 最新文件树仍包含 570 个 `assets/analysis` 文件。
+- 下一步：
+  - 创建独立备份与清理克隆。
+  - 使用 `git filter-repo --sensitive-data-removal --invert-paths --path assets/analysis/` 重写历史。
+  - 验证所有本地 refs 中不再包含 `assets/analysis` 后，强制推送需要保留的远端分支。
+
+## 阶段 6：历史重写执行与本地验证
+
+- 隔离目录：
+  - 原始备份镜像：`D:\code\AIProjects\ShowProjects\gesture-mask-studio-sensitive-backup-20260619-154417.git`
+  - 清理镜像：`D:\code\AIProjects\ShowProjects\gesture-mask-studio-history-clean-20260619-154417.git`
+  - filter-repo 日志：`D:\code\AIProjects\ShowProjects\gesture-mask-studio-filter-repo-20260619-154417.log`
+- 执行命令：
+  - `python -m git_filter_repo --sensitive-data-removal --invert-paths --path assets/analysis/ --force`
+- 执行结果：
+  - 共解析 50 个提交。
+  - 重写 26 个提交。
+  - First Changed Commit：`3774e09930636b3658a6763e59811290a14a932c`。
+  - LFS 未使用，因此未检查 LFS orphaning。
+- 清理后 refs：
+  - `main` -> `365d2b1`
+  - `feat/spatial-template-mvp` -> `179d584`
+  - `codex/fix-3d-template-dedupe` -> `481bad7`
+  - 本地清理镜像中的 `pull/1/head` 与 `pull/2/head` 也已重写，但 GitHub 的 `refs/pull/*` 是只读引用，不能直接推送覆盖。
+- 本地验证：
+  - `git for-each-ref` + `git ls-tree` 检查所有 refs，未发现 `assets/analysis`。
+  - `git log --all --name-only -- assets/analysis` 无输出。
+- 下一步：
+  - 强制推送 `main`、`feat/spatial-template-mvp`、`codex/fix-3d-template-dedupe` 三个可写远端分支。
+
+## 阶段 7：远端分支历史强制更新
+
+- 执行内容：
+  - 使用显式 refspec 强制推送三个可写分支：
+    - `main`
+    - `codex/fix-3d-template-dedupe`
+    - `feat/spatial-template-mvp`
+  - 镜像克隆默认配置 `remote.origin.mirror=true`，不能与显式 refspec 混用；已通过临时配置 `-c remote.origin.mirror=false` 执行分支级 force push，避免误推 `refs/pull/*`。
+- 推送结果：
+  - `main`：`5e6c7e7` -> `365d2b1`
+  - `codex/fix-3d-template-dedupe`：`ef50df4` -> `481bad7`
+  - `feat/spatial-template-mvp`：`1564095` -> `179d584`
+- 远端验证：
+  - `git fetch origin --prune` 后，`refs/remotes/origin/*` 的最新文件树均不再包含 `assets/analysis`。
+  - GitHub Contents API 对 `contents/assets/analysis` 返回 404。
+- PR refs 残留：
+  - `refs/pull/1/head` 仍指向 `156409593d720a7a127bac824976a07bd40e9dda`。
+  - `refs/pull/2/head` 仍指向 `ef50df4b1d7016e19bb66878a41ede40193871c9`。
+  - 两个旧 PR head commit 的树中仍各包含 570 个 `assets/analysis` 文件。
+  - 这两个 PR 均为 merged PR，GitHub 的 `refs/pull/*` 是只读引用，不能由普通 git push 直接覆盖。
+- 下一步：
+  - 准备 GitHub Support 敏感数据清理请求，包含仓库、受影响 PR、First Changed Commit、已强推分支和需清理的路径。
